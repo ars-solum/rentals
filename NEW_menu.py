@@ -420,18 +420,24 @@ class Pokemon:
         self.moves = [row[11], row[12], row[13], row[14]]
         self.image = [[] for j in range(4)]
 
-        if self.name == "Bulbasaur":
-            for j in range(4):
-                self.image[0].append(tk.PhotoImage(file='media\\{0}\\{1}_{2}.gif'.format(BATTLE_OPTIONS[0].replace(" ", ""), self.name, IMGTYPE[j])))
-            # for i in range(4):
-            #     for j in range(4):
-            #         self.image[i].append(tk.PhotoImage(file='media\\{0}\\{1}_{2}.gif'.format(BATTLE_OPTIONS[i].replace(" ", ""), self.name, IMGTYPE[j])))
+        for j in range(4):
+            if j == 1:
+                self.image[j].append(tk.PhotoImage(file='media\\{0}\\{1}_{2}.gif'.format(BATTLE_OPTIONS[j].replace(" ", ""), self.name, IMGTYPE[0])))
+            else:
+                for i in range(5):
+                    self.image.append(tk.PhotoImage(file='media\\{0}\\{1}_{2}.gif'.format(BATTLE_OPTIONS[j].replace(" ", ""), self.name, IMGTYPE[i])))
 
 
 class MainApp(tk.Tk):
+    ############################################
+    ##### constructor/initializer function #####
+    ############################################
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
+        ########################################
+        ##### initialize private variables #####
+        ########################################
         f_buttonsidebar = tk.Frame(self)
         f_buttonsidebar.grid(row=0, column=0, sticky="nsew")
         f_buttonsidebar.grid_rowconfigure(0, weight=1)
@@ -448,6 +454,9 @@ class MainApp(tk.Tk):
 
         self.containerFrames = {}
 
+        ######################################
+        ##### initialize each menu layer #####
+        ######################################
         for F in (StandardDraft, RandomBattle, NemesisDraft, FirstPickDraft,
                     Trainers, Auctions, Leaderboards, Prizes):
             page_name = F.__name__
@@ -458,6 +467,9 @@ class MainApp(tk.Tk):
         self.show_frame("StandardDraft")
         self.sidebar.set_selected(BATTLE_OPTIONS[0].replace(" ", ""))
 
+    ########################################
+    ##### menu layer changing function #####
+    ########################################
     def show_frame(self, page_name):
         self.sidebar.set_selected(page_name)
         self.sidebar.update_media()
@@ -465,14 +477,16 @@ class MainApp(tk.Tk):
         frame.tkraise()
 
 class Sidebar(tk.Frame):
-    ##################################
-    ##### setup the sidebar menu #####
-    ##################################
+    ############################################
+    ##### constructor/initializer function #####
+    ############################################
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        # initialize "private" variables
+        ########################################
+        ##### initialize private variables #####
+        ########################################
         self.currSelected = None
         self.prevSelected = None
         self.f_menuOptions = []
@@ -483,6 +497,9 @@ class Sidebar(tk.Frame):
         self.img_inactive_button = []
         self.img_battleModes = tk.PhotoImage(file='media\\battle_formats.gif')
 
+        ##############################################
+        ##### set up the menu buttons and images #####
+        ##############################################
         for i in range(2):
             self.f_menuOptions.append(tk.Frame(self))
             self.f_menuOptions[i].grid(row=i, column=0, sticky="nsew")
@@ -516,6 +533,7 @@ class Sidebar(tk.Frame):
             self.b_auctionOptions.append(tk.Button(self.f_menuOptions[1], text=AUCTION_OPTIONS[i], width=B_WIDTH,
                                                 command=lambda i=i: controller.show_frame(AUCTION_OPTIONS[i].replace(" ", ""))))
             self.b_auctionOptions[i].grid(row=i+6, column=0)
+
 
     def on_enter(self, i):
         if self.currSelected == BATTLE_OPTIONS[i].replace(" ", ""):
@@ -557,7 +575,7 @@ class Sidebar(tk.Frame):
                     break
 
 class TeamBox(tk.Frame):
-    def __init__(self, parent, controller, team):
+    def __init__(self, parent, controller, team, mode):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.team = team
@@ -567,7 +585,7 @@ class TeamBox(tk.Frame):
         l_team.grid(row=0, column=0, columnspan=3)
         l_team.image = img_team
 
-        self.img_inactive_Blank = tk.PhotoImage(file='media\\button_inactive_Blank.gif')
+        self.img_inactive_Blank = tk.PhotoImage(file='media\\{0}\\button_inactive_Blank.gif'.format(mode))
 
         self.l_pokemon = []
         for i in range(3):
@@ -583,16 +601,16 @@ class TeamBox(tk.Frame):
         pass
 
 class HelpBox(tk.Frame):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller, mode):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.img_blank = tk.PhotoImage(file='media\\button_inactive_Blank.gif')
+        self.img_blank = tk.PhotoImage(file='media\\{0}\\button_inactive_Blank.gif'.format(mode))
         self.img_pokemon_selected = tk.PhotoImage(file='media\\empty_pokemon.gif')
 
         self.img_pokemon = []
-        self.img_pokemon.append(tk.PhotoImage(file='media\\Bulbasaur_inactive.gif'))
-        self.img_pokemon.append(tk.PhotoImage(file='media\\Charmander_inactive.gif'))
+        self.img_pokemon.append(tk.PhotoImage(file='media\\{0}\\Bulbasaur_inactive.gif'.format(mode)))
+        self.img_pokemon.append(tk.PhotoImage(file='media\\{0}\\Charmander_inactive.gif'.format(mode)))
 
         self.container = []
         for i in range(3):
@@ -707,27 +725,28 @@ class StandardDraft(tk.Frame):
         self.assist = tk.BooleanVar()
         self.assist.set(False)
 
-        self.img_inactive_Blank = tk.PhotoImage(file='media\\button_inactive_Blank.gif')
-        self.img_active_Blank = tk.PhotoImage(file='media\\button_active_Blank.gif')
+        self.img_inactive_Blank = tk.PhotoImage(file='media\\{0}\\button_inactive_Blank.gif'.format(BATTLE_OPTIONS[0].replace(" ", "")))
+        self.img_active_Blank = tk.PhotoImage(file='media\\{0}\\button_active_Blank.gif'.format(BATTLE_OPTIONS[0].replace(" ", "")))
 
-        self.b_testIcon = [[] for i in range(18)]
+        self.b_icons = []
+        self.img_pokemon = [[] for i in range(18)]
 
         for i in range(3):
             for j in range(6):
                 x = (i*6)+j
-                self.b_testIcon.append(tk.Button(self, image=self.img_inactive_Blank, bd=0.1, command=None))
-                self.b_testIcon[x].grid(row=i, column=j, padx=5, pady=5)
-                self.b_testIcon[x].image = self.img_inactive_Blank
-                self.b_testIcon[x].bind("<Enter>", lambda event, x=x: self.on_enter(x))
-                self.b_testIcon[x].bind("<Leave>", lambda event, x=x: self.on_leave(x))
+                self.b_icons.append(tk.Button(self, image=self.img_inactive_Blank, bd=0.1, command=None))
+                self.b_icons[x].grid(row=i, column=j, padx=5, pady=5)
+                self.b_icons[x].image = self.img_inactive_Blank
+                self.b_icons[x].bind("<Enter>", lambda event, x=x: self.on_enter(x))
+                self.b_icons[x].bind("<Leave>", lambda event, x=x: self.on_leave(x))
 
         self.f_teams = []
         for i in range(2):
-            frame = TeamBox(parent=self, controller=self, team=i+1)
+            frame = TeamBox(parent=self, controller=self, team=i+1, mode="StandardDraft")
             self.f_teams.append(frame)
             frame.grid(row=3, column=i*3, columnspan=3, pady=(30,0), sticky="nsew")
 
-        self.helpbox = HelpBox(parent=self, controller=self)
+        self.helpbox = HelpBox(parent=self, controller=self, mode="StandardDraft")
         self.helpbox.grid(row=4, column=0, columnspan=6, pady=10)
 
         self.settings = SettingsBar(parent=self, controller=self)
@@ -739,58 +758,58 @@ class StandardDraft(tk.Frame):
         ########################
         ## generate code here ##
         ########################
-        
+
         for i in range(18):
             self.pokemonNotPicked[i] = True
 
-        self.b_testIcon[0].config(image=self.testicon[0], command=lambda: self.test(0))
-        self.b_testIcon[0].image = self.testicon[0]
-        self.b_testIcon[1].config(image=self.testicon[3], command=lambda: self.test(1))
-        self.b_testIcon[1].image = self.testicon[3]
+        self.b_icons[0].config(image=self.testicon[0], command=lambda: self.test(0))
+        self.b_icons[0].image = self.testicon[0]
+        self.b_icons[1].config(image=self.testicon[3], command=lambda: self.test(1))
+        self.b_icons[1].image = self.testicon[3]
 
     def test(self, i):
         if self.pokemonNotPicked[i]:
-            self.b_testIcon[i].config(image=self.testicon[i+2])
-            self.b_testIcon[i].image = self.testicon[i+2]
+            self.b_icons[i].config(image=self.testicon[i+2])
+            self.b_icons[i].image = self.testicon[i+2]
             self.pokemonNotPicked[i] = False
 
     def on_enter(self, i):
         if self.activated:
             if i == 0:
                 if self.pokemonNotPicked[i]:
-                    self.b_testIcon[0].config(image=self.testicon[1])
-                    self.b_testIcon[0].image = self.testicon[1]
+                    self.b_icons[0].config(image=self.testicon[1])
+                    self.b_icons[0].image = self.testicon[1]
                 self.helpbox.update_info(i)
             elif i == 1:
                 if self.pokemonNotPicked[i]:
-                    self.b_testIcon[1].config(image=self.testicon[4])
-                    self.b_testIcon[1].image = self.testicon[4]
+                    self.b_icons[1].config(image=self.testicon[4])
+                    self.b_icons[1].image = self.testicon[4]
                 self.helpbox.update_info(i)
             else:
-                self.b_testIcon[i].config(image=self.img_active_Blank)
-                self.b_testIcon[i].image = self.img_active_Blank
+                self.b_icons[i].config(image=self.img_active_Blank)
+                self.b_icons[i].image = self.img_active_Blank
         else:
-            self.b_testIcon[i].config(image=self.img_active_Blank)
-            self.b_testIcon[i].image = self.img_active_Blank
+            self.b_icons[i].config(image=self.img_active_Blank)
+            self.b_icons[i].image = self.img_active_Blank
 
     def on_leave(self, i):
         if self.activated:
             if i == 0:
                 if self.pokemonNotPicked[i]:
-                    self.b_testIcon[0].config(image=self.testicon[0])
-                    self.b_testIcon[0].image = self.testicon[0]
+                    self.b_icons[0].config(image=self.testicon[0])
+                    self.b_icons[0].image = self.testicon[0]
                 self.helpbox.hide_info()
             elif i == 1:
                 if self.pokemonNotPicked[i]:
-                    self.b_testIcon[1].config(image=self.testicon[3])
-                    self.b_testIcon[1].image = self.testicon[3]
+                    self.b_icons[1].config(image=self.testicon[3])
+                    self.b_icons[1].image = self.testicon[3]
                 self.helpbox.hide_info()
             else:
-                self.b_testIcon[i].config(image=self.img_inactive_Blank)
-                self.b_testIcon[i].image = self.img_inactive_Blank
+                self.b_icons[i].config(image=self.img_inactive_Blank)
+                self.b_icons[i].image = self.img_inactive_Blank
         else:
-            self.b_testIcon[i].config(image=self.img_inactive_Blank)
-            self.b_testIcon[i].image = self.img_inactive_Blank
+            self.b_icons[i].config(image=self.img_inactive_Blank)
+            self.b_icons[i].image = self.img_inactive_Blank
 
 class RandomBattle(tk.Frame):
     def __init__(self, parent, controller):
@@ -832,11 +851,11 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     random.seed(time.strftime("%Y-%m-%d"))
+
+    app = MainApp()
     with open('main_database.csv', 'r') as fileName:
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
             POKEMON.append(Pokemon(row))
-
-    app = MainApp()
     app.mainloop()
