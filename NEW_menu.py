@@ -418,14 +418,6 @@ class Pokemon:
         self.nature = row[9]
         self.ivSpread = row[10]
         self.moves = [row[11], row[12], row[13], row[14]]
-        self.image = [[] for j in range(4)]
-
-        for j in range(4):
-            if j == 1:
-                self.image[j].append(tk.PhotoImage(file='media\\{0}\\{1}_{2}.gif'.format(BATTLE_OPTIONS[j].replace(" ", ""), self.name, IMGTYPE[0])))
-            else:
-                for i in range(5):
-                    self.image.append(tk.PhotoImage(file='media\\{0}\\{1}_{2}.gif'.format(BATTLE_OPTIONS[j].replace(" ", ""), self.name, IMGTYPE[i])))
 
 
 class MainApp(tk.Tk):
@@ -496,6 +488,7 @@ class Sidebar(tk.Frame):
         self.img_active_button = []
         self.img_inactive_button = []
         self.img_battleModes = tk.PhotoImage(file='media\\battle_formats.gif')
+        self.img_auctionModes = tk.PhotoImage(file='media\\auction_formats.gif')
 
         ##############################################
         ##### set up the menu buttons and images #####
@@ -505,8 +498,6 @@ class Sidebar(tk.Frame):
             self.f_menuOptions[i].grid(row=i, column=0, sticky="nsew")
 
         self.l_battleModes = tk.Label(self.f_menuOptions[0], image=self.img_battleModes)
-        self.l_auctionModes = tk.Label(self.f_menuOptions[1], text="Auction Options", width=B_WIDTH)
-
         self.l_battleModes.image = self.img_battleModes
         self.l_battleModes.grid(row=0, column=0)
 
@@ -527,12 +518,14 @@ class Sidebar(tk.Frame):
             self.b_battleOptions[i].bind("<Enter>", lambda event, i=i: self.on_enter(i))
             self.b_battleOptions[i].bind("<Leave>", lambda event, i=i: self.on_leave(i))
 
-        self.l_auctionModes.grid(row=5, column=0, pady=10)
+        self.l_auctionModes = tk.Label(self.f_menuOptions[1], image=self.img_auctionModes)
+        self.l_auctionModes.image = self.img_auctionModes
+        self.l_auctionModes.grid(row=0, column=0)
 
         for i in range(4):
             self.b_auctionOptions.append(tk.Button(self.f_menuOptions[1], text=AUCTION_OPTIONS[i], width=B_WIDTH,
                                                 command=lambda i=i: controller.show_frame(AUCTION_OPTIONS[i].replace(" ", ""))))
-            self.b_auctionOptions[i].grid(row=i+6, column=0)
+            self.b_auctionOptions[i].grid(row=i+1, column=0)
 
 
     def on_enter(self, i):
