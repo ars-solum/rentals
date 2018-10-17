@@ -432,8 +432,6 @@ class MainApp(tk.Tk):
         ########################################
         f_buttonsidebar = tk.Frame(self)
         f_buttonsidebar.grid(row=0, column=0, sticky="nsew")
-        f_buttonsidebar.grid_rowconfigure(0, weight=1)
-        f_buttonsidebar.grid_columnconfigure(0, weight=1)
 
         mainSidebar = Sidebar(parent=f_buttonsidebar, controller=self)
         self.sidebar = mainSidebar
@@ -442,7 +440,7 @@ class MainApp(tk.Tk):
         f_container = tk.Frame(self)
         f_container.grid(row=0, column=1, rowspan=4, sticky="nsew")
         f_container.grid_rowconfigure(0, weight=1)
-        f_container.grid_columnconfigure(1, weight=1)
+        f_container.grid_columnconfigure(0, weight=1)
 
         self.containerFrames = {}
 
@@ -485,7 +483,6 @@ class Sidebar(tk.Frame):
         self.b_battleOptions = []
         self.b_auctionOptions = []
         self.img_selected_button = []
-        self.img_active_button = []
         self.img_inactive_button = []
         self.img_battleModes = tk.PhotoImage(file='media\\battle_formats.gif')
         self.img_auctionModes = tk.PhotoImage(file='media\\auction_formats.gif')
@@ -503,18 +500,18 @@ class Sidebar(tk.Frame):
 
         for i in range(4):
             self.img_selected_button.append(tk.PhotoImage(file='media\\button_selected_{0}.gif'.format(BATTLE_OPTIONS[i].replace(" ", ""))))
-            self.img_active_button.append(tk.PhotoImage(file='media\\button_active_{0}.gif'.format(BATTLE_OPTIONS[i].replace(" ", ""))))
             self.img_inactive_button.append(tk.PhotoImage(file='media\\button_inactive_{0}.gif'.format(BATTLE_OPTIONS[i].replace(" ", ""))))
 
             if i == 0:
                 self.b_battleOptions.append(tk.Button(self.f_menuOptions[0], image=self.img_selected_button[i], bd=0.1,
                                                         command=lambda i=i: controller.show_frame(BATTLE_OPTIONS[i].replace(" ", ""))))
                 self.currSelected = BATTLE_OPTIONS[i].replace(" ", "")
+                self.b_battleOptions[i].image = self.img_selected_button[i]
             else:
                 self.b_battleOptions.append(tk.Button(self.f_menuOptions[0], image=self.img_inactive_button[i], bd=0.1,
                                                         command=lambda i=i: controller.show_frame(BATTLE_OPTIONS[i].replace(" ", ""))))
+                self.b_battleOptions[i].image = self.img_inactive_button[i]
             self.b_battleOptions[i].grid(row=i+1, column=0)
-            self.b_battleOptions[i].image = self.img_active_button[i]
             self.b_battleOptions[i].bind("<Enter>", lambda event, i=i: self.on_enter(i))
             self.b_battleOptions[i].bind("<Leave>", lambda event, i=i: self.on_leave(i))
 
@@ -523,25 +520,45 @@ class Sidebar(tk.Frame):
         self.l_auctionModes.grid(row=0, column=0)
 
         for i in range(4):
-            self.b_auctionOptions.append(tk.Button(self.f_menuOptions[1], text=AUCTION_OPTIONS[i], width=B_WIDTH,
-                                                command=lambda i=i: controller.show_frame(AUCTION_OPTIONS[i].replace(" ", ""))))
-            self.b_auctionOptions[i].grid(row=i+1, column=0)
+            self.img_selected_button.append(tk.PhotoImage(file='media\\button_selected_{0}.gif'.format(AUCTION_OPTIONS[i].replace(" ", ""))))
+            self.img_inactive_button.append(tk.PhotoImage(file='media\\button_inactive_{0}.gif'.format(AUCTION_OPTIONS[i].replace(" ", ""))))
 
+            self.b_auctionOptions.append(tk.Button(self.f_menuOptions[1], image=self.img_inactive_button[i+4], bd=0.1,
+                                                command=lambda i=i: controller.show_frame(AUCTION_OPTIONS[i].replace(" ", ""))))
+            self.b_auctionOptions[i].image = self.img_inactive_button[i+4]
+            self.b_auctionOptions[i].grid(row=i+1, column=0)
+            self.b_auctionOptions[i].bind("<Enter>", lambda event, i=i: self.on_enter(i+4))
+            self.b_auctionOptions[i].bind("<Leave>", lambda event, i=i: self.on_leave(i+4))
 
     def on_enter(self, i):
-        if self.currSelected == BATTLE_OPTIONS[i].replace(" ", ""):
-            pass
+        if i < 4:
+            if self.currSelected == BATTLE_OPTIONS[i].replace(" ", ""):
+                pass
+            else:
+                self.b_battleOptions[i].config(image=self.img_selected_button[i])
+                self.b_battleOptions[i].image = self.img_selected_button[i]
         else:
-            self.b_battleOptions[i].config(image=self.img_active_button[i])
-            self.b_battleOptions[i].image = self.img_active_button[i]
+            if self.currSelected == AUCTION_OPTIONS[i-4].replace(" ", ""):
+                pass
+            else:
+                self.b_auctionOptions[i-4].config(image=self.img_selected_button[i])
+                self.b_auctionOptions[i-4].image = self.img_selected_button[i]
 
     def on_leave(self, i):
-        if self.currSelected == BATTLE_OPTIONS[i].replace(" ", ""):
-            self.b_battleOptions[i].config(image=self.img_selected_button[i])
-            self.b_battleOptions[i].image = self.img_selected_button[i]
+        if i < 4:
+            if self.currSelected == BATTLE_OPTIONS[i].replace(" ", ""):
+                self.b_battleOptions[i].config(image=self.img_selected_button[i])
+                self.b_battleOptions[i].image = self.img_selected_button[i]
+            else:
+                self.b_battleOptions[i].config(image=self.img_inactive_button[i])
+                self.b_battleOptions[i].image = self.img_inactive_button[i]
         else:
-            self.b_battleOptions[i].config(image=self.img_inactive_button[i])
-            self.b_battleOptions[i].image = self.img_inactive_button[i]
+            if self.currSelected == AUCTION_OPTIONS[i-4].replace(" ", ""):
+                self.b_auctionOptions[i-4].config(image=self.img_selected_button[i])
+                self.b_auctionOptions[i-4].image = self.img_selected_button[i]
+            else:
+                self.b_auctionOptions[i-4].config(image=self.img_inactive_button[i])
+                self.b_auctionOptions[i-4].image = self.img_inactive_button[i]
 
     def set_selected(self, x):
         self.prevSelected = self.currSelected
@@ -560,11 +577,19 @@ class Sidebar(tk.Frame):
                     self.b_battleOptions[i].config(image=self.img_inactive_button[i])
                     self.b_battleOptions[i].image = self.img_inactive_button[i]
                     break
+                if self.prevSelected == AUCTION_OPTIONS[i].replace(" ", ""):
+                    self.b_auctionOptions[i].config(image=self.img_inactive_button[i+4])
+                    self.b_auctionOptions[i].image = self.img_inactive_button[i+4]
+                    break
         else:
             for i in range(4):
                 if self.currSelected == BATTLE_OPTIONS[i].replace(" ", ""):
                     self.b_battleOptions[i].config(image=self.img_selected_button[i])
                     self.b_battleOptions[i].image = self.img_selected_button[i]
+                    break
+                if self.currSelected == AUCTION_OPTIONS[i].replace(" ", ""):
+                    self.b_auctionOptions[i].config(image=self.img_selected_button[i+4])
+                    self.b_auctionOptions[i].image = self.img_selected_button[i+4]
                     break
 
 class TeamBox(tk.Frame):
