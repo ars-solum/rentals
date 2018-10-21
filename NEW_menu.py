@@ -9,407 +9,16 @@ import csv
 import time
 import random
 from random import shuffle
+from TypeChart import TypeChart
 
-TypeChart = {
-    ("Bug", "Bug")      : 0,
-    ("Bug", "Dark")     : 1,
-    ("Bug", "Dragon")   : 0,
-    ("Bug", "Electric") : 0,
-    ("Bug", "Fairy")    : -1,
-    ("Bug", "Fighting") : -1,
-    ("Bug", "Fire")     : -1,
-    ("Bug", "Flying")   : -1,
-    ("Bug", "Ghost")    : -1,
-    ("Bug", "Grass")    : 1,
-    ("Bug", "Ground")   : 0,
-    ("Bug", "Ice")      : 0,
-    ("Bug", "Normal")   : 0,
-    ("Bug", "Poison")   : -1,
-    ("Bug", "Psychic")  : 1,
-    ("Bug", "Rock")     : 0,
-    ("Bug", "Steel")    : -1,
-    ("Bug", "Water")    : 0,
-
-    ("Dark", "Bug")      : 0,
-    ("Dark", "Dark")     : -1,
-    ("Dark", "Dragon")   : 0,
-    ("Dark", "Electric") : 0,
-    ("Dark", "Fairy")    : -1,
-    ("Dark", "Fighting") : -1,
-    ("Dark", "Fire")     : 0,
-    ("Dark", "Flying")   : 0,
-    ("Dark", "Ghost")    : 1,
-    ("Dark", "Grass")    : 0,
-    ("Dark", "Ground")   : 0,
-    ("Dark", "Ice")      : 0,
-    ("Dark", "Normal")   : 0,
-    ("Dark", "Poison")   : 0,
-    ("Dark", "Psychic")  : 1,
-    ("Dark", "Rock")     : 0,
-    ("Dark", "Steel")    : 0,
-    ("Dark", "Water")    : 0,
-
-    ("Dragon", "Bug")      : 0,
-    ("Dragon", "Dark")     : 0,
-    ("Dragon", "Dragon")   : 1,
-    ("Dragon", "Electric") : 0,
-    ("Dragon", "Fairy")    : -1,
-    ("Dragon", "Fighting") : 0,
-    ("Dragon", "Fire")     : 0,
-    ("Dragon", "Flying")   : 0,
-    ("Dragon", "Ghost")    : 0,
-    ("Dragon", "Grass")    : 0,
-    ("Dragon", "Ground")   : 0,
-    ("Dragon", "Ice")      : 0,
-    ("Dragon", "Normal")   : 0,
-    ("Dragon", "Poison")   : 0,
-    ("Dragon", "Psychic")  : 0,
-    ("Dragon", "Rock")     : 0,
-    ("Dragon", "Steel")    : -1,
-    ("Dragon", "Water")    : 0,
-
-    ("Electric", "Bug")      : 0,
-    ("Electric", "Dark")     : 0,
-    ("Electric", "Dragon")   : -1,
-    ("Electric", "Electric") : -1,
-    ("Electric", "Fairy")    : 0,
-    ("Electric", "Fighting") : 0,
-    ("Electric", "Fire")     : 0,
-    ("Electric", "Flying")   : 1,
-    ("Electric", "Ghost")    : 0,
-    ("Electric", "Grass")    : -1,
-    ("Electric", "Ground")   : -1,
-    ("Electric", "Ice")      : 0,
-    ("Electric", "Normal")   : 0,
-    ("Electric", "Poison")   : 0,
-    ("Electric", "Psychic")  : 0,
-    ("Electric", "Rock")     : 0,
-    ("Electric", "Steel")    : 0,
-    ("Electric", "Water")    : 1,
-
-    ("Fairy", "Bug")      : 0,
-    ("Fairy", "Dark")     : 1,
-    ("Fairy", "Dragon")   : 1,
-    ("Fairy", "Electric") : 0,
-    ("Fairy", "Fairy")    : 0,
-    ("Fairy", "Fighting") : 1,
-    ("Fairy", "Fire")     : -1,
-    ("Fairy", "Flying")   : 0,
-    ("Fairy", "Ghost")    : 0,
-    ("Fairy", "Grass")    : 0,
-    ("Fairy", "Ground")   : 0,
-    ("Fairy", "Ice")      : 0,
-    ("Fairy", "Normal")   : 0,
-    ("Fairy", "Poison")   : -1,
-    ("Fairy", "Psychic")  : 0,
-    ("Fairy", "Rock")     : 0,
-    ("Fairy", "Steel")    : -1,
-    ("Fairy", "Water")    : 0,
-
-    ("Fighting", "Bug")      : -1,
-    ("Fighting", "Dark")     : 1,
-    ("Fighting", "Dragon")   : 0,
-    ("Fighting", "Electric") : 0,
-    ("Fighting", "Fairy")    : 1,
-    ("Fighting", "Fighting") : 0,
-    ("Fighting", "Fire")     : 0,
-    ("Fighting", "Flying")   : -1,
-    ("Fighting", "Ghost")    : -1,
-    ("Fighting", "Grass")    : 0,
-    ("Fighting", "Ground")   : 0,
-    ("Fighting", "Ice")      : 1,
-    ("Fighting", "Normal")   : 1,
-    ("Fighting", "Poison")   : -1,
-    ("Fighting", "Psychic")  : -1,
-    ("Fighting", "Rock")     : 1,
-    ("Fighting", "Steel")    : 1,
-    ("Fighting", "Water")    : 0,
-
-    ("Fire", "Bug")      : 1,
-    ("Fire", "Dark")     : 0,
-    ("Fire", "Dragon")   : -1,
-    ("Fire", "Electric") : 0,
-    ("Fire", "Fairy")    : 0,
-    ("Fire", "Fighting") : 0,
-    ("Fire", "Fire")     : -1,
-    ("Fire", "Flying")   : 0,
-    ("Fire", "Ghost")    : 0,
-    ("Fire", "Grass")    : 1,
-    ("Fire", "Ground")   : 0,
-    ("Fire", "Ice")      : 1,
-    ("Fire", "Normal")   : 0,
-    ("Fire", "Poison")   : 0,
-    ("Fire", "Psychic")  : 0,
-    ("Fire", "Rock")     : -1,
-    ("Fire", "Steel")    : 1,
-    ("Fire", "Water")    : -1,
-
-    ("Flying", "Bug")      : 1,
-    ("Flying", "Dark")     : 0,
-    ("Flying", "Dragon")   : 0,
-    ("Flying", "Electric") : -1,
-    ("Flying", "Fairy")    : 0,
-    ("Flying", "Fighting") : 1,
-    ("Flying", "Fire")     : 0,
-    ("Flying", "Flying")   : 0,
-    ("Flying", "Ghost")    : 0,
-    ("Flying", "Grass")    : 1,
-    ("Flying", "Ground")   : 0,
-    ("Flying", "Ice")      : 0,
-    ("Flying", "Normal")   : 0,
-    ("Flying", "Poison")   : 0,
-    ("Flying", "Psychic")  : 0,
-    ("Flying", "Rock")     : -1,
-    ("Flying", "Steel")    : -1,
-    ("Flying", "Water")    : 0,
-
-    ("Ghost", "Bug")      : 0,
-    ("Ghost", "Dark")     : -1,
-    ("Ghost", "Dragon")   : 0,
-    ("Ghost", "Electric") : 0,
-    ("Ghost", "Fairy")    : 0,
-    ("Ghost", "Fighting") : 0,
-    ("Ghost", "Fire")     : 0,
-    ("Ghost", "Flying")   : 0,
-    ("Ghost", "Ghost")    : 1,
-    ("Ghost", "Grass")    : 0,
-    ("Ghost", "Ground")   : 0,
-    ("Ghost", "Ice")      : 0,
-    ("Ghost", "Normal")   : -1,
-    ("Ghost", "Poison")   : 0,
-    ("Ghost", "Psychic")  : 1,
-    ("Ghost", "Rock")     : 0,
-    ("Ghost", "Steel")    : 0,
-    ("Ghost", "Water")    : 0,
-
-    ("Grass", "Bug")      : -1,
-    ("Grass", "Dark")     : 0,
-    ("Grass", "Dragon")   : -1,
-    ("Grass", "Electric") : 0,
-    ("Grass", "Fairy")    : 0,
-    ("Grass", "Fighting") : 0,
-    ("Grass", "Fire")     : -1,
-    ("Grass", "Flying")   : -1,
-    ("Grass", "Ghost")    : 0,
-    ("Grass", "Grass")    : -1,
-    ("Grass", "Ground")   : 1,
-    ("Grass", "Ice")      : 0,
-    ("Grass", "Normal")   : 0,
-    ("Grass", "Poison")   : -1,
-    ("Grass", "Psychic")  : 0,
-    ("Grass", "Rock")     : 1,
-    ("Grass", "Steel")    : -1,
-    ("Grass", "Water")    : 1,
-
-    ("Ground", "Bug")      : -1,
-    ("Ground", "Dark")     : 0,
-    ("Ground", "Dragon")   : 0,
-    ("Ground", "Electric") : 1,
-    ("Ground", "Fairy")    : 0,
-    ("Ground", "Fighting") : 0,
-    ("Ground", "Fire")     : 1,
-    ("Ground", "Flying")   : -1,
-    ("Ground", "Ghost")    : 0,
-    ("Ground", "Grass")    : -1,
-    ("Ground", "Ground")   : 0,
-    ("Ground", "Ice")      : 0,
-    ("Ground", "Normal")   : 0,
-    ("Ground", "Poison")   : 1,
-    ("Ground", "Psychic")  : 0,
-    ("Ground", "Rock")     : 1,
-    ("Ground", "Steel")    : 1,
-    ("Ground", "Water")    : 0,
-
-    ("Ice", "Bug")      : 0,
-    ("Ice", "Dark")     : 0,
-    ("Ice", "Dragon")   : 1,
-    ("Ice", "Electric") : 0,
-    ("Ice", "Fairy")    : 0,
-    ("Ice", "Fighting") : 0,
-    ("Ice", "Fire")     : -1,
-    ("Ice", "Flying")   : 1,
-    ("Ice", "Ghost")    : 0,
-    ("Ice", "Grass")    : 1,
-    ("Ice", "Ground")   : 1,
-    ("Ice", "Ice")      : -1,
-    ("Ice", "Normal")   : 0,
-    ("Ice", "Poison")   : 0,
-    ("Ice", "Psychic")  : 0,
-    ("Ice", "Rock")     : 0,
-    ("Ice", "Steel")    : -1,
-    ("Ice", "Water")    : -1,
-
-    ("Normal", "Bug")      : 0,
-    ("Normal", "Dark")     : 0,
-    ("Normal", "Dragon")   : 0,
-    ("Normal", "Electric") : 0,
-    ("Normal", "Fairy")    : 0,
-    ("Normal", "Fighting") : 0,
-    ("Normal", "Fire")     : 0,
-    ("Normal", "Flying")   : 0,
-    ("Normal", "Ghost")    : -1,
-    ("Normal", "Grass")    : 0,
-    ("Normal", "Ground")   : 0,
-    ("Normal", "Ice")      : 0,
-    ("Normal", "Normal")   : 0,
-    ("Normal", "Poison")   : 0,
-    ("Normal", "Psychic")  : 0,
-    ("Normal", "Rock")     : -1,
-    ("Normal", "Steel")    : -1,
-    ("Normal", "Water")    : 0,
-
-    ("Poison", "Bug")      : 0,
-    ("Poison", "Dark")     : 0,
-    ("Poison", "Dragon")   : 0,
-    ("Poison", "Electric") : 0,
-    ("Poison", "Fairy")    : 1,
-    ("Poison", "Fighting") : 0,
-    ("Poison", "Fire")     : 0,
-    ("Poison", "Flying")   : 0,
-    ("Poison", "Ghost")    : -1,
-    ("Poison", "Grass")    : 1,
-    ("Poison", "Ground")   : -1,
-    ("Poison", "Ice")      : 0,
-    ("Poison", "Normal")   : 0,
-    ("Poison", "Poison")   : -1,
-    ("Poison", "Psychic")  : 0,
-    ("Poison", "Rock")     : -1,
-    ("Poison", "Steel")    : -1,
-    ("Poison", "Water")    : 0,
-
-    ("Psychic", "Bug")      : 0,
-    ("Psychic", "Dark")     : -1,
-    ("Psychic", "Dragon")   : 0,
-    ("Psychic", "Electric") : 0,
-    ("Psychic", "Fairy")    : 0,
-    ("Psychic", "Fighting") : 1,
-    ("Psychic", "Fire")     : 0,
-    ("Psychic", "Flying")   : 0,
-    ("Psychic", "Ghost")    : 0,
-    ("Psychic", "Grass")    : 0,
-    ("Psychic", "Ground")   : 0,
-    ("Psychic", "Ice")      : 0,
-    ("Psychic", "Normal")   : 0,
-    ("Psychic", "Poison")   : 1,
-    ("Psychic", "Psychic")  : -1,
-    ("Psychic", "Rock")     : 0,
-    ("Psychic", "Steel")    : -1,
-    ("Psychic", "Water")    : 0,
-
-    ("Rock", "Bug")      : 1,
-    ("Rock", "Dark")     : 0,
-    ("Rock", "Dragon")   : 0,
-    ("Rock", "Electric") : 0,
-    ("Rock", "Fairy")    : 0,
-    ("Rock", "Fighting") : -1,
-    ("Rock", "Fire")     : 1,
-    ("Rock", "Flying")   : 1,
-    ("Rock", "Ghost")    : 0,
-    ("Rock", "Grass")    : 0,
-    ("Rock", "Ground")   : -1,
-    ("Rock", "Ice")      : 1,
-    ("Rock", "Normal")   : 0,
-    ("Rock", "Poison")   : 0,
-    ("Rock", "Psychic")  : 0,
-    ("Rock", "Rock")     : 0,
-    ("Rock", "Steel")    : -1,
-    ("Rock", "Water")    : 0,
-
-    ("Steel", "Bug")      : 0,
-    ("Steel", "Dark")     : 0,
-    ("Steel", "Dragon")   : 0,
-    ("Steel", "Electric") : -1,
-    ("Steel", "Fairy")    : 1,
-    ("Steel", "Fighting") : 0,
-    ("Steel", "Fire")     : -1,
-    ("Steel", "Flying")   : 0,
-    ("Steel", "Ghost")    : 0,
-    ("Steel", "Grass")    : 0,
-    ("Steel", "Ground")   : 0,
-    ("Steel", "Ice")      : 1,
-    ("Steel", "Normal")   : 0,
-    ("Steel", "Poison")   : 0,
-    ("Steel", "Psychic")  : 0,
-    ("Steel", "Rock")     : 1,
-    ("Steel", "Steel")    : -1,
-    ("Steel", "Water")    : -1,
-
-    ("Water", "Bug")      : 0,
-    ("Water", "Dark")     : 0,
-    ("Water", "Dragon")   : -1,
-    ("Water", "Electric") : 0,
-    ("Water", "Fairy")    : 0,
-    ("Water", "Fighting") : 0,
-    ("Water", "Fire")     : 1,
-    ("Water", "Flying")   : 0,
-    ("Water", "Ghost")    : 0,
-    ("Water", "Grass")    : -1,
-    ("Water", "Ground")   : 1,
-    ("Water", "Ice")      : 0,
-    ("Water", "Normal")   : 0,
-    ("Water", "Poison")   : 0,
-    ("Water", "Psychic")  : 0,
-    ("Water", "Rock")     : 1,
-    ("Water", "Steel")    : 0,
-    ("Water", "Water")    : -1
-}
-
-B_WIDTH = 15
-BATTLE_OPTIONS = ["Standard Draft", "Random Battle", "Nemesis Draft", "Ban Draft"]
+BATTLE_OPTIONS = ["StandardDraft", "RandomBattle", "NemesisDraft", "BanDraft"]
 AUCTION_OPTIONS = ["Trainers", "Auctions", "Leaderboards", "Prizes"]
-
-POKEMON = []
 IMGTYPE = ["inactive", "active", "picked", "banned", "unknown"]
+ALL_POKEMON = []
+
 
 def RGBAImage(path):
     return Image.open(path).convert("RGBA")
-
-
-def type_logic(attackingPokemon, defendingPokemon):
-    matchup = 0
-    if ("Delta Stream" in attackingPokemon.ability):
-        return True
-    if ("Multitype" in attackingPokemon.ability or
-        "Multitype" in defendingPokemon.ability or
-        "RKS System" in attackingPokemon.ability or
-        "RKS System" in defendingPokemon.ability):
-        return False
-    for x in attackingPokemon.type:
-        if x:
-            for y in defendingPokemon.type:
-                if y:
-                    if (("Levitate" in defendingPokemon.ability  and "Ground" in x) or
-                        ("Flash Fire" in defendingPokemon.ability  and "Fire" in x) or
-                        ("Water Bubble" in defendingPokemon.ability  and "Fire" in x) or
-                        ("Water Absorb" in defendingPokemon.ability  and "Water" in x) or
-                        ("Storm Drain" in defendingPokemon.ability  and "Water" in x) or
-                        ("Dry Skin" in defendingPokemon.ability  and "Water" in x) or
-                        ("Lightningrod" in defendingPokemon.ability  and "Electric" in x) or
-                        ("Volt Absorb" in defendingPokemon.ability  and "Electric" in x) or
-                        ("Motor Drive" in defendingPokemon.ability  and "Electric" in x) or
-                        ("Sap Sipper" in defendingPokemon.ability  and "Grass" in x) or
-                        ("Desolate Land" in defendingPokemon.ability  and "Water" in x) or
-                        ("Primordial Sea" in defendingPokemon.ability  and "Fire" in x) or
-                        ("Prankster" in attackingPokemon.ability  and "Dark" in y)):
-                        matchup -= 1
-                    elif (("Fluffy" in defendingPokemon.ability and "Fire" in x) or
-                          ("Dry Skin" in defendingPokemon.ability and "Fire" in x) or
-                          ("Steelworker" in attackingPokemon.ability and "Rock" in y) or
-                          ("Steelworker" in attackingPokemon.ability and "Fairy" in y) or
-                          ("Steelworker" in attackingPokemon.ability and "Ice" in y)):
-                        matchup += 1
-                    elif (("Scrappy" in attackingPokemon.ability and "Ghost" in y) or
-                          ("Tinted Lens" in attackingPokemon.ability and
-                            ("Fairy" in y) or ("Fighting" in y) or ("Fire" in y) or
-                            ("Flying" in y) or ("Ghost" in y) or ("Poison" in y) or
-                            ("Steel" in y))):
-                        matchup += 0
-                    else:
-                        matchup += TypeChart[(x, y)]
-    if matchup > 0:
-        return True
-    else:
-        return False
 
 class Pokemon:
     def __init__(self, row):
@@ -451,9 +60,9 @@ class MainApp(tk.Tk):
         ##### initialize each menu layer #####
         ######################################
         for i in range(4):
-            page_name = BATTLE_OPTIONS[i].replace(" ", "")
+            page_name = BATTLE_OPTIONS[i]
             frame = Battle(parent=f_container, controller=self, mode=page_name)
-            frame.config(background='black')
+            #frame.config(background='black')
             self.containerFrames[page_name] = frame
             frame.grid(row=0, column=1, rowspan=4, sticky="nsew")
 
@@ -486,85 +95,74 @@ class Sidebar(tk.Frame):
         # initialize private variables
         self.currSelected = None
         self.prevSelected = None
-        self.f_menuOptions = []
-        self.b_battleOptions = []
-        self.b_auctionOptions = []
 
         self.img_battleModes = ImageTk.PhotoImage(RGBAImage('media\\Common\\label_battle.png'))
         self.img_auctionModes = ImageTk.PhotoImage(RGBAImage('media\\Common\\label_auction.png'))
 
         # set up the menu buttons and images
+        self.f_menuOptions = []
         for i in range(2):
             self.f_menuOptions.append(tk.Frame(self))
             self.f_menuOptions[i].grid(row=i, column=0, sticky="nsew")
 
         self.l_battleModes = tk.Label(self.f_menuOptions[0], image=self.img_battleModes)
-        self.l_battleModes.image = self.img_battleModes
         self.l_battleModes.grid(row=0, column=0, pady=5)
 
         self.img_selected_button = []
         self.img_inactive_button = []
+        self.b_battleOptions = []
         for i in range(4):
-            self.img_selected_button.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\button_selected_{0}.png'.format(BATTLE_OPTIONS[i].replace(" ", "")))))
-            self.img_inactive_button.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\button_inactive_{0}.png'.format(BATTLE_OPTIONS[i].replace(" ", "")))))
+            self.img_selected_button.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\button_selected_{0}.png'.format(BATTLE_OPTIONS[i]))))
+            self.img_inactive_button.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\button_inactive_{0}.png'.format(BATTLE_OPTIONS[i]))))
 
             if i == 0:
                 self.b_battleOptions.append(tk.Button(self.f_menuOptions[0], image=self.img_selected_button[i], bd=0.1,
-                                                        command=lambda i=i: controller.show_frame(BATTLE_OPTIONS[i].replace(" ", ""))))
-                self.currSelected = BATTLE_OPTIONS[i].replace(" ", "")
-                self.b_battleOptions[i].image = self.img_selected_button[i]
+                                                        command=lambda i=i: controller.show_frame(BATTLE_OPTIONS[i])))
+                self.currSelected = BATTLE_OPTIONS[i]
             else:
                 self.b_battleOptions.append(tk.Button(self.f_menuOptions[0], image=self.img_inactive_button[i], bd=0.1,
-                                                        command=lambda i=i: controller.show_frame(BATTLE_OPTIONS[i].replace(" ", ""))))
-                self.b_battleOptions[i].image = self.img_inactive_button[i]
+                                                        command=lambda i=i: controller.show_frame(BATTLE_OPTIONS[i])))
             self.b_battleOptions[i].grid(row=i+1, column=0)
             self.b_battleOptions[i].bind("<Enter>", lambda event, i=i: self.on_enter(i))
             self.b_battleOptions[i].bind("<Leave>", lambda event, i=i: self.on_leave(i))
 
         self.l_auctionModes = tk.Label(self.f_menuOptions[1], image=self.img_auctionModes)
-        self.l_auctionModes.image = self.img_auctionModes
         self.l_auctionModes.grid(row=0, column=0, pady=(20, 5))
 
+        self.b_auctionOptions = []
         for i in range(4):
-            self.img_selected_button.append(tk.PhotoImage(file='media\\button_selected_{0}.gif'.format(AUCTION_OPTIONS[i].replace(" ", ""))))
-            self.img_inactive_button.append(tk.PhotoImage(file='media\\button_inactive_{0}.gif'.format(AUCTION_OPTIONS[i].replace(" ", ""))))
+            self.img_selected_button.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\button_selected_{0}.png'.format(AUCTION_OPTIONS[i].replace(" ", "")))))
+            self.img_inactive_button.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\button_inactive_{0}.png'.format(AUCTION_OPTIONS[i].replace(" ", "")))))
 
             self.b_auctionOptions.append(tk.Button(self.f_menuOptions[1], image=self.img_inactive_button[i+4], bd=0.1,
                                                 command=lambda i=i: controller.show_frame(AUCTION_OPTIONS[i].replace(" ", ""))))
-            self.b_auctionOptions[i].image = self.img_inactive_button[i+4]
             self.b_auctionOptions[i].grid(row=i+1, column=0)
             self.b_auctionOptions[i].bind("<Enter>", lambda event, i=i: self.on_enter(i+4))
             self.b_auctionOptions[i].bind("<Leave>", lambda event, i=i: self.on_leave(i+4))
 
     def on_enter(self, i):
         if i < 4:
-            if self.currSelected == BATTLE_OPTIONS[i].replace(" ", ""):
+            if self.currSelected == BATTLE_OPTIONS[i]:
                 pass
             else:
                 self.b_battleOptions[i].config(image=self.img_selected_button[i])
-                self.b_battleOptions[i].image = self.img_selected_button[i]
         else:
-            if self.currSelected == AUCTION_OPTIONS[i-4].replace(" ", ""):
+            if self.currSelected == AUCTION_OPTIONS[i-4]:
                 pass
             else:
                 self.b_auctionOptions[i-4].config(image=self.img_selected_button[i])
-                self.b_auctionOptions[i-4].image = self.img_selected_button[i]
 
     def on_leave(self, i):
         if i < 4:
-            if self.currSelected == BATTLE_OPTIONS[i].replace(" ", ""):
+            if self.currSelected == BATTLE_OPTIONS[i]:
                 self.b_battleOptions[i].config(image=self.img_selected_button[i])
-                self.b_battleOptions[i].image = self.img_selected_button[i]
             else:
                 self.b_battleOptions[i].config(image=self.img_inactive_button[i])
-                self.b_battleOptions[i].image = self.img_inactive_button[i]
         else:
             if self.currSelected == AUCTION_OPTIONS[i-4].replace(" ", ""):
                 self.b_auctionOptions[i-4].config(image=self.img_selected_button[i])
-                self.b_auctionOptions[i-4].image = self.img_selected_button[i]
             else:
                 self.b_auctionOptions[i-4].config(image=self.img_inactive_button[i])
-                self.b_auctionOptions[i-4].image = self.img_inactive_button[i]
 
     def set_selected(self, x):
         self.prevSelected = self.currSelected
@@ -579,23 +177,19 @@ class Sidebar(tk.Frame):
     def update_media(self):
         if self.currSelected != self.prevSelected:
             for i in range(4):
-                if self.prevSelected == BATTLE_OPTIONS[i].replace(" ", ""):
+                if self.prevSelected == BATTLE_OPTIONS[i]:
                     self.b_battleOptions[i].config(image=self.img_inactive_button[i])
-                    self.b_battleOptions[i].image = self.img_inactive_button[i]
                     break
                 if self.prevSelected == AUCTION_OPTIONS[i].replace(" ", ""):
                     self.b_auctionOptions[i].config(image=self.img_inactive_button[i+4])
-                    self.b_auctionOptions[i].image = self.img_inactive_button[i+4]
                     break
         else:
             for i in range(4):
-                if self.currSelected == BATTLE_OPTIONS[i].replace(" ", ""):
+                if self.currSelected == BATTLE_OPTIONS[i]:
                     self.b_battleOptions[i].config(image=self.img_selected_button[i])
-                    self.b_battleOptions[i].image = self.img_selected_button[i]
                     break
-                if self.currSelected == AUCTION_OPTIONS[i].replace(" ", ""):
+                if self.currSelected == AUCTION_OPTIONS[i]:
                     self.b_auctionOptions[i].config(image=self.img_selected_button[i+4])
-                    self.b_auctionOptions[i].image = self.img_selected_button[i+4]
                     break
 
 class BanBox(tk.Frame):
@@ -603,18 +197,15 @@ class BanBox(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        img_team = tk.PhotoImage(file='media\\t{0}bans.gif'.format(team))
-        self.l_team = tk.Label(self, image=img_team)
-        self.l_team.image = img_team
+        self.img_team = ImageTk.PhotoImage(RGBAImage('media\\Common\\t{0}bans.png'.format(team)))
+        self.l_team = tk.Label(self, image=self.img_team)
         self.l_team.grid(row=0, column=0, columnspan=3)
 
-        self.img_inactive_Blank = tk.PhotoImage(file='media\\{0}\\button_inactive_Blank.gif'.format(self.controller.mode))
-        self.img_empty = tk.PhotoImage(file='media\\empty_pokemon.gif')
+        self.img_empty = ImageTk.PhotoImage(RGBAImage('media\\empty_pokemon.png'))
 
         self.l_pokemon = []
         for i in range(3):
-            self.l_pokemon.append(tk.Label(self, image=self.img_inactive_Blank))
-            self.l_pokemon[i].image = self.img_inactive_Blank
+            self.l_pokemon.append(tk.Label(self, image=self.controller.img_inactive_Blank))
             self.l_pokemon[i].grid(row=1, column=i, sticky="nsew")
 
 class TeamBox(tk.Frame):
@@ -622,37 +213,39 @@ class TeamBox(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        img_team = tk.PhotoImage(file='media\\T{0}T_logo_inactive.gif'.format(team))
-        self.l_team = tk.Label(self, image=img_team)
-        self.l_team.image = img_team
+        self.img_team = ImageTk.PhotoImage(RGBAImage('media\\Common\\T{0}T_logo_inactive.png'.format(team)))
+        if team == 2:
+            self.img_cpu_team = ImageTk.PhotoImage(RGBAImage('media\\Common\\T3T_logo_inactive.png'))
+        self.l_team = tk.Label(self, image=self.img_team)
         self.l_team.grid(row=0, column=0, columnspan=3)
-
-        self.img_inactive_Blank = tk.PhotoImage(file='media\\{0}\\button_inactive_Blank.gif'.format(self.controller.mode))
 
         self.l_pokemon = []
         for i in range(3):
             for j in range(2):
                 x = (i*2)+j
                 if "Random" in controller.__class__.__name__:
-                    self.l_pokemon.append(tk.Button(self, image=self.img_inactive_Blank, bd=0.1, command=None))
+                    self.l_pokemon.append(tk.Button(self, image=self.controller.img_inactive_Blank, bd=0.1, command=None))
                 else:
-                    self.l_pokemon.append(tk.Label(self, image=self.img_inactive_Blank))
+                    self.l_pokemon.append(tk.Label(self, image=self.controller.img_inactive_Blank))
                 self.l_pokemon[x].grid(row=i+1, column=j, sticky="e")
-                self.l_pokemon[x].image = self.img_inactive_Blank
-    def update_pokemon(self, x):
-        pass
+
+        self.team_list = [None for i in range(6)]
+
+    def addToTeam(self, i):
+        if self.team_list[self.controller.turn/2] == None:
+            self.team_list[self.controller.turn/2] = self.controller.pokemonList[i]
+
 
 class HelpBox(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.img_blank = tk.PhotoImage(file='media\\{0}\\button_inactive_Blank.gif'.format(self.controller.mode))
-        self.img_pokemon_selected = tk.PhotoImage(file='media\\empty_pokemon.gif')
+        self.img_pokemon_selected = ImageTk.PhotoImage(RGBAImage('media\\empty_pokemon.png'))
 
-        self.img_pokemon = []
-        for i in range(18):
-            self.img_pokemon.append(tk.PhotoImage(file='media\\{0}\\Bulbasaur_inactive.gif'.format(self.controller.mode)))
+        # self.img_pokemon = []
+        # for i in range(18):
+        #     self.img_pokemon.append(ImageTk.PhotoImage(RGBAImage('media\\Bulbasaur_inactive.png')))
 
         self.container = []
         for i in range(3):
@@ -661,12 +254,11 @@ class HelpBox(tk.Frame):
 
         self.l_pokemon_name = tk.Label(self.container[0], text="", width=10)
         self.l_pokemon_selected = tk.Label(self.container[0], image=self.img_pokemon_selected)
-        self.l_pokemon_selected.image = self.img_pokemon_selected
         self.l_pokemon_name.grid(row=0, column=0, sticky="nsew")
         self.l_pokemon_selected.grid(row=1, column=0, sticky="nsew")
 
         self.l_possibleAbility = tk.Label(self.container[1], text="")
-        self.l_possibleAbilities = tk.Label(self.container[1], text="", width=B_WIDTH)
+        self.l_possibleAbilities = tk.Label(self.container[1], text="", width=15)
         self.l_possibleAbility.grid(row=0, column=0, sticky="n")
         self.l_possibleAbilities.grid(row=1, column=0, sticky="n")
 
@@ -676,7 +268,6 @@ class HelpBox(tk.Frame):
         for i in range(3):
             self.l_counters.append(tk.Label(self.container[2], image=self.img_pokemon_selected))
             self.l_counters[i].grid(row=1, column=i, padx=5, sticky="nsew")
-            self.l_counters[i].image = self.img_pokemon_selected
 
     def update_info(self, i):
         if self.controller.assist.get():
@@ -684,12 +275,10 @@ class HelpBox(tk.Frame):
             self.l_possibleAbilities.config(text="Overgrow\nChlorophyll\n")
             # counter logic here
             for j in range(3):
-                self.l_counters[j].config(image=self.img_blank)
-                self.l_counters[j].image = self.img_blank
+                self.l_counters[j].config(image=self.controller.img_inactive_Blank)
             self.l_possibleAbility.config(text="Possible Abilities:")
             self.l_counterpick.config(text="Struggles Against:")
-            self.l_pokemon_selected.config(image=self.img_pokemon[i])
-            self.l_pokemon_selected.image = self.img_pokemon[i]
+            self.l_pokemon_selected.config(image=self.controller.TEST[0])
 
 
 
@@ -697,24 +286,21 @@ class HelpBox(tk.Frame):
         if self.controller.assist.get():
             self.l_pokemon_name.config(text="")
             self.l_pokemon_selected.config(image=self.img_pokemon_selected)
-            self.l_pokemon_selected.image = self.img_pokemon_selected
             self.l_possibleAbility.config(text="")
             self.l_possibleAbilities.config(text="")
             self.l_counterpick.config(text="")
             for i in range(3):
                 self.l_counters[i].config(image=self.img_pokemon_selected)
-                self.l_counters[i].image = self.img_pokemon_selected
 
 class SettingsBar(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.img_settingsTitle = tk.PhotoImage(file='media\\label_settings_{0}.gif'.format(self.controller.mode))
+        self.img_settingsTitle = ImageTk.PhotoImage(RGBAImage('media\\Common\\label_settings_{0}.png'.format(self.controller.mode)))
 
         self.l_settingsTitle = tk.Label(self, image=self.img_settingsTitle)
         self.l_settingsTitle.grid(row=0, column=0, columnspan=2)
-        self.l_settingsTitle.image = self.img_settingsTitle
 
         self.l_generate = tk.Label(self, text="Pokémon Appearance")
         self.l_generate.grid(row=1, column=0, columnspan=2, sticky="w")
@@ -743,7 +329,7 @@ class SettingsBar(tk.Frame):
             self.l_bans.grid(row=9, column=0, columnspan=2, sticky="w")
 
             self.optionsBans = ["One (default)", 1, "Two", 2, "Three", 3]
-            self.bans = tk.IntVar()
+            self.bans = tk.IntVar(value=1)
             self.b_bans = []
             for i in range(3):
                 self.b_bans.append(tk.Radiobutton(self, text=self.optionsBans[i*2], variable=self.bans, value=self.optionsBans[(i*2)+1]))
@@ -767,13 +353,13 @@ class SettingsBar(tk.Frame):
         self.l_other.grid(row=20, column=0, columnspan=2, sticky="w")
         self.b_assist = tk.Checkbutton(self, text="Show Tips", variable=self.controller.assist)
         self.b_assist.grid(row=21, column=0, columnspan=2, padx=(20, 0), sticky="w")
-        self.b_vscpu = tk.Checkbutton(self, text="Play Against CPU", variable=self.controller.vscpu, onvalue=True, offvalue=False, command=lambda: self.controller.playCPU())
+        self.b_vscpu = tk.Checkbutton(self, text="Play Against CPU", variable=self.controller.vscpu, command=lambda: self.controller.playCPU())
         self.b_vscpu.grid(row=22, column=0, columnspan=2, padx=(20, 0), sticky="w")
-        self.b_hide = tk.Checkbutton(self, text="Hide Pokémon", variable=self.controller.hide, onvalue=True, offvalue=False, command=lambda: self.controller.hidePokemon())
+        self.b_hide = tk.Checkbutton(self, text="Hide Pokémon", variable=self.controller.hide, command=lambda: self.controller.hidePokemon())
         self.b_hide.grid(row=23, column=0, columnspan=2, padx=(20, 0), sticky="w")
 
 
-        self.goButton = tk.Button(self, text="Go", command=lambda: controller.activate())
+        self.goButton = tk.Button(self, text="Go", command=lambda: self.controller.activate())
         self.goButton.grid(row=24, column=0, padx=5, pady=5)
 
 class Battle(tk.Frame):
@@ -782,6 +368,8 @@ class Battle(tk.Frame):
         self.controller = controller
         self.mode = mode
 
+        self.alpha = 0
+        self.turn = 0
         self.activated = False
         self.pokemonNotPicked = [True for i in range(18)]
 
@@ -792,23 +380,25 @@ class Battle(tk.Frame):
         self.hide = tk.BooleanVar()
         self.hide.set(False)
 
-        self.img_inactive_Blank = tk.PhotoImage(file='media\\{0}\\button_inactive_Blank.gif'.format(self.mode))
-        self.img_active_Blank = tk.PhotoImage(file='media\\{0}\\button_active_Blank.gif'.format(self.mode))
+        self.img_border = RGBAImage('media\\border_%s.png' % self.mode)
+        self.img_inactive_Blank_base = RGBAImage('media\\button_inactive_Blank.png')
+        self.img_active_Blank_base = RGBAImage('media\\button_active_Blank.png')
+        self.img_inactive_Blank_base.paste(self.img_border, (0, 0), self.img_border)
+        self.img_active_Blank_base.paste(self.img_border, (0, 0), self.img_border)
+        self.img_inactive_Blank = ImageTk.PhotoImage(self.img_inactive_Blank_base)
+        self.img_active_Blank = ImageTk.PhotoImage(self.img_active_Blank_base)
 
         self.b_icons = []
         self.img_pokemon = [[] for i in range(18)]
 
-        self.TEST = tk.PhotoImage(file='media\\StandardDraft\\Bulbasaur_inactive.gif')
-        self.TEST2 = tk.PhotoImage(file='media\\StandardDraft\\Bulbasaur_active.gif')
-        self.TEST3 = tk.PhotoImage(file='media\\StandardDraft\\Bulbasaur_picked.gif')
-        self.TEST4 = tk.PhotoImage(file='media\\StandardDraft\\Bulbasaur_unknown.gif')
+        ##### TEST CODE #####
+        ##### TEST CODE #####
 
         for i in range(3):
             for j in range(6):
                 x = (i*6)+j
-                self.b_icons.append(tk.Button(self, image=self.img_inactive_Blank, bd=0.1, bg='black', command=None))
+                self.b_icons.append(tk.Button(self, image=self.img_inactive_Blank, bd=0.1, command=None))
                 self.b_icons[x].grid(row=i, column=j, padx=5, pady=5)
-                self.b_icons[x].image = self.img_inactive_Blank
                 self.b_icons[x].bind("<Enter>", lambda event, x=x: self.on_enter(x))
                 self.b_icons[x].bind("<Leave>", lambda event, x=x: self.on_leave(x))
 
@@ -836,69 +426,88 @@ class Battle(tk.Frame):
 
     def playCPU(self):
         # do i need to do this with checkboxes?
-        self.vscpu = not self.vscpu
-        if self.vscpu:
-            img_replacement_team = tk.PhotoImage(file='media\\T{0}T_logo_inactive.gif'.format(3))
+        if self.vscpu.get():
+            self.f_teams[1].l_team.config(image=self.f_teams[1].img_cpu_team)
         else:
-            img_replacement_team = tk.PhotoImage(file='media\\T{0}T_logo_inactive.gif'.format(2))
-        self.f_teams[1].l_team.config(image=img_replacement_team)
-        self.f_teams[1].l_team.image = img_replacement_team
+            self.f_teams[1].l_team.config(image=self.f_teams[1].img_team)
 
     def hidePokemon(self):
-        self.hide = not self.hide
         if self.activated:
             for i in range(18):
                 if self.pokemonNotPicked[i]:
-                    if self.hide:
-                        self.b_icons[i].config(image=self.TEST4)
-                        self.b_icons[i].image = self.TEST4
+                    if self.hide.get():
+                        self.b_icons[i].config(image=self.TEST[4])
                     else:
-                        self.b_icons[i].config(image=self.TEST)
-                        self.b_icons[i].image = self.TEST
+                        self.b_icons[i].config(image=self.TEST[0])
 
     def activate(self):
         self.activated = True
-        ########################
-        ## generate code here ##
-        ########################
+        self.TEST_RANGE = ["Bulbasaur", "Ivysaur", "Venusaur", "Charmander",
+                           "Charmeleon", "Charizard", "Squirtle", "Wartortle",
+                           "Blastoise", "Caterpie", "Metapod", "Butterfree",
+                           "Weedle", "Kakuna", "Beedrill", "Pidgey",
+                           "Pidgeotto", "Pidgeot"]
+        self.pokemonList = random.sample(self.TEST_RANGE, 18)
+        print(self.pokemonList[1])
+        self.TEST_base = [[] for i in range(18)]
+        self.TEST = [[] for i in range(18)]
+        for i in range(18):
+            for j in range(5):
+                self.TEST_base[i].append(RGBAImage('media\\{0}_{1}.png'.format(self.pokemonList[i], IMGTYPE[j])))
+                self.TEST_base[i][j].paste(self.img_border, (0, 0), self.img_border)
+                self.TEST[i].append(ImageTk.PhotoImage(self.TEST_base[i][j]))
         for i in range(18):
             self.pokemonNotPicked[i] = True
-            self.b_icons[i].config(image=self.TEST, command=lambda i=i: self.test(i))
-            self.b_icons[i].image = self.TEST
+            self.b_icons[i].config(image=self.TEST[i][0], command=lambda i=i: self.test(i))
+
+    def fade(self, i):
+        if self.alpha > 1.0:
+            self.alpha = 0
+            self.b_icons[i].config(command=None)
+        else:
+            # create the interpolated image using the current alpha value
+            self.new_img = ImageTk.PhotoImage(Image.blend(self.TEST_base[i][1], self.TEST_base[i][2], self.alpha))
+            self.alpha = self.alpha + 0.1
+            # update the image displayed continuously to create the "fade" effect
+            self.b_icons[i].config(image=self.new_img)
+            self.b_icons[i].image = self.new_img
+            self.after(10, self.fade, i)
 
     def test(self, i):
         if self.pokemonNotPicked[i]:
-            self.b_icons[i].config(image=self.TEST3)
-            self.b_icons[i].image = self.TEST3
             self.pokemonNotPicked[i] = False
+            self.f_teams[self.turn%2].addToTeam(i)
+            self.turn += 1
+            if self.turn == 11:
+                for j in range(18):
+                    if self.pokemonNotPicked[j]:
+                        self.b_icons[i].config(command=None)
+            self.fade(i)
 
     def on_enter(self, i):
         if self.activated:
             if self.pokemonNotPicked[i]:
-                if not self.hide:
-                    self.b_icons[i].config(image=self.TEST2)
-                    self.b_icons[i].image = self.TEST2
+                if not self.hide.get():
+                    self.b_icons[i].config(image=self.TEST[1])
             self.helpbox.update_info(i)
         else:
             self.b_icons[i].config(image=self.img_active_Blank)
-            self.b_icons[i].image = self.img_active_Blank
 
     def on_leave(self, i):
         if self.activated:
             if self.pokemonNotPicked[i]:
-                if not self.hide:
-                    self.b_icons[i].config(image=self.TEST)
-                    self.b_icons[i].image = self.TEST
+                if not self.hide.get():
+                    self.b_icons[i].config(image=self.TEST[0])
             self.helpbox.hide_info()
         else:
             self.b_icons[i].config(image=self.img_inactive_Blank)
-            self.b_icons[i].image = self.img_inactive_Blank
 
 class RandomBattle(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        self.alpha = 0
         self.assist = tk.BooleanVar()
         self.assist.set(False)
         self.vscpu = tk.BooleanVar()
@@ -918,11 +527,29 @@ class RandomBattle(tk.Frame):
         # do i need to do this with checkboxes?
         self.vscpu = not self.vscpu
         if self.vscpu:
-            img_replacement_team = tk.PhotoImage(file='media\\T{0}T_logo_inactive.gif'.format(3))
+            img_replacement_team = ImageTk.PhotoImage(RGBAImage('media\\Common\\T{0}T_logo_inactive.png'.format(3)))
         else:
-            img_replacement_team = tk.PhotoImage(file='media\\T{0}T_logo_inactive.gif'.format(2))
+            img_replacement_team = ImageTk.PhotoImage(RGBAImage('media\\Common\\T{0}T_logo_inactive.png'.format(2)))
         self.f_teams[1].l_team.config(image=img_replacement_team)
         self.f_teams[1].l_team.image = img_replacement_team
+
+    def fade(self, i):
+        if self.alpha > 1.0:
+            self.alpha = 0
+            self.b_icons[i].config(command=None)
+        else:
+            # create the interpolated image using the current alpha value
+            self.new_img = ImageTk.PhotoImage(Image.blend(self.TEST_base[1], self.TEST_base[2], self.alpha))
+            self.alpha = self.alpha + 0.1
+            # update the image displayed continuously to create the "fade" effect
+            self.b_icons[i].config(image=self.new_img)
+            self.b_icons[i].image = self.new_img
+            self.after(10, self.fade, i)
+
+    def test(self, i):
+        if self.pokemonNotPicked[i]:
+            self.pokemonNotPicked[i] = False
+            self.fade(i)
 
 class Trainers(tk.Frame):
     def __init__(self, parent, controller):
@@ -931,23 +558,26 @@ class Trainers(tk.Frame):
 
         self.alpha = 0.0
         self.img_pokemon = []
-        for i in range(2, 5):
-            self.img_pokemon.append(RGBAImage("media\\piltest{0}.png".format(i)))
-        self.img_border = RGBAImage("media\\piltest1.png")
-        for i in range(3):
+        self.img_pokemon.append(RGBAImage("media\\Squirtle_inactive.png"))
+        self.img_pokemon.append(RGBAImage("media\\Squirtle_active.png"))
+        self.img_pokemon.append(RGBAImage("media\\Squirtle_banned.png"))
+        self.img_pokemon.append(RGBAImage("media\\Squirtle_unknown.png"))
+        self.img_pokemon.append(RGBAImage("media\\Squirtle_picked.png"))
+        self.img_border = RGBAImage("media\\border_StandardDraft.png")
+        for i in range(5):
             self.img_pokemon[i].paste(self.img_border, (0, 0), self.img_border)
 
         self.img_pokemonFull = []
-        for i in range(3):
+        for i in range(5):
             self.img_pokemonFull.append(ImageTk.PhotoImage(self.img_pokemon[i]))
 
         self.labels = []
-        for i in range(3):
+        for i in range(5):
             self.labels.append(tk.Label(self, image=self.img_pokemonFull[i]))
             self.labels[i].grid(row=0, column=i, sticky="nsew")
 
         self.label1 = tk.Button(self, image=self.img_pokemonFull[0], bd=0.1, command=lambda:self.pick())
-        self.label1.grid(row=0, column=3, sticky="nsew")
+        self.label1.grid(row=0, column=6, sticky="nsew")
 
     def pick(self):
         if self.alpha > 1.0:
@@ -983,5 +613,5 @@ if __name__ == "__main__":
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
-            POKEMON.append(Pokemon(row))
+            ALL_POKEMON.append(Pokemon(row))
     app.mainloop()
