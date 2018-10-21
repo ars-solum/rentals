@@ -231,9 +231,9 @@ class TeamBox(tk.Frame):
 
         self.team_list = [None for i in range(6)]
 
-    def addToTeam(self, i):
-        if self.team_list[self.controller.turn/2] == None:
-            self.team_list[self.controller.turn/2] = self.controller.pokemonList[i]
+    def addToTeam(self, i, turn):
+        if self.team_list[int(self.controller.turn/2)] == None:
+            self.team_list[int(self.controller.turn/2)] = self.controller.pokemonList[i]
 
 
 class HelpBox(tk.Frame):
@@ -448,7 +448,6 @@ class Battle(tk.Frame):
                            "Weedle", "Kakuna", "Beedrill", "Pidgey",
                            "Pidgeotto", "Pidgeot"]
         self.pokemonList = random.sample(self.TEST_RANGE, 18)
-        print(self.pokemonList[1])
         self.TEST_base = [[] for i in range(18)]
         self.TEST = [[] for i in range(18)]
         for i in range(18):
@@ -476,7 +475,7 @@ class Battle(tk.Frame):
     def test(self, i):
         if self.pokemonNotPicked[i]:
             self.pokemonNotPicked[i] = False
-            self.f_teams[self.turn%2].addToTeam(i)
+            self.f_teams[self.turn%2].addToTeam(i, self.turn)
             self.turn += 1
             if self.turn == 11:
                 for j in range(18):
@@ -488,7 +487,7 @@ class Battle(tk.Frame):
         if self.activated:
             if self.pokemonNotPicked[i]:
                 if not self.hide.get():
-                    self.b_icons[i].config(image=self.TEST[1])
+                    self.b_icons[i].config(image=self.TEST[i][1])
             self.helpbox.update_info(i)
         else:
             self.b_icons[i].config(image=self.img_active_Blank)
@@ -497,7 +496,7 @@ class Battle(tk.Frame):
         if self.activated:
             if self.pokemonNotPicked[i]:
                 if not self.hide.get():
-                    self.b_icons[i].config(image=self.TEST[0])
+                    self.b_icons[i].config(image=self.TEST[i][0])
             self.helpbox.hide_info()
         else:
             self.b_icons[i].config(image=self.img_inactive_Blank)
