@@ -9,7 +9,7 @@ import csv
 import time
 import random
 from random import shuffle
-from TypeChart import TypeChart
+from TypeChart import TypeChart, type_logic
 
 BATTLE_OPTIONS = ["StandardDraft", "RandomBattle", "NemesisDraft", "BanDraft"]
 AUCTION_OPTIONS = ["Trainers", "Auctions", "Leaderboards", "Prizes"]
@@ -214,10 +214,14 @@ class TeamBox(tk.Frame):
         self.controller = controller
         self.team = team
 
-        self.img_team = ImageTk.PhotoImage(RGBAImage('media\\Common\\T{0}T_logo_inactive.png'.format(self.team)))
+        self.img_team = []
+        for i in range(2):
+            self.img_team.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\T{0}T_logo_{1}.png'.format(self.team, IMGTYPE[i]))))
         if self.team == 2:
-            self.img_cpu_team = ImageTk.PhotoImage(RGBAImage('media\\Common\\T3T_logo_inactive.png'))
-        self.l_team = tk.Label(self, image=self.img_team)
+            self.img_cpu_team = []
+            for i in range(2):
+                self.img_cpu_team.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\T3T_logo_{0}.png'.format(IMGTYPE[i]))))
+        self.l_team = tk.Label(self, image=self.img_team[0])
         self.l_team.grid(row=0, column=0, columnspan=3)
 
         self.l_pokemon = []
@@ -231,27 +235,40 @@ class TeamBox(tk.Frame):
 
         self.team_list = [None for i in range(6)]
 
+    def reset_team(self):
+        for i in range(6):
+            self.team_list[i] = None
+            self.l_pokemon[i].config(image=self.controller.img_inactive_Blank, command=None)
+
+    def findPokemon(self, i_team):
+        for i in range(18):
+            if self.team_list[i_team] == self.controller.pokemonList[i].name:
+                x = i
+                break
+        return x
+
     def on_enter(self, i_team):
-        if not self.controller.pokemonNotPicked[i_team]:
-            self.l_pokemon[i_team].config(image=self.controller.TEST[i_team][1])
+        if self.team_list[i_team]:
+            x = self.findPokemon(i_team)
+            self.l_pokemon[i_team].config(image=self.controller.TEST[x][1])
         else:
             self.l_pokemon[i_team].config(image=self.controller.img_active_Blank)
         if "Random" not in self.controller.mode:
-            self.controller.helpbox.update_infoV2(self.team-1, i_team)
+            self.controller.helpbox.update_team_info(self.team-1, i_team)
 
     def on_leave(self, i_team):
-        if self.controller.pokemonNotPicked[i_team]:
+        if not self.team_list[i_team]:
             self.l_pokemon[i_team].config(image=self.controller.img_inactive_Blank)
         else:
-            self.l_pokemon[i_team].config(image=self.controller.TEST[i_team][0])
+            x = self.findPokemon(i_team)
+            self.l_pokemon[i_team].config(image=self.controller.TEST[x][0])
         if "Random" not in self.controller.mode:
             self.controller.helpbox.hide_info()
 
     def addToTeam(self, i_list, turn):
         if self.team_list[int(turn/2)] == None:
-            self.team_list[int(turn/2)] = self.controller.pokemonList[i_list]
+            self.team_list[int(turn/2)] = self.controller.pokemonList[i_list].name
             self.l_pokemon[int(turn/2)].config(image=self.controller.TEST[i_list][0])
-            print(self.team_list)
 
 class HelpBox(tk.Frame):
     def __init__(self, parent, controller):
@@ -281,19 +298,26 @@ class HelpBox(tk.Frame):
         for i in range(3):
             self.l_counters.append(tk.Label(self.container[2], image=self.img_pokemon_selected))
             self.l_counters[i].grid(row=1, column=i, padx=5, sticky="nsew")
+        self.counter_pokemon = [[] for j in range(18)]
 
     def update_info(self, i):
         if self.controller.assist.get():
-            self.l_pokemon_name.config(text="TEST")
+            self.l_pokemon_name.config(text=self.controller.pokemonList[i].name)
             self.l_possibleAbilities.config(text="TEST\nTEST\n")
-            # counter logic here
-            for j in range(3):
-                self.l_counters[j].config(image=self.controller.img_inactive_Blank)
+            print(self.counter_pokemon[i])
+            for j in range(len(self.counter_pokemon[i])):
+                if j > 2:
+                    break
+                for k in range(18):
+                    if self.counter_pokemon[i][j] == self.controller.pokemonList[k].name:
+                        x = k
+                        break
+                self.l_counters[j].config(image=self.controller.TEST[x][0])
             self.l_possibleAbility.config(text="Possible Abilities:")
             self.l_counterpick.config(text="Struggles Against:")
             self.l_pokemon_selected.config(image=self.controller.TEST[i][0])
 
-    def update_infoV2(self, team, i):
+    def update_team_info(self, team, i):
         if self.controller.assist.get():
             if self.controller.f_teams[team].team_list[i]:
                 self.l_pokemon_name.config(text="TEST")
@@ -303,7 +327,8 @@ class HelpBox(tk.Frame):
                     self.l_counters[j].config(image=self.controller.img_inactive_Blank)
                 self.l_possibleAbility.config(text="Possible Abilities:")
                 self.l_counterpick.config(text="Struggles Against:")
-                self.l_pokemon_selected.config(image=self.controller.f_teams[team].team_list[i])
+                x = self.controller.f_teams[team].findPokemon(i)
+                self.l_pokemon_selected.config(image=self.controller.TEST[x][0])
 
 
     def hide_info(self):
@@ -392,6 +417,7 @@ class Battle(tk.Frame):
         self.controller = controller
         self.mode = mode
 
+        ##### initialize variables and images #####
         self.alpha = 0
         self.turn = 0
         self.activated = False
@@ -412,6 +438,7 @@ class Battle(tk.Frame):
         self.img_inactive_Blank = ImageTk.PhotoImage(self.img_inactive_Blank_base)
         self.img_active_Blank = ImageTk.PhotoImage(self.img_active_Blank_base)
 
+        ##### initialize POOL #####
         if "Random" not in self.mode:
             self.b_icons = []
             self.img_pokemon = [[] for i in range(18)]
@@ -424,6 +451,7 @@ class Battle(tk.Frame):
                     self.b_icons[x].bind("<Enter>", lambda event, x=x: self.on_enter(x))
                     self.b_icons[x].bind("<Leave>", lambda event, x=x: self.on_leave(x))
 
+        ##### initialize TEAMS #####
         self.f_teams = []
         if "Ban" in self.mode:
             self.f_bans = []
@@ -437,6 +465,7 @@ class Battle(tk.Frame):
                 self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
                 self.f_teams[i].grid(row=3, column=i*3, columnspan=3, sticky="nsew")
 
+        ##### initialize HELPBOX #####
         if "Random" not in self.mode:
             self.helpbox = HelpBox(parent=self, controller=self)
             if "Ban" in self.mode:
@@ -444,6 +473,7 @@ class Battle(tk.Frame):
             else:
                 self.helpbox.grid(row=4, column=0, columnspan=6, pady=10)
 
+        ##### initialize SETTINGS #####
         self.settings = SettingsBar(parent=self, controller=self)
         self.settings.grid(row=0, column=7, rowspan=8, sticky="n")
 
@@ -466,37 +496,52 @@ class Battle(tk.Frame):
     def activate(self):
         self.activated = True
         self.turn = 0
-        self.TEST_RANGE = ["Bulbasaur", "Ivysaur", "Venusaur", "Charmander",
-                           "Charmeleon", "Charizard", "Squirtle", "Wartortle",
-                           "Blastoise", "Caterpie", "Metapod", "Butterfree",
-                           "Weedle", "Kakuna", "Beedrill", "Pidgey",
-                           "Pidgeotto", "Pidgeot"]
-        self.pokemonList = random.sample(self.TEST_RANGE, 18)
+        self.pokemonList = random.sample(ALL_POKEMON, 18)
         self.TEST_base = [[] for i in range(18)]
         self.TEST = [[] for i in range(18)]
         for i in range(18):
             for j in range(5):
-                self.TEST_base[i].append(RGBAImage('media\\{0}_{1}.png'.format(self.pokemonList[i], IMGTYPE[j])))
+                self.TEST_base[i].append(RGBAImage('media\\{0}_{1}.png'.format(self.pokemonList[i].name, IMGTYPE[j])))
                 self.TEST_base[i][j].paste(self.img_border, (0, 0), self.img_border)
                 self.TEST[i].append(ImageTk.PhotoImage(self.TEST_base[i][j]))
             self.pokemonNotPicked[i] = True
-            self.b_icons[i].config(image=self.TEST[i][0], command=lambda i=i: self.test(i))
+            if self.hide.get():
+                self.b_icons[i].config(image=self.TEST[i][4], command=lambda i=i: self.test(i))
+            else:
+                self.b_icons[i].config(image=self.TEST[i][0], command=lambda i=i: self.test(i))
         for i in range(2):
-            for j in range(6):
-                self.f_teams[i].l_pokemon[j].config(image=self.img_inactive_Blank)
+            self.f_teams[i].reset_team()
+        self.helpbox.counter_pokemon = [[] for j in range(18)]
+        for j in range(18):
+            for k in range(18):
+                if j != k:
+                    if type_logic(self.pokemonList[k], self.pokemonList[j]):
+                        self.helpbox.counter_pokemon[j].append(self.pokemonList[k].name)
 
-    def fade_in(self, i):
+
+    def fade_in(self, i, button1, button2):
         if self.alpha > 1.0:
             self.alpha = 0
             self.b_icons[i].config(command=None)
         else:
             # create the interpolated image using the current alpha value
-            self.new_img = ImageTk.PhotoImage(Image.blend(self.TEST_base[i][1], self.TEST_base[i][2], self.alpha))
+            if self.hide.get():
+                self.new_img = ImageTk.PhotoImage(Image.blend(self.TEST_base[i][4], self.TEST_base[i][2], self.alpha))
+            else:
+                self.new_img = ImageTk.PhotoImage(Image.blend(self.TEST_base[i][1], self.TEST_base[i][2], self.alpha))
+            if button2:
+                self.new_img2 = ImageTk.PhotoImage(Image.blend(self.img_inactive_Blank_base, self.TEST_base[i][0], self.alpha))
+            #self.new_team_img = ImageTk.PhotoImage(Image.blend(self.f_teams.img_team[], self.TEST_base[i][2], self.alpha))
             self.alpha = self.alpha + 0.1
+            #if self.turn%2 == 0:
+            #    self.f_teams[0].l_team.config(image=self.f_teams.img_team)
             # update the image displayed continuously to create the "fade in" effect
-            self.b_icons[i].config(image=self.new_img)
-            self.b_icons[i].image = self.new_img
-            self.after(10, self.fade_in, i)
+            button1.config(image=self.new_img)
+            button1.image = self.new_img
+            if button2:
+                button2.config(image=self.new_img2)
+                button2.image = self.new_img2
+            self.after(10, self.fade_in, i, button1, button2)
 
     def test(self, i):
         if self.pokemonNotPicked[i]:
@@ -504,7 +549,7 @@ class Battle(tk.Frame):
                 self.pokemonNotPicked[i] = False
                 self.f_teams[self.turn%2].addToTeam(i, self.turn)
                 self.turn += 1
-                self.fade_in(i)
+                self.fade_in(i, self.b_icons[i], self.f_teams[(self.turn-1)%2].l_pokemon[int((self.turn-1)/2)])
 
     def on_enter(self, i):
         if self.activated:
@@ -587,4 +632,6 @@ if __name__ == "__main__":
         next(reader, None)
         for row in reader:
             ALL_POKEMON.append(Pokemon(row))
+            if row[1] == "Pidgeot":
+                break
     app.mainloop()
