@@ -282,7 +282,7 @@ class HelpBox(tk.Frame):
             self.container.append(tk.Frame(self))
             self.container[i].grid(row=0, column=i, padx=5)
 
-        self.l_pokemon_name = tk.Label(self.container[0], text="", width=10)
+        self.l_pokemon_name = tk.Label(self.container[0], text="", width=15)
         self.l_pokemon_selected = tk.Label(self.container[0], image=self.img_pokemon_selected)
         self.l_pokemon_name.grid(row=0, column=0, sticky="nsew")
         self.l_pokemon_selected.grid(row=1, column=0, sticky="nsew")
@@ -304,7 +304,6 @@ class HelpBox(tk.Frame):
         if self.controller.assist.get():
             self.l_pokemon_name.config(text=self.controller.pokemonList[i].name)
             self.l_possibleAbilities.config(text="TEST\nTEST\n")
-            print(self.counter_pokemon[i])
             for j in range(len(self.counter_pokemon[i])):
                 if j > 2:
                     break
@@ -400,7 +399,7 @@ class SettingsBar(tk.Frame):
         if "Random" not in self.controller.mode:
             self.l_other = tk.Label(self, text="Other Options")
             self.l_other.grid(row=20, column=0, columnspan=2, sticky="w")
-            self.b_assist = tk.Checkbutton(self, text="Show Tips", variable=self.controller.assist)
+            self.b_assist = tk.Checkbutton(self, text="Show Basic Tips", variable=self.controller.assist)
             self.b_assist.grid(row=21, column=0, columnspan=2, padx=(20, 0), sticky="w")
             self.b_vscpu = tk.Checkbutton(self, text="Play Against CPU", variable=self.controller.vscpu, command=lambda: self.controller.playCPU())
             self.b_vscpu.grid(row=22, column=0, columnspan=2, padx=(20, 0), sticky="w")
@@ -480,9 +479,9 @@ class Battle(tk.Frame):
     def playCPU(self):
         # do i need to do this with checkboxes?
         if self.vscpu.get():
-            self.f_teams[1].l_team.config(image=self.f_teams[1].img_cpu_team)
+            self.f_teams[1].l_team.config(image=self.f_teams[1].img_cpu_team[0])
         else:
-            self.f_teams[1].l_team.config(image=self.f_teams[1].img_team)
+            self.f_teams[1].l_team.config(image=self.f_teams[1].img_team[0])
 
     def hidePokemon(self):
         if self.activated:
@@ -496,7 +495,24 @@ class Battle(tk.Frame):
     def activate(self):
         self.activated = True
         self.turn = 0
-        self.pokemonList = random.sample(ALL_POKEMON, 18)
+        self.pokemonList = []
+        counter = 0
+        while counter < 18:
+            newPokemon = random.choice(ALL_POKEMON)
+            if not self.pokemonList:
+                self.pokemonList.append(newPokemon)
+                counter += 1
+            else:
+                names = []
+                for i in range(len(self.pokemonList)):
+                    names.append(self.pokemonList[i].name)
+                x = True
+                for i in names:
+                    if newPokemon.name == i:
+                        x = False
+                if x:
+                    self.pokemonList.append(newPokemon)
+                    counter += 1
         self.TEST_base = [[] for i in range(18)]
         self.TEST = [[] for i in range(18)]
         for i in range(18):
@@ -631,7 +647,9 @@ if __name__ == "__main__":
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
-            ALL_POKEMON.append(Pokemon(row))
-            if row[1] == "Pidgeot":
+            if row[1] == "Clefairy" or row[1] == "Clefable":
                 break
+            else:
+                ALL_POKEMON.append(Pokemon(row))
+
     app.mainloop()

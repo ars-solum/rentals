@@ -355,19 +355,19 @@ def type_logic(attackingPokemon, defendingPokemon):
         if x:
             for y in defendingPokemon.type:
                 if y:
-                    if (("Levitate" in defendingPokemon.ability  and "Ground" in x) or
-                        ("Flash Fire" in defendingPokemon.ability  and "Fire" in x) or
-                        ("Water Bubble" in defendingPokemon.ability  and "Fire" in x) or
-                        ("Water Absorb" in defendingPokemon.ability  and "Water" in x) or
-                        ("Storm Drain" in defendingPokemon.ability  and "Water" in x) or
-                        ("Dry Skin" in defendingPokemon.ability  and "Water" in x) or
-                        ("Lightningrod" in defendingPokemon.ability  and "Electric" in x) or
-                        ("Volt Absorb" in defendingPokemon.ability  and "Electric" in x) or
-                        ("Motor Drive" in defendingPokemon.ability  and "Electric" in x) or
-                        ("Sap Sipper" in defendingPokemon.ability  and "Grass" in x) or
-                        ("Desolate Land" in defendingPokemon.ability  and "Water" in x) or
-                        ("Primordial Sea" in defendingPokemon.ability  and "Fire" in x) or
-                        ("Prankster" in attackingPokemon.ability  and "Dark" in y)):
+                    if (("Levitate" in defendingPokemon.ability and "Ground" in x) or
+                        ("Flash Fire" in defendingPokemon.ability and "Fire" in x) or
+                        ("Water Bubble" in defendingPokemon.ability and "Fire" in x) or
+                        ("Water Absorb" in defendingPokemon.ability and "Water" in x) or
+                        ("Storm Drain" in defendingPokemon.ability and "Water" in x) or
+                        ("Dry Skin" in defendingPokemon.ability and "Water" in x) or
+                        ("Lightningrod" in defendingPokemon.ability and "Electric" in x) or
+                        ("Volt Absorb" in defendingPokemon.ability and "Electric" in x) or
+                        ("Motor Drive" in defendingPokemon.ability and "Electric" in x) or
+                        ("Sap Sipper" in defendingPokemon.ability and "Grass" in x) or
+                        ("Desolate Land" in defendingPokemon.ability and "Water" in x) or
+                        ("Primordial Sea" in defendingPokemon.ability and "Fire" in x) or
+                        ("Prankster" in attackingPokemon.ability and "Dark" in y)):
                         matchup -= 1
                     elif (("Fluffy" in defendingPokemon.ability and "Fire" in x) or
                           ("Dry Skin" in defendingPokemon.ability and "Fire" in x) or
@@ -375,11 +375,25 @@ def type_logic(attackingPokemon, defendingPokemon):
                           ("Steelworker" in attackingPokemon.ability and "Fairy" in y) or
                           ("Steelworker" in attackingPokemon.ability and "Ice" in y)):
                         matchup += 1
-                    elif (("Scrappy" in attackingPokemon.ability and "Ghost" in y) or
-                          ("Tinted Lens" in attackingPokemon.ability and
-                            ("Fairy" in y) or ("Fighting" in y) or ("Fire" in y) or
-                            ("Flying" in y) or ("Ghost" in y) or ("Poison" in y) or
-                            ("Steel" in y))):
+                    elif ("Scrappy" in attackingPokemon.ability and "Ghost" in y):
+                        matchup += 0
+                    elif (("Tinted Lens" in attackingPokemon.ability and "Bug" in x) and
+                          ("Fairy" in y or "Fighting" in y or "Fire" in y or
+                           "Flying" in y or "Ghost" in y or "Poison" in y or
+                           "Steel" in y)):
+                        matchup += 0
+                    elif (("Tinted Lens" in attackingPokemon.ability and "Flying" in x) and
+                          ("Electric" in y or "Rock" in y or "Steel" in y)):
+                        matchup += 0
+                    elif (("Tinted Lens" in attackingPokemon.ability and "Normal" in x) and
+                          ("Rock" in y or "Steel" in y)):
+                        matchup += 0
+                    elif (("Tinted Lens" in attackingPokemon.ability and "Poison" in x) and
+                          ("Ghost" in y or "Ground" in y or "Poison" in y or
+                           "Rock" in y)):
+                        matchup += 0
+                    elif (("Tinted Lens" in attackingPokemon.ability and "Psychic" in x) and
+                          ("Psychic" in y or "Steel" in y)):
                         matchup += 0
                     else:
                         matchup += TypeChart[(x, y)]
