@@ -45,9 +45,8 @@ class MainApp(tk.Tk):
         f_buttonsidebar = tk.Frame(self)
         f_buttonsidebar.grid(row=0, column=0, sticky="nsew")
 
-        mainSidebar = Sidebar(parent=f_buttonsidebar, controller=self)
-        self.sidebar = mainSidebar
-        mainSidebar.grid(row=0, column=0, sticky="nsew")
+        self.sidebar = Sidebar(parent=f_buttonsidebar, controller=self)
+        self.sidebar.grid(row=0, column=0, sticky="nsew")
 
         f_container = tk.Frame(self)
         f_container.grid(row=0, column=1, rowspan=5, sticky="nsew")
@@ -72,6 +71,11 @@ class MainApp(tk.Tk):
             self.containerFrames[page_name] = frame
             frame.grid(row=0, column=1, rowspan=4, sticky="nsew")
 
+        page_name = "TurnAnimation"
+        frame = TurnAnimation(parent=f_container, controller=self, mode="")
+        self.containerFrames[page_name] = frame
+        frame.grid(row=0, column=1, rowspan=4, sticky="nsw")
+
         self.show_frame("StandardDraft")
         self.sidebar.set_selected("StandardDraft")
 
@@ -85,9 +89,6 @@ class MainApp(tk.Tk):
         frame.tkraise()
 
 class Sidebar(tk.Frame):
-    ############################################
-    ##### constructor/initializer function #####
-    ############################################
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -250,7 +251,7 @@ class TeamBox(tk.Frame):
     def on_enter(self, i_team):
         if self.team_list[i_team]:
             x = self.findPokemon(i_team)
-            self.l_pokemon[i_team].config(image=self.controller.TEST[x][1])
+            self.l_pokemon[i_team].config(image=self.controller.img_pokemonIcons[x][1])
         else:
             self.l_pokemon[i_team].config(image=self.controller.img_active_Blank)
         if "Random" not in self.controller.mode:
@@ -261,14 +262,14 @@ class TeamBox(tk.Frame):
             self.l_pokemon[i_team].config(image=self.controller.img_inactive_Blank)
         else:
             x = self.findPokemon(i_team)
-            self.l_pokemon[i_team].config(image=self.controller.TEST[x][0])
+            self.l_pokemon[i_team].config(image=self.controller.img_pokemonIcons[x][0])
         if "Random" not in self.controller.mode:
             self.controller.helpbox.hide_info()
 
     def addToTeam(self, i_list, turn):
         if self.team_list[int(turn/2)] == None:
             self.team_list[int(turn/2)] = self.controller.pokemonList[i_list].name
-            self.l_pokemon[int(turn/2)].config(image=self.controller.TEST[i_list][0])
+            self.l_pokemon[int(turn/2)].config(image=self.controller.img_pokemonIcons[i_list][0])
 
 class HelpBox(tk.Frame):
     def __init__(self, parent, controller):
@@ -311,23 +312,22 @@ class HelpBox(tk.Frame):
                     if self.counter_pokemon[i][j] == self.controller.pokemonList[k].name:
                         x = k
                         break
-                self.l_counters[j].config(image=self.controller.TEST[x][0])
+                self.l_counters[j].config(image=self.controller.img_pokemonIcons[x][0])
             self.l_possibleAbility.config(text="Possible Abilities:")
             self.l_counterpick.config(text="Struggles Against:")
-            self.l_pokemon_selected.config(image=self.controller.TEST[i][0])
+            self.l_pokemon_selected.config(image=self.controller.img_pokemonIcons[i][0])
 
     def update_team_info(self, team, i):
         if self.controller.assist.get():
             if self.controller.f_teams[team].team_list[i]:
-                self.l_pokemon_name.config(text="TEST")
+                self.l_pokemon_name.config(text=self.controller.f_teams[team].team_list[i])
                 self.l_possibleAbilities.config(text="TEST\nTEST\n")
-                # counter logic here
                 for j in range(3):
                     self.l_counters[j].config(image=self.controller.img_inactive_Blank)
                 self.l_possibleAbility.config(text="Possible Abilities:")
                 self.l_counterpick.config(text="Struggles Against:")
                 x = self.controller.f_teams[team].findPokemon(i)
-                self.l_pokemon_selected.config(image=self.controller.TEST[x][0])
+                self.l_pokemon_selected.config(image=self.controller.img_pokemonIcons[x][0])
 
 
     def hide_info(self):
@@ -488,9 +488,9 @@ class Battle(tk.Frame):
             for i in range(18):
                 if self.pokemonNotPicked[i]:
                     if self.hide.get():
-                        self.b_icons[i].config(image=self.TEST[i][4])
+                        self.b_icons[i].config(image=self.img_pokemonIcons[i][4])
                     else:
-                        self.b_icons[i].config(image=self.TEST[i][0])
+                        self.b_icons[i].config(image=self.img_pokemonIcons[i][0])
 
     def activate(self):
         self.activated = True
@@ -513,18 +513,18 @@ class Battle(tk.Frame):
                 if x:
                     self.pokemonList.append(newPokemon)
                     counter += 1
-        self.TEST_base = [[] for i in range(18)]
-        self.TEST = [[] for i in range(18)]
+        self.img_pokemonBase = [[] for i in range(18)]
+        self.img_pokemonIcons = [[] for i in range(18)]
         for i in range(18):
             for j in range(5):
-                self.TEST_base[i].append(RGBAImage('media\\{0}_{1}.png'.format(self.pokemonList[i].name, IMGTYPE[j])))
-                self.TEST_base[i][j].paste(self.img_border, (0, 0), self.img_border)
-                self.TEST[i].append(ImageTk.PhotoImage(self.TEST_base[i][j]))
+                self.img_pokemonBase[i].append(RGBAImage('media\\{0}_{1}.png'.format(self.pokemonList[i].name, IMGTYPE[j])))
+                self.img_pokemonBase[i][j].paste(self.img_border, (0, 0), self.img_border)
+                self.img_pokemonIcons[i].append(ImageTk.PhotoImage(self.img_pokemonBase[i][j]))
             self.pokemonNotPicked[i] = True
             if self.hide.get():
-                self.b_icons[i].config(image=self.TEST[i][4], command=lambda i=i: self.test(i))
+                self.b_icons[i].config(image=self.img_pokemonIcons[i][4], command=lambda i=i: self.test(i))
             else:
-                self.b_icons[i].config(image=self.TEST[i][0], command=lambda i=i: self.test(i))
+                self.b_icons[i].config(image=self.img_pokemonIcons[i][0], command=lambda i=i: self.test(i))
         for i in range(2):
             self.f_teams[i].reset_team()
         self.helpbox.counter_pokemon = [[] for j in range(18)]
@@ -533,6 +533,7 @@ class Battle(tk.Frame):
                 if j != k:
                     if type_logic(self.pokemonList[k], self.pokemonList[j]):
                         self.helpbox.counter_pokemon[j].append(self.pokemonList[k].name)
+        ##### Turn Animation here #####
 
 
     def fade_in(self, i, button1, button2):
@@ -542,12 +543,12 @@ class Battle(tk.Frame):
         else:
             # create the interpolated image using the current alpha value
             if self.hide.get():
-                self.new_img = ImageTk.PhotoImage(Image.blend(self.TEST_base[i][4], self.TEST_base[i][2], self.alpha))
+                self.new_img = ImageTk.PhotoImage(Image.blend(self.img_pokemonBase[i][4], self.img_pokemonBase[i][2], self.alpha))
             else:
-                self.new_img = ImageTk.PhotoImage(Image.blend(self.TEST_base[i][1], self.TEST_base[i][2], self.alpha))
+                self.new_img = ImageTk.PhotoImage(Image.blend(self.img_pokemonBase[i][1], self.img_pokemonBase[i][2], self.alpha))
             if button2:
-                self.new_img2 = ImageTk.PhotoImage(Image.blend(self.img_inactive_Blank_base, self.TEST_base[i][0], self.alpha))
-            #self.new_team_img = ImageTk.PhotoImage(Image.blend(self.f_teams.img_team[], self.TEST_base[i][2], self.alpha))
+                self.new_img2 = ImageTk.PhotoImage(Image.blend(self.img_inactive_Blank_base, self.img_pokemonBase[i][0], self.alpha))
+            #self.new_team_img = ImageTk.PhotoImage(Image.blend(self.f_teams.img_team[], self.img_pokemonBase[i][2], self.alpha))
             self.alpha = self.alpha + 0.1
             #if self.turn%2 == 0:
             #    self.f_teams[0].l_team.config(image=self.f_teams.img_team)
@@ -571,7 +572,7 @@ class Battle(tk.Frame):
         if self.activated:
             if self.pokemonNotPicked[i]:
                 if not self.hide.get():
-                    self.b_icons[i].config(image=self.TEST[i][1])
+                    self.b_icons[i].config(image=self.img_pokemonIcons[i][1])
             self.helpbox.update_info(i)
         else:
             self.b_icons[i].config(image=self.img_active_Blank)
@@ -580,7 +581,7 @@ class Battle(tk.Frame):
         if self.activated:
             if self.pokemonNotPicked[i]:
                 if not self.hide.get():
-                    self.b_icons[i].config(image=self.TEST[i][0])
+                    self.b_icons[i].config(image=self.img_pokemonIcons[i][0])
             self.helpbox.hide_info()
         else:
             self.b_icons[i].config(image=self.img_inactive_Blank)
@@ -636,6 +637,35 @@ class Prizes(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+class TEST:
+    def __init__(self, canvas, x1, y1, x2, y2, player):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        self.player = player
+        self.img_trainer = []
+        self.img_turn = []
+        self.img_trainer.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\trainer{0}.png'.format(self.player))))
+        self.img_trainer.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\trainer{0}fast.png'.format(self.player))))
+        self.img_turn.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\turn{0}.png'.format(self.player))))
+        self.img_turn.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\turn{0}fast.png'.format(self.player))))
+
+    def move_turns(self, direction):
+        if direction == "Left":
+            pass
+
+class TurnAnimation(tk.Frame):
+    def __init__(self, parent, controller, mode):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.mode = mode
+
+        canvas = tk.Canvas(self, width=560, height=250)
+        canvas.grid(row=0, column=0, sticky="nsew")
+        self.turn = []
+        self.turn.append(TEST(canvas, -20, 115, 0, 135, "1"))
+        self.turn.append(TEST(canvas, 560, 145, 580, 165, "2"))
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -647,7 +677,7 @@ if __name__ == "__main__":
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
-            if row[1] == "Clefairy" or row[1] == "Clefable":
+            if row[1] == "Golbat":
                 break
             else:
                 ALL_POKEMON.append(Pokemon(row))
