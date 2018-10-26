@@ -61,7 +61,6 @@ class MainApp(tk.Tk):
         for i in range(4):
             page_name = BATTLE_OPTIONS[i]
             frame = Battle(parent=f_container, controller=self, mode=page_name)
-            #frame.config(background='black')
             self.containerFrames[page_name] = frame
             frame.grid(row=0, column=1, rowspan=4, sticky="nsew")
 
@@ -70,11 +69,6 @@ class MainApp(tk.Tk):
             frame = F(parent=f_container, controller=self)
             self.containerFrames[page_name] = frame
             frame.grid(row=0, column=1, rowspan=4, sticky="nsew")
-
-        page_name = "TurnAnimation"
-        frame = TurnAnimation(parent=f_container, controller=self, mode="")
-        self.containerFrames[page_name] = frame
-        frame.grid(row=0, column=1, rowspan=4, sticky="nsw")
 
         self.show_frame("StandardDraft")
         self.sidebar.set_selected("StandardDraft")
@@ -415,8 +409,16 @@ class Battle(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.mode = mode
+        ##### turn stuff here #####
+        # self.img_bg = ImageTk.PhotoImage(RGBAImage('media\\Common\\blank_canvas.png'))
+        # self.canvas = tk.Canvas(self, width=450, height=580)
+        # self.canvas.grid(row=0, column=0, columnspan=6, rowspan=10, sticky="nsew")
+        # self.canvas_bg = self.canvas.create_image(0, 0, image=self.img_bg, anchor="nw")
+        # self.obj_turn = []
+        # self.obj_turn.append(TEST(self.canvas, -20, 115, 0, 135, "1"))
+        # self.obj_turn.append(TEST(self.canvas, 560, 145, 580, 165, "2"))
 
-        ##### initialize variables and images #####
+        # initialize variables and images
         self.alpha = 0
         self.turn = 0
         self.activated = False
@@ -437,11 +439,10 @@ class Battle(tk.Frame):
         self.img_inactive_Blank = ImageTk.PhotoImage(self.img_inactive_Blank_base)
         self.img_active_Blank = ImageTk.PhotoImage(self.img_active_Blank_base)
 
-        ##### initialize POOL #####
+        # initialize pool of pokemon buttons
         if "Random" not in self.mode:
             self.b_icons = []
             self.img_pokemon = [[] for i in range(18)]
-
             for i in range(3):
                 for j in range(6):
                     x = (i*6)+j
@@ -450,7 +451,7 @@ class Battle(tk.Frame):
                     self.b_icons[x].bind("<Enter>", lambda event, x=x: self.on_enter(x))
                     self.b_icons[x].bind("<Leave>", lambda event, x=x: self.on_leave(x))
 
-        ##### initialize TEAMS #####
+        # initialize team boxes
         self.f_teams = []
         if "Ban" in self.mode:
             self.f_bans = []
@@ -464,7 +465,7 @@ class Battle(tk.Frame):
                 self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
                 self.f_teams[i].grid(row=3, column=i*3, columnspan=3, sticky="nsew")
 
-        ##### initialize HELPBOX #####
+        # initialize helpful tips box
         if "Random" not in self.mode:
             self.helpbox = HelpBox(parent=self, controller=self)
             if "Ban" in self.mode:
@@ -472,12 +473,11 @@ class Battle(tk.Frame):
             else:
                 self.helpbox.grid(row=4, column=0, columnspan=6, pady=10)
 
-        ##### initialize SETTINGS #####
+        # initialize settings side bar
         self.settings = SettingsBar(parent=self, controller=self)
         self.settings.grid(row=0, column=7, rowspan=8, sticky="n")
 
     def playCPU(self):
-        # do i need to do this with checkboxes?
         if self.vscpu.get():
             self.f_teams[1].l_team.config(image=self.f_teams[1].img_cpu_team[0])
         else:
@@ -493,16 +493,20 @@ class Battle(tk.Frame):
                         self.b_icons[i].config(image=self.img_pokemonIcons[i][0])
 
     def activate(self):
+        # reset settings
         self.activated = True
         self.turn = 0
         self.pokemonList = []
         counter = 0
+
+        # pick new pokemon
         while counter < 18:
             newPokemon = random.choice(ALL_POKEMON)
             if not self.pokemonList:
                 self.pokemonList.append(newPokemon)
                 counter += 1
             else:
+                # check if pokemon already picked
                 names = []
                 for i in range(len(self.pokemonList)):
                     names.append(self.pokemonList[i].name)
@@ -513,6 +517,8 @@ class Battle(tk.Frame):
                 if x:
                     self.pokemonList.append(newPokemon)
                     counter += 1
+
+        # get pokemon icons
         self.img_pokemonBase = [[] for i in range(18)]
         self.img_pokemonIcons = [[] for i in range(18)]
         for i in range(18):
@@ -520,47 +526,51 @@ class Battle(tk.Frame):
                 self.img_pokemonBase[i].append(RGBAImage('media\\{0}_{1}.png'.format(self.pokemonList[i].name, IMGTYPE[j])))
                 self.img_pokemonBase[i][j].paste(self.img_border, (0, 0), self.img_border)
                 self.img_pokemonIcons[i].append(ImageTk.PhotoImage(self.img_pokemonBase[i][j]))
+            # reset all button functionality
             self.pokemonNotPicked[i] = True
             if self.hide.get():
-                self.b_icons[i].config(image=self.img_pokemonIcons[i][4], command=lambda i=i: self.test(i))
+                self.b_icons[i].config(image=self.img_pokemonIcons[i][4], command=lambda i=i: self.pickPokemon(i))
             else:
-                self.b_icons[i].config(image=self.img_pokemonIcons[i][0], command=lambda i=i: self.test(i))
+                self.b_icons[i].config(image=self.img_pokemonIcons[i][0], command=lambda i=i: self.pickPokemon(i))
+
+        # clear teams
         for i in range(2):
             self.f_teams[i].reset_team()
+
+        # get list of counters for each pokemon
         self.helpbox.counter_pokemon = [[] for j in range(18)]
         for j in range(18):
             for k in range(18):
                 if j != k:
                     if type_logic(self.pokemonList[k], self.pokemonList[j]):
                         self.helpbox.counter_pokemon[j].append(self.pokemonList[k].name)
-        ##### Turn Animation here #####
 
+        #tk.Misc.lift(self.canvas, aboveThis=None)
 
     def fade_in(self, i, button1, button2):
         if self.alpha > 1.0:
+            # reset alpha value for next use and disable button
             self.alpha = 0
             self.b_icons[i].config(command=None)
         else:
-            # create the interpolated image using the current alpha value
+            # create the interpolated images using the current alpha value
             if self.hide.get():
                 self.new_img = ImageTk.PhotoImage(Image.blend(self.img_pokemonBase[i][4], self.img_pokemonBase[i][2], self.alpha))
             else:
                 self.new_img = ImageTk.PhotoImage(Image.blend(self.img_pokemonBase[i][1], self.img_pokemonBase[i][2], self.alpha))
             if button2:
                 self.new_img2 = ImageTk.PhotoImage(Image.blend(self.img_inactive_Blank_base, self.img_pokemonBase[i][0], self.alpha))
-            #self.new_team_img = ImageTk.PhotoImage(Image.blend(self.f_teams.img_team[], self.img_pokemonBase[i][2], self.alpha))
             self.alpha = self.alpha + 0.1
-            #if self.turn%2 == 0:
-            #    self.f_teams[0].l_team.config(image=self.f_teams.img_team)
-            # update the image displayed continuously to create the "fade in" effect
+            # update the images displayed continuously to create fade in effect
             button1.config(image=self.new_img)
             button1.image = self.new_img
             if button2:
                 button2.config(image=self.new_img2)
                 button2.image = self.new_img2
+            # loop until fade is complete
             self.after(10, self.fade_in, i, button1, button2)
 
-    def test(self, i):
+    def pickPokemon(self, i):
         if self.pokemonNotPicked[i]:
             if self.turn <= 11:
                 self.pokemonNotPicked[i] = False
@@ -655,29 +665,17 @@ class TEST:
         if direction == "Left":
             pass
 
-class TurnAnimation(tk.Frame):
-    def __init__(self, parent, controller, mode):
-        tk.Frame.__init__(self, parent)
-        self.controller = controller
-        self.mode = mode
-
-        canvas = tk.Canvas(self, width=560, height=250)
-        canvas.grid(row=0, column=0, sticky="nsew")
-        self.turn = []
-        self.turn.append(TEST(canvas, -20, 115, 0, 135, "1"))
-        self.turn.append(TEST(canvas, 560, 145, 580, 165, "2"))
-
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    random.seed(time.strftime("%Y-%m-%d"))
+    #random.seed(time.strftime("%Y-%m-%d"))
 
     app = MainApp()
     with open('main_database.csv', 'r') as fileName:
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
-            if row[1] == "Golbat":
+            if row[1] == "Diglett":
                 break
             else:
                 ALL_POKEMON.append(Pokemon(row))
