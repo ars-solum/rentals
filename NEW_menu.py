@@ -15,7 +15,7 @@ BATTLE_OPTIONS = ["StandardDraft", "RandomBattle", "NemesisDraft", "BanDraft"]
 AUCTION_OPTIONS = ["Trainers", "Auctions", "Leaderboards", "Prizes"]
 IMGTYPE = ["inactive", "active", "picked", "banned", "unknown"]
 ALL_POKEMON = []
-
+ABILITIES = {}
 
 def RGBAImage(path):
     return Image.open(path).convert("RGBA")
@@ -298,7 +298,16 @@ class HelpBox(tk.Frame):
     def update_info(self, i):
         if self.controller.assist.get():
             self.l_pokemon_name.config(text=self.controller.pokemonList[i].name)
-            self.l_possibleAbilities.config(text="TEST\nTEST\n")
+            abilities = ABILITIES[self.controller.pokemonList[i].name]
+            while len(abilities) < 3:
+                abilities.append("")
+            t_abilities = ""
+            for x in range(3):
+                if x < 2:
+                    t_abilities += abilities[x] + "\n"
+                else:
+                    t_abilities += abilities[x]
+            self.l_possibleAbilities.config(text=t_abilities)
             for j in range(len(self.counter_pokemon[i])):
                 if j > 2:
                     break
@@ -544,6 +553,8 @@ class Battle(tk.Frame):
                 if j != k:
                     if type_logic(self.pokemonList[k], self.pokemonList[j]):
                         self.helpbox.counter_pokemon[j].append(self.pokemonList[k].name)
+        for counters in self.helpbox.counter_pokemon:
+            shuffle(counters)
 
         #tk.Misc.lift(self.canvas, aboveThis=None)
 
@@ -675,9 +686,12 @@ if __name__ == "__main__":
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
-            if row[1] == "Dugtrio":
+            if row[1] == "Graveler":
                 break
             else:
                 ALL_POKEMON.append(Pokemon(row))
-
+    with open('Abilities.csv', 'r') as fileName:
+        reader = csv.reader(fileName)
+        for row in reader:
+            ABILITIES[row[0]] = [row[x] for x in range(1,4) if row[x] != '']
     app.mainloop()
