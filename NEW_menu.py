@@ -135,29 +135,29 @@ class Sidebar(tk.Frame):
             self.b_auctionOptions[i].bind("<Enter>", lambda event, i=i: self.on_enter(i+4))
             self.b_auctionOptions[i].bind("<Leave>", lambda event, i=i: self.on_leave(i+4))
 
-    def on_enter(self, i):
-        if i < 4:
-            if self.currSelected == BATTLE_OPTIONS[i]:
+    def on_enter(self, option):
+        if option < 4:
+            if self.currSelected == BATTLE_OPTIONS[option]:
                 pass
             else:
-                self.b_battleOptions[i].config(image=self.img_selected_button[i])
+                self.b_battleOptions[option].config(image=self.img_selected_button[option])
         else:
-            if self.currSelected == AUCTION_OPTIONS[i-4]:
+            if self.currSelected == AUCTION_OPTIONS[option-4]:
                 pass
             else:
-                self.b_auctionOptions[i-4].config(image=self.img_selected_button[i])
+                self.b_auctionOptions[option-4].config(image=self.img_selected_button[option])
 
-    def on_leave(self, i):
-        if i < 4:
-            if self.currSelected == BATTLE_OPTIONS[i]:
-                self.b_battleOptions[i].config(image=self.img_selected_button[i])
+    def on_leave(self, option):
+        if option < 4:
+            if self.currSelected == BATTLE_OPTIONS[option]:
+                self.b_battleOptions[option].config(image=self.img_selected_button[option])
             else:
-                self.b_battleOptions[i].config(image=self.img_inactive_button[i])
+                self.b_battleOptions[option].config(image=self.img_inactive_button[option])
         else:
-            if self.currSelected == AUCTION_OPTIONS[i-4].replace(" ", ""):
-                self.b_auctionOptions[i-4].config(image=self.img_selected_button[i])
+            if self.currSelected == AUCTION_OPTIONS[option-4]:
+                self.b_auctionOptions[option-4].config(image=self.img_selected_button[option])
             else:
-                self.b_auctionOptions[i-4].config(image=self.img_inactive_button[i])
+                self.b_auctionOptions[option-4].config(image=self.img_inactive_button[option])
 
     def set_selected(self, x):
         self.prevSelected = self.currSelected
@@ -323,10 +323,29 @@ class HelpBox(tk.Frame):
     def update_team_info(self, team, i):
         if self.controller.assist.get():
             if self.controller.f_teams[team].team_list[i]:
+
                 self.l_pokemon_name.config(text=self.controller.f_teams[team].team_list[i])
-                self.l_possibleAbilities.config(text="TEST\nTEST\n")
-                for j in range(3):
-                    self.l_counters[j].config(image=self.controller.img_inactive_Blank)
+
+                abilities = ABILITIES[self.controller.f_teams[team].team_list[i]]
+                while len(abilities) < 3:
+                    abilities.append("")
+                t_abilities = ""
+                for x in range(3):
+                    if x < 2:
+                        t_abilities += abilities[x] + "\n"
+                    else:
+                        t_abilities += abilities[x]
+                self.l_possibleAbilities.config(text=t_abilities)
+
+                for j in range(len(self.counter_pokemon[i])):
+                    if j > 2:
+                        break
+                    for k in range(18):
+                        if self.counter_pokemon[i][j] == self.controller.pokemonList[k].name:
+                            x = k
+                            break
+                    self.l_counters[j].config(image=self.controller.img_pokemonIcons[x][0])
+
                 self.l_possibleAbility.config(text="Possible Abilities:")
                 self.l_counterpick.config(text="Struggles Against:")
                 x = self.controller.f_teams[team].findPokemon(i)
@@ -388,30 +407,41 @@ class SettingsBar(tk.Frame):
 
 
         self.l_exclude = tk.Label(self, text="Exclusions")
-        self.l_exclude.grid(row=13, column=0, columnspan=2, sticky="w")
-        self.optionsExcludeTiers = ["Ubers", "OU", "UU", "RU", "NU", "PU"]
-        self.excludes = [tk.StringVar() for i in range(6)]
-        self.b_excludes = []
-        for i in range(6):
-            self.b_excludes.append(tk.Checkbutton(self, text=self.optionsExcludeTiers[i], variable=self.excludes[i], onvalue=self.optionsExcludeTiers[i], offvalue=""))
+        self.l_exclude.grid(row=13, column=0, columnspan=1, sticky="w")
+        #self.b_moreExcludes = tk.Button(self, text=">", command=lambda: self.moreExcludes(1))
+        #self.b_moreExcludes.grid(row=13, column=1, columnspan=1, sticky="w")
+        self.optionsExcludeTiers = ["Ubers", "OU", "UU", "RU", "NU", "PU", "NFE"]
+        self.optionsExcludeRegions = ["Kanto", "Johto", "Hoenn", "Sinnoh", "Unova", "Kalos", "Alola"]
+        self.tierExcludes = [tk.StringVar() for i in range(7)]
+        self.regionExcludes = [tk.StringVar() for i in range(7)]
+        self.typeExcludes = [tk.StringVar() for i in range(7)]
+        self.b_tierExcludes = []
+        self.b_regionExcludes = []
+        self.b_typeExcludes = []
+        for i in range(7):
+            self.b_tierExcludes.append(tk.Checkbutton(self, text=self.optionsExcludeTiers[i], variable=self.tierExcludes[i], onvalue=self.optionsExcludeTiers[i], offvalue=""))
             if i%2 == 0:
-                self.b_excludes[i].grid(row=i+14, column=0, padx=(20, 0), sticky="w")
+                self.b_tierExcludes[i].grid(row=i+14, column=0, padx=(20, 0), sticky="w")
             else:
-                self.b_excludes[i].grid(row=i+13, column=1, sticky="w")
+                self.b_tierExcludes[i].grid(row=i+13, column=1, sticky="w")
 
         if "Random" not in self.controller.mode:
             self.l_other = tk.Label(self, text="Other Options")
-            self.l_other.grid(row=20, column=0, columnspan=2, sticky="w")
+            self.l_other.grid(row=21, column=0, columnspan=2, sticky="w")
             self.b_assist = tk.Checkbutton(self, text="Show Basic Tips", variable=self.controller.assist)
-            self.b_assist.grid(row=21, column=0, columnspan=2, padx=(20, 0), sticky="w")
+            self.b_assist.grid(row=22, column=0, columnspan=2, padx=(20, 0), sticky="w")
             self.b_vscpu = tk.Checkbutton(self, text="Play Against CPU", variable=self.controller.vscpu, command=lambda: self.controller.playCPU())
-            self.b_vscpu.grid(row=22, column=0, columnspan=2, padx=(20, 0), sticky="w")
-            self.b_hide = tk.Checkbutton(self, text="Hide Pokémon", variable=self.controller.hide, command=lambda: self.controller.hidePokemon())
-            self.b_hide.grid(row=23, column=0, columnspan=2, padx=(20, 0), sticky="w")
+            self.b_vscpu.grid(row=23, column=0, columnspan=2, padx=(20, 0), sticky="w")
+            self.b_blind = tk.Checkbutton(self, text="Blind Mode", variable=self.controller.blind, command=lambda: self.controller.blindMode())
+            self.b_blind.grid(row=24, column=0, columnspan=2, padx=(20, 0), sticky="w")
 
 
         self.goButton = tk.Button(self, text="Go", command=lambda: self.controller.activate())
-        self.goButton.grid(row=24, column=0, padx=5, pady=5)
+        self.goButton.grid(row=25, column=0, padx=5, pady=5)
+
+    def moreExcludes(self, page):
+        for i in range(7):
+            self.b_tierExcludes[i].grid_forget()
 
 class Battle(tk.Frame):
     def __init__(self, parent, controller, mode):
@@ -437,8 +467,8 @@ class Battle(tk.Frame):
         self.assist.set(False)
         self.vscpu = tk.BooleanVar()
         self.vscpu.set(False)
-        self.hide = tk.BooleanVar()
-        self.hide.set(False)
+        self.blind = tk.BooleanVar()
+        self.blind.set(False)
 
         self.img_border = RGBAImage('media\\border_%s.png' % self.mode)
         self.img_inactive_Blank_base = RGBAImage('media\\button_inactive_Blank.png')
@@ -492,11 +522,11 @@ class Battle(tk.Frame):
         else:
             self.f_teams[1].l_team.config(image=self.f_teams[1].img_team[0])
 
-    def hidePokemon(self):
+    def blindMode(self):
         if self.activated:
             for i in range(18):
                 if self.pokemonNotPicked[i]:
-                    if self.hide.get():
+                    if self.blind.get():
                         self.b_icons[i].config(image=self.img_pokemonIcons[i][4])
                     else:
                         self.b_icons[i].config(image=self.img_pokemonIcons[i][0])
@@ -507,6 +537,10 @@ class Battle(tk.Frame):
         self.turn = 0
         self.pokemonList = []
         counter = 0
+        excludeTiers = []
+        for i in range(len(self.settings.tierExcludes)):
+            if self.settings.tierExcludes[i].get() != "":
+                excludeTiers.append(self.settings.tierExcludes[i].get())
 
         # pick new pokemon
         while counter < 18:
@@ -516,14 +550,15 @@ class Battle(tk.Frame):
                 counter += 1
             else:
                 # check if pokemon already picked
+                add = True
                 names = []
                 for i in range(len(self.pokemonList)):
                     names.append(self.pokemonList[i].name)
-                x = True
-                for i in names:
-                    if newPokemon.name == i:
-                        x = False
-                if x:
+                if newPokemon.name in names:
+                    add = False
+                if newPokemon.tier in excludeTiers:
+                    add = False
+                if add:
                     self.pokemonList.append(newPokemon)
                     counter += 1
 
@@ -537,7 +572,7 @@ class Battle(tk.Frame):
                 self.img_pokemonIcons[i].append(ImageTk.PhotoImage(self.img_pokemonBase[i][j]))
             # reset all button functionality
             self.pokemonNotPicked[i] = True
-            if self.hide.get():
+            if self.blind.get():
                 self.b_icons[i].config(image=self.img_pokemonIcons[i][4], command=lambda i=i: self.pickPokemon(i))
             else:
                 self.b_icons[i].config(image=self.img_pokemonIcons[i][0], command=lambda i=i: self.pickPokemon(i))
@@ -565,7 +600,7 @@ class Battle(tk.Frame):
             self.b_icons[i].config(command=None)
         else:
             # create the interpolated images using the current alpha value
-            if self.hide.get():
+            if self.blind.get():
                 self.new_img = ImageTk.PhotoImage(Image.blend(self.img_pokemonBase[i][4], self.img_pokemonBase[i][2], self.alpha))
             else:
                 self.new_img = ImageTk.PhotoImage(Image.blend(self.img_pokemonBase[i][1], self.img_pokemonBase[i][2], self.alpha))
@@ -592,7 +627,7 @@ class Battle(tk.Frame):
     def on_enter(self, i):
         if self.activated:
             if self.pokemonNotPicked[i]:
-                if not self.hide.get():
+                if not self.blind.get():
                     self.b_icons[i].config(image=self.img_pokemonIcons[i][1])
             self.helpbox.update_info(i)
         else:
@@ -601,7 +636,7 @@ class Battle(tk.Frame):
     def on_leave(self, i):
         if self.activated:
             if self.pokemonNotPicked[i]:
-                if not self.hide.get():
+                if not self.blind.get():
                     self.b_icons[i].config(image=self.img_pokemonIcons[i][0])
             self.helpbox.hide_info()
         else:
@@ -686,7 +721,7 @@ if __name__ == "__main__":
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
-            if row[1] == "Bayleef":
+            if row[1] == "Furret":
                 break
             else:
                 ALL_POKEMON.append(Pokemon(row))
