@@ -375,10 +375,10 @@ class SettingsBar(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.img_settingsTitle = ImageTk.PhotoImage(RGBAImage('media\\Common\\label_settings_{0}.png'.format(self.controller.mode)))
+        self.img_settingsTitle = ImageTk.PhotoImage(RGBAImage('media\\Common\\label_settings_{0}2.png'.format(self.controller.mode)))
 
         self.l_settingsTitle = tk.Label(self, image=self.img_settingsTitle)
-        self.l_settingsTitle.grid(row=0, column=0, columnspan=2)
+        self.l_settingsTitle.grid(row=0, column=0, columnspan=3)
 
         self.l_generate = tk.Label(self, text="Pokémon Appearance")
         self.l_generate.grid(row=1, column=0, columnspan=2, sticky="w")
@@ -456,14 +456,6 @@ class Battle(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.mode = mode
-        ##### turn stuff here #####
-        # self.img_bg = ImageTk.PhotoImage(RGBAImage('media\\Common\\blank_canvas.png'))
-        # self.canvas = tk.Canvas(self, width=450, height=580)
-        # self.canvas.grid(row=0, column=0, columnspan=6, rowspan=10, sticky="nsew")
-        # self.canvas_bg = self.canvas.create_image(0, 0, image=self.img_bg, anchor="nw")
-        # self.obj_turn = []
-        # self.obj_turn.append(TEST(self.canvas, -20, 115, 0, 135, "1"))
-        # self.obj_turn.append(TEST(self.canvas, 560, 145, 580, 165, "2"))
 
         # initialize variables and images
         self.alpha = 0
