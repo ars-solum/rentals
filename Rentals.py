@@ -375,7 +375,7 @@ class SettingsBar(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.img_settingsTitle = ImageTk.PhotoImage(RGBAImage('media\\Common\\label_settings_{0}2.png'.format(self.controller.mode)))
+        self.img_settingsTitle = ImageTk.PhotoImage(RGBAImage('media\\Common\\label_settings_{0}.png'.format(self.controller.mode)))
 
         self.l_settingsTitle = tk.Label(self, image=self.img_settingsTitle)
         self.l_settingsTitle.grid(row=0, column=0, columnspan=3)
@@ -729,7 +729,7 @@ if __name__ == "__main__":
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
-            if row[1] == "Furret":
+            if row[1] == "Bellossom":
                 break
             else:
                 ALL_POKEMON.append(Pokemon(row))
