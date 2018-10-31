@@ -418,7 +418,7 @@ class SettingsBar(tk.Frame):
         self.l_exclude.grid(row=13, column=0, columnspan=1, sticky="w")
         #self.b_moreExcludes = tk.Button(self, text=">", command=lambda: self.moreExcludes(1))
         #self.b_moreExcludes.grid(row=13, column=1, columnspan=1, sticky="w")
-        self.optionsExcludeTiers = ["Ubers", "OU", "UU", "RU", "NU", "PU", "NFE"]
+        self.optionsExcludeTiers = ["UBERS", "OU", "UU", "RU", "NU", "PU", "NFE"]
         self.optionsExcludeRegions = ["Kanto", "Johto", "Hoenn", "Sinnoh", "Unova", "Kalos", "Alola"]
         self.tierExcludes = [tk.StringVar() for i in range(7)]
         self.regionExcludes = [tk.StringVar() for i in range(7)]
