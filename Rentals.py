@@ -729,7 +729,7 @@ if __name__ == "__main__":
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
-            if row[1] == "Bellossom":
+            if row[1] == "Grovyle":
                 break
             else:
                 ALL_POKEMON.append(Pokemon(row))
