@@ -442,10 +442,12 @@ class SettingsBar(tk.Frame):
             self.b_vscpu.grid(row=23, column=0, columnspan=2, padx=(20, 0), sticky="w")
             self.b_blind = tk.Checkbutton(self, text="Blind Mode", variable=self.controller.blind, command=lambda: self.controller.blindMode())
             self.b_blind.grid(row=24, column=0, columnspan=2, padx=(20, 0), sticky="w")
+            self.b_mega = tk.Checkbutton(self, text="Reveal Megas", variable=self.controller.show_megas, command=lambda: self.controller.showMegas())
+            self.b_mega.grid(row=25, column=0, columnspan=2, padx=(20, 0), sticky="w")
 
 
         self.goButton = tk.Button(self, text="Go", command=lambda: self.controller.activate())
-        self.goButton.grid(row=25, column=0, padx=5, pady=5)
+        self.goButton.grid(row=26, column=0, padx=5, pady=5)
 
     def moreExcludes(self, page):
         for i in range(7):
@@ -469,8 +471,11 @@ class Battle(tk.Frame):
         self.vscpu.set(False)
         self.blind = tk.BooleanVar()
         self.blind.set(False)
+        self.show_megas = tk.BooleanVar()
+        self.show_megas.set(False)
 
         self.img_border = RGBAImage('media\\border_%s.png' % self.mode)
+        self.img_border_mega = RGBAImage('media\\border_Mega.png')
         self.img_inactive_Blank_base = RGBAImage('media\\button_inactive_Blank.png')
         self.img_active_Blank_base = RGBAImage('media\\button_active_Blank.png')
         self.img_inactive_Blank_base.paste(self.img_border, (0, 0), self.img_border)
@@ -530,6 +535,32 @@ class Battle(tk.Frame):
                         self.b_icons[i].config(image=self.img_pokemonIcons[i][4])
                     else:
                         self.b_icons[i].config(image=self.img_pokemonIcons[i][0])
+                else:
+                    self.b_icons[i].config(image=self.img_pokemonIcons[i][2])
+
+    def showMegas(self):
+        if self.activated:
+            for i in range(18):
+                if self.pokemonList[i].item.endswith("ite") and self.pokemonList[i].item != "Eviolite":
+                    for j in range(5):
+                        if self.show_megas.get():
+                            self.img_pokemonBase[i][j].paste(self.img_border_mega, (0, 0), self.img_border_mega)
+                        else:
+                            self.img_pokemonBase[i][j].paste(self.img_border, (0, 0), self.img_border)
+                        self.img_pokemonIcons[i][j] = ImageTk.PhotoImage(self.img_pokemonBase[i][j])
+                        if self.pokemonNotPicked[i]:
+                            if self.blind.get():
+                                self.b_icons[i].config(image=self.img_pokemonIcons[i][4])
+                            else:
+                                self.b_icons[i].config(image=self.img_pokemonIcons[i][0])
+                        else:
+                            self.b_icons[i].config(image=self.img_pokemonIcons[i][2])
+                            for k in range(2):
+                                for m in range(6):
+                                    if self.f_teams[k].team_list[m] == self.pokemonList[i].name:
+                                        self.f_teams[k].b_team_pokemon[m].config(image=self.img_pokemonIcons[i][0])
+                                        break
+
 
     def activate(self):
         # reset settings
@@ -568,7 +599,13 @@ class Battle(tk.Frame):
         for i in range(18):
             for j in range(5):
                 self.img_pokemonBase[i].append(RGBAImage('media\\{0}_{1}.png'.format(self.pokemonList[i].name, IMGTYPE[j])))
-                self.img_pokemonBase[i][j].paste(self.img_border, (0, 0), self.img_border)
+                if self.show_megas.get():
+                    if self.pokemonList[i].item.endswith("ite") and self.pokemonList[i].item != "Eviolite":
+                        self.img_pokemonBase[i][j].paste(self.img_border_mega, (0, 0), self.img_border_mega)
+                    else:
+                        self.img_pokemonBase[i][j].paste(self.img_border, (0, 0), self.img_border)
+                else:
+                    self.img_pokemonBase[i][j].paste(self.img_border, (0, 0), self.img_border)
                 self.img_pokemonIcons[i].append(ImageTk.PhotoImage(self.img_pokemonBase[i][j]))
             # reset all button functionality
             self.pokemonNotPicked[i] = True
@@ -729,7 +766,7 @@ if __name__ == "__main__":
         reader = csv.reader(fileName)
         next(reader, None)
         for row in reader:
-            if row[1] == "Grovyle":
+            if row[1] == "Shiftry":
                 break
             else:
                 ALL_POKEMON.append(Pokemon(row))
