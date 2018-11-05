@@ -5,8 +5,7 @@ except ImportError:
 from PIL import Image, ImageTk
 from RGBAImage import RGBAImage
 
-from Pokemon import Pokemon, ALL_POKEMON, ABILITIES
-from TypeChart import TypeChart, type_logic
+from Pokemon import Pokemon, ALL_POKEMON, ABILITIES , TypeChart, type_logic
 
 BATTLE_OPTIONS = ["StandardDraft", "RandomBattle", "NemesisDraft", "BanDraft"]
 AUCTION_OPTIONS = ["Trainers", "Auctions", "Leaderboards", "Prizes"]
