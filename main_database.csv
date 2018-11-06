@@ -11337,7 +11337,7 @@ Impish Nature
 - Block  
 - Avalanche  
 - Protect",FIX,Eww
-1382,Wormadam (F),413,Bug,Grass,PU,Leftovers,Anticipation,252 SpA / 4 SpD / 252 Spe,Modest,0 Atk,Quiver Dance,Hidden Power [Water],Giga Drain,Bug Buzz,"Wormadam @ Leftovers  
+1382,Wormadam,413,Bug,Grass,PU,Leftovers,Anticipation,252 SpA / 4 SpD / 252 Spe,Modest,0 Atk,Quiver Dance,Hidden Power [Water],Giga Drain,Bug Buzz,"Wormadam @ Leftovers  
 Ability: Anticipation  
 EVs: 252 SpA / 4 SpD / 252 Spe  
 Modest Nature  
@@ -11346,7 +11346,7 @@ IVs: 0 Atk
 - Hidden Power [Water]  
 - Giga Drain  
 - Bug Buzz",FIX,
-1383,Wormadam-Sandy (F),413,Bug,Ground,PU,Choice Band,Overcoat,252 HP / 252 Atk / 4 Spe,Adamant,,Rock Tomb,Earthquake,Sucker Punch,Bug Bite,"Wormadam-Sandy @ Choice Band  
+1383,Wormadam-Sandy ,413,Bug,Ground,PU,Choice Band,Overcoat,252 HP / 252 Atk / 4 Spe,Adamant,,Rock Tomb,Earthquake,Sucker Punch,Bug Bite,"Wormadam-Sandy @ Choice Band  
 Ability: Overcoat  
 EVs: 252 HP / 252 Atk / 4 Spe  
 Adamant Nature  
@@ -11354,7 +11354,7 @@ Adamant Nature
 - Earthquake  
 - Sucker Punch  
 - Bug Bite",FIX,
-1384,Wormadam-Trash (F),413,Bug,Steel,PU,Lum Berry,Overcoat,252 HP / 252 Atk / 4 SpD,Brave,0 Spe,Gyro Ball,Gunk Shot,Stealth Rock,Sucker Punch,"Wormadam-Trash @ Lum Berry  
+1384,Wormadam-Trash,413,Bug,Steel,PU,Lum Berry,Overcoat,252 HP / 252 Atk / 4 SpD,Brave,0 Spe,Gyro Ball,Gunk Shot,Stealth Rock,Sucker Punch,"Wormadam-Trash @ Lum Berry  
 Ability: Overcoat  
 EVs: 252 HP / 252 Atk / 4 SpD  
 Brave Nature  
@@ -11363,7 +11363,7 @@ IVs: 0 Spe
 - Gunk Shot  
 - Stealth Rock  
 - Sucker Punch",FIX,
-1385,Mothim (M),414,Bug,Flying,PU,Leftovers,Tinted Lens,252 SpA / 4 SpD / 252 Spe,Modest,0 Atk,Air Slash,Giga Drain,Bug Buzz,Quiver Dance,"Mothim @ Leftovers  
+1385,Mothim,414,Bug,Flying,PU,Leftovers,Tinted Lens,252 SpA / 4 SpD / 252 Spe,Modest,0 Atk,Air Slash,Giga Drain,Bug Buzz,Quiver Dance,"Mothim @ Leftovers  
 Ability: Tinted Lens  
 EVs: 252 SpA / 4 SpD / 252 Spe  
 Modest Nature  
@@ -11372,7 +11372,7 @@ IVs: 0 Atk
 - Giga Drain  
 - Bug Buzz  
 - Quiver Dance",FIX,
-1386,Mothim (M),414,Bug,Flying,PU,Focus Sash,Swarm,252 Atk / 4 SpD / 252 Spe,Jolly,,Tailwind,Acrobatics,Lunge,U-turn,"Mothim @ Focus Sash  
+1386,Mothim,414,Bug,Flying,PU,Focus Sash,Swarm,252 Atk / 4 SpD / 252 Spe,Jolly,,Tailwind,Acrobatics,Lunge,U-turn,"Mothim @ Focus Sash  
 Ability: Swarm  
 EVs: 252 Atk / 4 SpD / 252 Spe  
 Jolly Nature  
@@ -11380,7 +11380,7 @@ Jolly Nature
 - Acrobatics  
 - Lunge  
 - U-turn",FIX,
-1387,Mothim (M),414,Bug,Flying,PU,Leftovers,Tinted Lens,252 HP / 252 Def / 4 SpD,Bold,0 Atk,Rest,Sleep Talk,Quiver Dance,Bug Buzz,"Mothim (M) @ Leftovers  
+1387,Mothim,414,Bug,Flying,PU,Leftovers,Tinted Lens,252 HP / 252 Def / 4 SpD,Bold,0 Atk,Rest,Sleep Talk,Quiver Dance,Bug Buzz,"Mothim (M) @ Leftovers  
 Ability: Tinted Lens  
 EVs: 252 HP / 252 Def / 4 SpD  
 Bold Nature  
@@ -11389,7 +11389,7 @@ IVs: 0 Atk
 - Sleep Talk  
 - Quiver Dance  
 - Bug Buzz",FIX,
-1388,Vespiquen (F),416,Bug,Flying,PU,Custap Berry,Unnerve,252 HP / 252 Atk / 4 Def,Brave,0 Spe,Attack Order,U-turn,Aerial Ace,Destiny Bond,"Vespiquen (F) @ Custap Berry  
+1388,Vespiquen,416,Bug,Flying,PU,Custap Berry,Unnerve,252 HP / 252 Atk / 4 Def,Brave,0 Spe,Attack Order,U-turn,Aerial Ace,Destiny Bond,"Vespiquen (F) @ Custap Berry  
 Ability: Unnerve  
 EVs: 252 HP / 252 Atk / 4 Def  
 Brave Nature  
@@ -11398,7 +11398,7 @@ IVs: 0 Spe
 - U-turn  
 - Aerial Ace  
 - Destiny Bond",FIX,
-1389,Vespiquen (F),416,Bug,Flying,PU,Normalium Z,Pressure,252 HP / 252 SpA / 4 SpD,Quiet,,Attack Order,Power Gem,Captivate,Confuse Ray,"Vespiquen (F) @ Normalium Z  
+1389,Vespiquen,416,Bug,Flying,PU,Normalium Z,Pressure,252 HP / 252 SpA / 4 SpD,Quiet,,Attack Order,Power Gem,Captivate,Confuse Ray,"Vespiquen (F) @ Normalium Z  
 Ability: Unnerve  
 EVs: 252 HP / 252 SpA / 4 SpD  
 Quiet Nature  
@@ -11406,7 +11406,7 @@ Quiet Nature
 - Power Gem  
 - Captivate  
 - Confuse Ray",FIX,
-1390,Vespiquen (F),416,Bug,Flying,PU,Quick Claw,Pressure,168 HP / 168 Def / 172 SpD,Sassy,,Defend Order,Protect,Toxic,Heal Order,"Vespiquen (F) @ Quick Claw  
+1390,Vespiquen,416,Bug,Flying,PU,Quick Claw,Pressure,168 HP / 168 Def / 172 SpD,Sassy,,Defend Order,Protect,Toxic,Heal Order,"Vespiquen (F) @ Quick Claw  
 Ability: Pressure  
 EVs: 168 HP / 168 Def / 172 SpD  
 Sassy Nature  
@@ -11414,7 +11414,7 @@ Sassy Nature
 - Protect  
 - Toxic  
 - Heal Order",FIX,
-1391,Vespiquen (F),416,Bug,Flying,PU,Leftovers,Pressure,168 HP / 172 Def / 168 SpD,Impish,,Attack Order,Defend Order,Roost,Confuse Ray,"Vespiquen (F) @ Leftovers  
+1391,Vespiquen,416,Bug,Flying,PU,Leftovers,Pressure,168 HP / 172 Def / 168 SpD,Impish,,Attack Order,Defend Order,Roost,Confuse Ray,"Vespiquen (F) @ Leftovers  
 Ability: Pressure  
 EVs: 168 HP / 172 Def / 168 SpD  
 Impish Nature  
@@ -11422,7 +11422,7 @@ Impish Nature
 - Defend Order  
 - Roost  
 - Confuse Ray",FIX,
-1392,Vespiquen (F),416,Bug,Flying,PU,Focus Sash,Unnerve,252 Atk / 4 Def / 252 Spe,Jolly,,Tailwind,Aerial Ace,U-turn,Destiny Bond,"Vespiquen (F) @ Focus Sash  
+1392,Vespiquen,416,Bug,Flying,PU,Focus Sash,Unnerve,252 Atk / 4 Def / 252 Spe,Jolly,,Tailwind,Aerial Ace,U-turn,Destiny Bond,"Vespiquen (F) @ Focus Sash  
 Ability: Unnerve  
 EVs: 252 Atk / 4 Def / 252 Spe  
 Jolly Nature  
@@ -11430,7 +11430,7 @@ Jolly Nature
 - Aerial Ace  
 - U-turn  
 - Destiny Bond",FIX,
-1393,Vespiquen (F),416,Bug,Flying,PU,Choice Specs,Unnerve,252 HP / 4 Def / 252 SpA,Modest,0 Atk,Bug Buzz,Power Gem,Air Slash,Hidden Power [Ground],"Vespiquen (F) @ Choice Specs  
+1393,Vespiquen,416,Bug,Flying,PU,Choice Specs,Unnerve,252 HP / 4 Def / 252 SpA,Modest,0 Atk,Bug Buzz,Power Gem,Air Slash,Hidden Power [Ground],"Vespiquen (F) @ Choice Specs  
 Ability: Unnerve  
 EVs: 252 HP / 4 Def / 252 SpA  
 Modest Nature   
