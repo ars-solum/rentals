@@ -425,7 +425,7 @@ with open('main_database.csv', 'r') as fileName:
     reader = csv.reader(fileName)
     next(reader, None)
     for row in reader:
-        if row[1] == "Claydol":
+        if row[1] == "Chatot":
             break
         else:
             ALL_POKEMON.append(Pokemon(row))
