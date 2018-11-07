@@ -12,7 +12,7 @@ from random import shuffle
 
 from RGBAImage import RGBAImage
 
-from Pokemon import Pokemon, ALL_POKEMON, ABILITIES, TypeChart, type_logic
+from Pokemon import *
 from Sidebar import Sidebar
 
 from Battle import Battle
