@@ -1,0 +1,39 @@
+POKEMON,TYPE 1,TYPE 2,TIER,RARITY
+Dartrix,Grass,Flying,NFE,COMMON
+Gloom,Grass,Poison,NFE,COMMON
+Ivysaur,Grass,Poison,NFE,COMMON
+Roselia,Grass,Poison,NFE,COMMON
+Servine,Grass,,NFE,COMMON
+Ambipom,Normal,,NU,COMMON
+Rotom-Mow,Electric,Grass,NU,COMMON
+Vileplume,Grass,Poison,NU,COMMON
+Bellossom,Grass,,PU,COMMON
+Carnivine,Grass,,PU,COMMON
+Exeggutor-Alola,Grass,Dragon,PU,COMMON
+Gourgeist-Super,Ghost,Grass,PU,COMMON
+Gumshoos,Normal,,PU,COMMON
+Leafeon,Grass,,PU,COMMON
+Lilligant,Grass,,PU,COMMON
+Lurantis,Grass,,PU,COMMON
+Parasect,Bug,Grass,PU,COMMON
+Raichu-Alola,Electric,Psychic,PU,COMMON
+Shiftry,Grass,Dark,PU,COMMON
+Simisage,Grass,,PU,COMMON
+Trevenant,Ghost,Grass,PU,COMMON
+Ursaring,Normal,,PU,COMMON
+Wormadam (F),Bug,Grass,PU,COMMON
+Abomasnow,Ice,Grass,RU,RARE
+Decidueye,Grass,Ghost,RU,RARE
+Roserade,Grass,Poison,RU,RARE
+Tsareena,Grass,,RU,RARE
+Zygarde-10%,Dragon,Ground,RU,RARE
+Amoonguss,Grass,Poison,UU,RARE
+Cobalion,Fighting,Steel,UU,RARE
+Heracross,Bug,Fighting,UU,RARE
+Scizor,Bug,Steel,UU,RARE
+Breloom,Grass,Fighting,OU,ULTRA-RARE
+Pinsir,Bug,,OU,ULTRA-RARE
+Serperior,Grass,,OU,ULTRA-RARE
+Tapu Bulu,Grass,Fairy,OU,ULTRA-RARE
+Venusaur,Grass,Poison,OU,ULTRA-RARE
+Zygarde,Dragon,Ground,OU,ULTRA-RARE
