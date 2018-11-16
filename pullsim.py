@@ -274,7 +274,6 @@ class MainApp(tk.Tk):
                                 noMercy = True
                         if noMercy:
                             getPlayer(self.currentPlayer.get()).numPullsUntil[self.bannerNum] -= 1
-                            print(getPlayer(self.currentPlayer.get()).numPullsUntil[self.bannerNum])
                         self.label.config(text="Get %s within %d more 12-pulls!" % (self.names[i], getPlayer(self.currentPlayer.get()).numPullsUntil[self.bannerNum]))
 
             filename = os.path.join(fileDir, 'players/' + self.currentPlayer.get() + '.csv')
