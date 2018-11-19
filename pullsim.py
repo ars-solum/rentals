@@ -1,9 +1,12 @@
-import tkinter as tk
+try:
+    import tkinter as tk
+except:
+    import Tkinter as tk
 import random
 import os
 import csv
-from PIL import Image, ImageTk
-from RGBAImage import RGBAImage
+# from PIL import Image, ImageTk
+# from RGBAImage import RGBAImage
 
 pkmn_list = [[] for i in range(1)]
 
@@ -84,8 +87,10 @@ for player in playerNames:
             currPlayer = Player(player, currJewels, currTeam, currPulls)
         player_list.append(currPlayer)
     except:
-        with open(filename, 'w', newline='') as file:
-            writer = csv.writer(file, delimiter=',')
+        with open(filename, 'w') as file:
+            #writer = csv.DictWriter(file, lineterminator='\n')
+            #writer = csv.writer(file, delimiter=',')
+            writer = csv.writer(file, delimiter=',', lineterminator='\n')
             writer.writerow(["3000"])
         player_list.append(Player(player, 3000))
 
@@ -277,8 +282,8 @@ class MainApp(tk.Tk):
                         self.label.config(text="Get %s within %d more 12-pulls!" % (self.names[i], getPlayer(self.currentPlayer.get()).numPullsUntil[self.bannerNum]))
 
             filename = os.path.join(fileDir, 'players/' + self.currentPlayer.get() + '.csv')
-            with open(filename, 'w', newline='') as file:
-                writer = csv.writer(file, delimiter=',')
+            with open(filename, 'w') as file:
+                writer = csv.writer(file, delimiter=',', lineterminator='\n')
                 writer.writerow([str(getPlayer(self.currentPlayer.get()).jewels)])
                 writer.writerow(getPlayer(self.currentPlayer.get()).numPullsUntil)
                 for pkm in getPlayer(self.currentPlayer.get()).team:
