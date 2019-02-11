@@ -7,7 +7,6 @@ from RGBAImage import RGBAImage
 
 from Pokemon import Pokemon, ALL_POKEMON, ABILITIES, TypeChart, type_logic
 
-BATTLE_OPTIONS = ["StandardDraft", "RandomBattle", "NemesisDraft", "BanDraft"]
 AUCTION_OPTIONS = ["Trainers", "Auctions", "Leaderboards", "Prizes"]
 IMGTYPE = ["inactive", "active", "picked", "banned", "unknown"]
 

@@ -17,41 +17,43 @@ from Sidebar import Sidebar
 
 from Battle import Battle
 
-BATTLE_OPTIONS = ["StandardDraft", "RandomBattle", "NemesisDraft", "BanDraft"]
+ROOT = os.path.dirname(os.path.realpath(__file__))
+
+SIDEBAR_OPTIONS = ["StandardDraft", "RandomBattle"]
 AUCTION_OPTIONS = ["Trainers", "Auctions", "Leaderboards", "Prizes"]
 
 class MainApp(tk.Tk):
-    # constructor function
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
-        # initialize sidebar
-        f_buttonsidebar = tk.Frame(self)
-        f_buttonsidebar.grid(row=0, column=0, sticky="nsew")
-
-        self.sidebar = Sidebar(parent=f_buttonsidebar, controller=self)
+        # initialize main menu items
+        self.f_sidebar = tk.Frame(self)
+        self.f_sidebar.grid(row=0, column=0, rowspan=11, columnspan=2, sticky="nsew")
+        self.sidebar = Sidebar(parent=self.f_sidebar, controller=self)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
 
-        # initialize main container for frames
-        f_container = tk.Frame(self)
-        f_container.grid(row=0, column=1, rowspan=5, sticky="nsew")
-        f_container.grid_rowconfigure(0, weight=1)
-        f_container.grid_columnconfigure(0, weight=1)
+        self.f_container = tk.Frame(self)
+        self.f_container.grid(row=0, column=1, rowspan=10, columnspan=6, sticky="nsew")
 
         self.containerFrames = {}
 
         # initialize each menu layer
-        for i in range(4):
-            page_name = BATTLE_OPTIONS[i]
-            frame = Battle(parent=f_container, controller=self, mode=page_name)
+        for i in range(len(SIDEBAR_OPTIONS)):
+            page_name = SIDEBAR_OPTIONS[i]
+            frame = Battle(parent=self.f_container, controller=self, mode=page_name)
             self.containerFrames[page_name] = frame
-            frame.grid(row=0, column=1, rowspan=4, sticky="nsew")
+            frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
 
         for F in (Trainers, Auctions, Leaderboards, Prizes):
             page_name = F.__name__
-            frame = F(parent=f_container, controller=self)
+            frame = F(parent=self.f_container, controller=self)
             self.containerFrames[page_name] = frame
-            frame.grid(row=0, column=1, rowspan=4, sticky="nsew")
+            frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
+
+        for i in range(11):
+            self.grid_rowconfigure(i, weight=1)
+        for i in range(8):
+            self.grid_columnconfigure(i, weight=1)
 
         self.show_frame("StandardDraft")
         self.sidebar.set_selected("StandardDraft")

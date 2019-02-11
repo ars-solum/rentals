@@ -1,4 +1,4 @@
 from PIL import Image, ImageTk
 
 def RGBAImage(path):
-    return Image.open(path).convert("RGBA")
+    return ImageTk.PhotoImage(Image.open(path).convert("RGBA"))
