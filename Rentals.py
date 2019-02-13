@@ -19,8 +19,9 @@ from Battle import Battle
 
 ROOT = os.path.dirname(os.path.realpath(__file__))
 
-SIDEBAR_OPTIONS = ["StandardDraft", "RandomBattle"]
-AUCTION_OPTIONS = ["Trainers", "Auctions", "Leaderboards", "Prizes"]
+SIDEBAR_OPTIONS = ['Draft', 'Random',
+                   'Settings',
+                   'Trainers', 'Auctions', 'Leaderboards', 'Prizes']
 
 class MainApp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -55,8 +56,8 @@ class MainApp(tk.Tk):
         for i in range(8):
             self.grid_columnconfigure(i, weight=1)
 
-        self.show_frame("StandardDraft")
-        self.sidebar.set_selected("StandardDraft")
+        self.show_frame('Draft')
+        self.sidebar.set_selected('Draft')
 
     # menu changing function
     def show_frame(self, page_name):

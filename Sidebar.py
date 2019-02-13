@@ -10,7 +10,7 @@ from Pokemon import Pokemon, ALL_POKEMON, ABILITIES , TypeChart, type_logic
 ROOT = os.path.dirname(os.path.realpath(__file__))
 
 SIDEBAR_OPTIONS = ['Draft', 'Random',
-                   'GeneralSettings', 'AdvancedSettings',
+                   'Settings',
                    'Trainers', 'Auctions', 'Leaderboards', 'Prizes']
 
 class Sidebar(tk.Frame):
@@ -39,27 +39,24 @@ class Sidebar(tk.Frame):
             for j in range(len(SIDEBAR_OPTIONS)):
                 self.img_buttons[i].append(RGBAImage(os.path.join(ROOT, 'media', 'Common', 'button_%s_%s.png' %(self.button_states[i], SIDEBAR_OPTIONS[j]))))
                 if 0 == i and 0 == j:
-                    self.b_buttons.append(tk.Button(self, image=self.img_buttons[0][0], bd=0.1, command=lambda: self.controller.show_frame(SIDEBAR_OPTIONS[0])))
+                    self.buttons.append(tk.Button(self, image=self.img_buttons[0][0], bd=0.1, command=lambda: self.controller.show_frame(SIDEBAR_OPTIONS[0])))
                 if 1 == i and j > 0:
-                    self.b_buttons.append(tk.Button(self, image=self.img_buttons[i][j], bd=0.1, command=lambda i=i, j=j: self.controller.show_frame(SIDEBAR_OPTIONS[i*2+j])))
+                    self.buttons.append(tk.Button(self, image=self.img_buttons[i][j], bd=0.1, command=lambda i=i, j=j: self.controller.show_frame(SIDEBAR_OPTIONS[i*2+j])))
 
-            self.b_battleOptions[i].grid(row=i+1, column=0)
-            self.b_battleOptions[i].bind("<Enter>", lambda event, i=i: self.on_enter(i))
-            self.b_battleOptions[i].bind("<Leave>", lambda event, i=i: self.on_leave(i))
 
-        self.l_auctionModes = tk.Label(self.f_menuOptions[1], image=self.img_auctionModes)
-        self.l_auctionModes.grid(row=0, column=0, pady=(20, 5))
+        for i in range(0, 2):
+            self.buttons[i].grid(row=i+1, column=0, sticky="nsew") # battle modes
+            self.buttons[i].bind("<Enter>", lambda event, i=i: self.on_enter(i))
+            self.buttons[i].bind("<Leave>", lambda event, i=i: self.on_leave(i))
+        self.buttons[2].grid(row=4, column=0, sticky="nsew") # settings
+        self.buttons[2].bind("<Enter>", lambda event: self.on_enter(2))
+        self.buttons[2].bind("<Leave>", lambda event: self.on_leave(2))
+        for i in range(3, 7):
+            self.buttons[i].grid(row=i+4, column=0, sticky="nsew") # league modes
+            self.buttons[i].bind("<Enter>", lambda event, i=i: self.on_enter(i))
+            self.buttons[i].bind("<Leave>", lambda event, i=i: self.on_leave(i))
 
-        self.b_auctionOptions = []
-        for i in range(len(AUCTION_OPTIONS)):
-            self.img_selected_button.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\button_selected_{0}.png'.format(AUCTION_OPTIONS[i]))))
-            self.img_inactive_button.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\button_inactive_{0}.png'.format(AUCTION_OPTIONS[i]))))
 
-            self.b_auctionOptions.append(tk.Button(self.f_menuOptions[1], image=self.img_inactive_button[i+len(BATTLE_OPTIONS)], bd=0.1,
-                                                command=lambda i=i: controller.show_frame(AUCTION_OPTIONS[i])))
-            self.b_auctionOptions[i].grid(row=i+1, column=0)
-            self.b_auctionOptions[i].bind("<Enter>", lambda event, i=i: self.on_enter(i+4))
-            self.b_auctionOptions[i].bind("<Leave>", lambda event, i=i: self.on_leave(i+4))
 
     def on_enter(self, option):
         if option < 4:

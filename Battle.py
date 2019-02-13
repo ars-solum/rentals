@@ -2,11 +2,12 @@ try:
     import Tkinter as tk
 except ImportError:
     import tkinter as tk
-from PIL import Image, ImageTk
-from RGBAImage import RGBAImage
 
+import os
 import random
 from random import shuffle
+from PIL import Image, ImageTk
+from RGBAImage import RGBAImage
 
 from BanBox import BanBox
 from TeamBox import TeamBox
@@ -14,6 +15,8 @@ from HelpBox import HelpBox
 from SettingsBar import SettingsBar
 
 from Pokemon import Pokemon, ALL_POKEMON, ABILITIES, TypeChart, type_logic
+
+ROOT = os.path.dirname(os.path.realpath(__file__))
 
 BATTLE_OPTIONS = ["StandardDraft", "RandomBattle", "NemesisDraft", "BanDraft"]
 AUCTION_OPTIONS = ["Trainers", "Auctions", "Leaderboards", "Prizes"]
@@ -40,11 +43,11 @@ class Battle(tk.Frame):
         self.show_megas = tk.BooleanVar()
         self.show_megas.set(False)
 
-        self.img_border = RGBAImage('media\\border_%s.png' % self.mode)
-        self.img_border_mega = RGBAImage('media\\border_Mega.png')
-        self.img_inactive_Blank_base = RGBAImage('media\\button_inactive_Blank.png')
-        self.img_active_Blank_base = RGBAImage('media\\button_active_Blank.png')
-        self.img_inactive_Blank_base.paste(self.img_border, (0, 0), self.img_border)
+        self.img_border = RGBAImage(os.path.join(ROOT, 'media', 'Common', 'border_%s.png' %(self.mode)))
+        self.img_border_mega = RGBAImage(os.path.join(ROOT, 'media', 'Common', 'border_Mega.png'))
+        self.img_inactive_Blank_base = RGBAImage(os.path.join(ROOT, 'media', 'Common', 'button_inactive_Blank.png'))
+        self.img_active_Blank_base = RGBAImage(os.path.join(ROOT, 'media', 'Common', 'button_active_Blank.png'))
+        self.img_inactive_Blank_base.paste(self.img_border, (0, 0))
         self.img_active_Blank_base.paste(self.img_border, (0, 0), self.img_border)
         self.img_inactive_Blank = ImageTk.PhotoImage(self.img_inactive_Blank_base)
         self.img_active_Blank = ImageTk.PhotoImage(self.img_active_Blank_base)
