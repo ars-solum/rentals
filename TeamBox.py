@@ -19,7 +19,7 @@ class TeamBox(tk.Frame):
 
         self.img_team = []
         for i in range(2):
-            self.img_team.append(ImageTk.PhotoImage(RGBAImage('media\\Common\\T{0}T_logo_{1}.png'.format(self.team, IMGTYPE[i]))))
+            self.img_team.append(RGBAImage('media\\Common\\T{0}T_logo_{1}.png'.format(self.team, IMGTYPE[i]))))
         if self.team == 2:
             self.img_cpu_team = []
             for i in range(2):

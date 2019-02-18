@@ -7,7 +7,7 @@ import os
 import random
 from random import shuffle
 from PIL import Image, ImageTk
-from RGBAImage import RGBAImage
+from RGBAImage import RGBAImage, RGBAImage2
 
 from BanBox import BanBox
 from TeamBox import TeamBox
@@ -43,10 +43,10 @@ class Battle(tk.Frame):
         self.show_megas = tk.BooleanVar()
         self.show_megas.set(False)
 
-        self.img_border = RGBAImage(os.path.join(ROOT, 'media', 'Common', 'border_%s.png' %(self.mode)))
-        self.img_border_mega = RGBAImage(os.path.join(ROOT, 'media', 'Common', 'border_Mega.png'))
-        self.img_inactive_Blank_base = RGBAImage(os.path.join(ROOT, 'media', 'Common', 'button_inactive_Blank.png'))
-        self.img_active_Blank_base = RGBAImage(os.path.join(ROOT, 'media', 'Common', 'button_active_Blank.png'))
+        self.img_border = RGBAImage2(os.path.join(ROOT, 'media', 'Common', 'border_%s.png' %(self.mode)))
+        self.img_border_mega = RGBAImage2(os.path.join(ROOT, 'media', 'Common', 'border_Mega.png'))
+        self.img_inactive_Blank_base = RGBAImage2(os.path.join(ROOT, 'media', 'Common', 'button_inactive_Blank.png'))
+        self.img_active_Blank_base = RGBAImage2(os.path.join(ROOT, 'media', 'Common', 'button_active_Blank.png'))
         self.img_inactive_Blank_base.paste(self.img_border, (0, 0))
         self.img_active_Blank_base.paste(self.img_border, (0, 0), self.img_border)
         self.img_inactive_Blank = ImageTk.PhotoImage(self.img_inactive_Blank_base)
