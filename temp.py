@@ -95,7 +95,7 @@ class Draft(tk.Frame):
         for i in range(3):
             for j in range(6):
                 x = (i*6) + j
-                self.pool_buttons.append(tk.Button(self, text="???", command=None))
+                self.pool_buttons.append(tk.Button(self, text="? ? ? ? ?", command=None))
                 self.pool_buttons[x].grid(row=i, column=j, padx=5, pady=5)
         ##### Pool Pokemon #####
 
@@ -106,7 +106,7 @@ class Draft(tk.Frame):
         self.ban_buttons = [[], []]
         for i in range(2):
             for j in range(2):
-                self.ban_buttons[i].append(tk.Button(self, text="???", command=None))
+                self.ban_buttons[i].append(tk.Button(self, text="? ? ? ? ?", command=None))
                 self.ban_buttons[i][j].grid(row=4, column=i*4+j, padx=5, pady=5, sticky="nsew")
         ##### Ban Boxes #####
 
@@ -120,7 +120,7 @@ class Draft(tk.Frame):
             for row in range(3):
                 for column in range(2):
                     x = (row * 2) + column
-                    self.team_buttons[team].append(tk.Button(self, text="???", command=None))
+                    self.team_buttons[team].append(tk.Button(self, text="? ? ? ? ?", command=None))
                     self.team_buttons[team][x].grid(row=row+6, column=(team*4)+column, padx=5, pady=5, sticky="nsew")
         ##### Team Boxes #####
 
@@ -129,7 +129,13 @@ class Draft(tk.Frame):
         self.settingsV1.grid(row=6, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
         self.settingsV2 = tk.Button(self, text="Pokemon Settings", command=None)
         self.settingsV2.grid(row=7, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
+        ##### Settings #####
 
+        ##### Start/Finish Buttons #####
+        self.start_button = tk.Button(self, text="New Game", command=None)
+        self.start_button.grid(row=8, column=2, padx=5, pady=5, sticky="nsew")
+        self.finish_button = tk.Button(self, text="Get Teams", command=None)
+        self.finish_button.grid(row=8, column=3, padx=5, pady=5, sticky="nsew")
 
 ###############################################################################
 
