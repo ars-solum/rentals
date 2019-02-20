@@ -24,6 +24,13 @@ def debug(message=None):
 
 ROOT = os.path.dirname(os.path.realpath(__file__))
 
+TIERS_SINGLES = ['LC', 'LC Uber', 'Untiered (PU)', 'NFE', 'PU', 'NU', 'RU', 'UU', 'OU', 'Uber']
+TIERS_DOUBLES = ['LC', 'Untiered', 'DUU', 'DOU', 'DUber']
+GENERATIONS = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola']
+TYPES = ['Bug', 'Dark', 'Dragon', 'Electric', 'Fairy', 'Fighting', 'Fire', 'Flying', 'Ghost', 'Grass', 'Ground', 'Ice', 'Normal', 'Poison', 'Psychic', 'Rock', 'Steel', 'Water']
+ITEMS = ['Mega Stones', 'Z-Crystals', 'Berries', 'Choice Band', 'Choice Scarf', 'Choice Specs', 'Leftovers', 'Life Orb']
+GIMMICKS = ['Sun', 'Rain', 'Sand', 'Hail', 'Trick Room', 'Baton Pass', 'E-Terrain', 'G-Terrain', 'M-Terrain', 'P-Terrain']
+
 class MainApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -39,7 +46,7 @@ class MainApp(tk.Tk):
 
         self.pages = {}
 
-        for Class in (Draft, Random, Banners):
+        for Class in (Draft, Random, DraftPokemonSettings, Banners):
             page_name = Class.__name__
             frame = Class(parent=self.main_frame, controller=self)
             self.pages[page_name] = frame
@@ -85,22 +92,34 @@ class Draft(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        ##### Private Variables #####
+        # misc. variables
         self.alpha = 0
         self.turn = 0
         self.game_activated = False
-        self.pokemonNotPicked = [True for i in range(18)]
+        self.pokemon_not_picked = [True for i in range(18)]
+        # filter/exclusion variables
+        self.pokemon_exclusion_tiers_singles = [tk.StringVar() for i in range(len(TIERS_SINGLES))]
+        self.pokemon_exclusion_tiers_doubles = [tk.StringVar() for i in range(len(TIERS_DOUBLES))]
+        self.pokemon_exclusion_generations = [tk.StringVar() for i in range(len(GENERATIONS))]
+        self.pokemon_exclusion_types = [tk.StringVar() for i in range(len(TYPES))]
+        self.pokemon_exclusion_items = [tk.StringVar() for i in range(len(ITEMS))]
+        self.pokemon_exclusion_gimmicks = [tk.StringVar() for i in range(len(GIMMICKS))]
+        self.pokemon_exclusion_usages = []
+        #############################
 
         ##### Pool Pokemon #####
+        self.pokemon_pool_list = []
         self.pool_buttons = []
         for i in range(3):
             for j in range(6):
                 x = (i*6) + j
                 self.pool_buttons.append(tk.Button(self, text="? ? ? ? ?", command=None))
                 self.pool_buttons[x].grid(row=i, column=j, padx=5, pady=5)
-        ##### Pool Pokemon #####
+        ########################
 
         ##### Ban Boxes #####
-        self.bans = [[], []]
+        self.pokemon_ban_list = [[], []]
         self.ban_text = tk.Label(self, text="BANS")
         self.ban_text.grid(row=4, column=2, columnspan=2, sticky="nsew")
         self.ban_buttons = [[], []]
@@ -108,11 +127,11 @@ class Draft(tk.Frame):
             for j in range(2):
                 self.ban_buttons[i].append(tk.Button(self, text="? ? ? ? ?", command=None))
                 self.ban_buttons[i][j].grid(row=4, column=i*4+j, padx=5, pady=5, sticky="nsew")
-        ##### Ban Boxes #####
+        #####################
 
         ##### Team Boxes #####
         self.team_text = []
-        self.team_list = [[None for i in range(6)] for j in range(2)]
+        self.pokemon_team_list = [[None for i in range(6)] for j in range(2)]
         self.team_buttons = [[], []]
         for team in range(2):
             self.team_text.append(tk.Label(self, text="TEAM %s" % str(team+1)))
@@ -122,24 +141,60 @@ class Draft(tk.Frame):
                     x = (row * 2) + column
                     self.team_buttons[team].append(tk.Button(self, text="? ? ? ? ?", command=None))
                     self.team_buttons[team][x].grid(row=row+6, column=(team*4)+column, padx=5, pady=5, sticky="nsew")
-        ##### Team Boxes #####
+        ######################
 
         ##### Settings #####
         self.settingsV1 = tk.Button(self, text="Draft Settings", command=None)
         self.settingsV1.grid(row=6, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
-        self.settingsV2 = tk.Button(self, text="Pokemon Settings", command=None)
+        self.settingsV2 = tk.Button(self, text="Pokemon Settings", command=lambda: self.pokemon_settings())
         self.settingsV2.grid(row=7, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
-        ##### Settings #####
+        ######################
 
         ##### Start/Finish Buttons #####
-        self.start_button = tk.Button(self, text="New Game", command=None)
+        self.start_button = tk.Button(self, text="New Game", command=lambda: self.new_game())
         self.start_button.grid(row=8, column=2, padx=5, pady=5, sticky="nsew")
         self.finish_button = tk.Button(self, text="Get Teams", command=None)
         self.finish_button.grid(row=8, column=3, padx=5, pady=5, sticky="nsew")
+        ################################
+
+    def pokemon_settings(self):
+        self.controller.show_frame('DraftPokemonSettings')
+
+    def new_game(self):
+        # reset private variables
+        self.game_activated = True
+        self.turn = 0
+        self.pokemon_pool_list = []
+        self.pokemon_ban_list = [[], []]
+        self.pokemon_team_list = [[None for i in range(6)] for j in range(2)]
+
+        temp_counter = 0
+        while temp_counter < 18:
+            temp_new_pokemon = random.choice(ALL_POKEMON)
+            if (self.check_validity(temp_new_pokemon)):
+                self.pokemon_pool_list.append(temp_new_pokemon)
+                temp_counter += 1
+
+    def check_validity(self, pokemon):
+        if ((pokemon in self.pokemon_pool_list) or
+            (pokemon.name in [pool.name for pool in self.pokemon_pool_list]) or
+            (pokemon.type[0] in [item.type[0]])
+            return False
+        elif
 
 ###############################################################################
 
+###############################################################################
+class DraftPokemonSettings(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        print(self.parent_page().turn)
 
+    def parent_page(self):
+        return self.controller.pages['Draft']
+
+###############################################################################
 
 ###############################################################################
 class Random(tk.Frame):

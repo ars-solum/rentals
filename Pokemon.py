@@ -409,26 +409,33 @@ ABILITIES = {}
 
 class Pokemon:
     def __init__(self, row):
-        self.id = row[0]
-        self.name = row[1]
-        self.dex = row[2]
-        self.type = [row[3], row[4]]
-        self.tier = row[5]
-        self.item = row[6]
-        self.ability = row[7]
-        self.evSpread = row[8]
-        self.nature = row[9]
-        self.ivSpread = row[10]
-        self.moves = [row[11], row[12], row[13], row[14]]
+        self.name = row[0]
+        self.dex = row[1]
+        self.type = [row[2], row[3]]
+        self.tier = row[4]
+        self.rarity = row[5]
+        self.tag = row[6]
+        self.item = row[7]
+        self.ability = row[8]
+        self.evSpread = row[9]
+        self.nature = row[10]
+        self.ivSpread = row[11]
+        self.moves = [row[12], row[13], row[14], row[15]]
+        # statistics
+        self.generated_draft = row[17]
+        self.generated_nemesis = row[18]
+        self.generated_random = row[19]
+        self.generated_total = row[20]
+        self.picked_draft = row[21]
+        self.picked_nemesis = row[22]
+        self.picked_total = row[23]
+        self.banned_total = row[24]
 
 with open('main_database.csv', 'r') as fileName:
     reader = csv.reader(fileName)
     next(reader, None)
     for row in reader:
-        if row[1] == "Herdier":
-            break
-        else:
-            ALL_POKEMON.append(Pokemon(row))
+        ALL_POKEMON.append(Pokemon(row))
 
 with open('Abilities.csv', 'r') as fileName:
     reader = csv.reader(fileName)
