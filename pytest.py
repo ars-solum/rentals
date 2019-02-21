@@ -1,3 +1,6 @@
-test = ['A', '']
+test = []
 
-list = ['A']
+list = ['C', 'B', 'A', 'D', '']
+
+test.extend(list)
+print(test)

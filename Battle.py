@@ -28,11 +28,11 @@ class Battle(tk.Frame):
         self.controller = controller
         self.mode = mode
 
-        # initialize variables and images
-        self.alpha = 0
-        self.turn = 0
-        self.activated = False
-        self.pokemonNotPicked = [True for i in range(18)]
+        # # initialize variables and images
+        # self.alpha = 0
+        # self.turn = 0
+        # self.activated = False
+        # self.pokemonNotPicked = [True for i in range(18)]
 
         self.assist = tk.BooleanVar()
         self.assist.set(False)
@@ -52,43 +52,43 @@ class Battle(tk.Frame):
         self.img_inactive_Blank = ImageTk.PhotoImage(self.img_inactive_Blank_base)
         self.img_active_Blank = ImageTk.PhotoImage(self.img_active_Blank_base)
 
-        # initialize pool of pokemon buttons
-        if "Random" not in self.mode:
-            self.b_icons = []
-            self.img_pokemon = [[] for i in range(18)]
-            for i in range(3):
-                for j in range(6):
-                    x = (i*6)+j
-                    self.b_icons.append(tk.Button(self, image=self.img_inactive_Blank, bd=0.1, command=None))
-                    self.b_icons[x].grid(row=i, column=j, padx=5, pady=5)
-                    self.b_icons[x].bind("<Enter>", lambda event, x=x: self.on_enter(x))
-                    self.b_icons[x].bind("<Leave>", lambda event, x=x: self.on_leave(x))
-
-        # initialize team boxes
-        self.f_teams = []
-        if "Ban" in self.mode:
-            self.f_bans = []
-        for i in range(2):
-            if "Ban" in self.mode:
-                self.f_bans.append(BanBox(parent=self, controller=self, team=i+1))
-                self.f_bans[i].grid(row=3, column=i*3, columnspan=3, padx=5, sticky="nsew")
-                self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
-                self.f_teams[i].grid(row=4, column=i*3, columnspan=3, padx=10, sticky="nsew")
-            else:
-                self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
-                self.f_teams[i].grid(row=3, column=i*3, columnspan=3, padx=10, pady=5, sticky="nsew")
-
-        # initialize helpful tips box
-        if "Random" not in self.mode:
-            self.helpbox = HelpBox(parent=self, controller=self)
-            if "Ban" in self.mode:
-                self.helpbox.grid(row=5, column=0, columnspan=6, pady=10)
-            else:
-                self.helpbox.grid(row=4, column=0, columnspan=6, pady=10)
-
-        # initialize settings side bar
-        self.settings = SettingsBar(parent=self, controller=self)
-        self.settings.grid(row=0, column=7, rowspan=8, sticky="n")
+        # # initialize pool of pokemon buttons
+        # if "Random" not in self.mode:
+        #     self.b_icons = []
+        #     self.img_pokemon = [[] for i in range(18)]
+        #     for i in range(3):
+        #         for j in range(6):
+        #             x = (i*6)+j
+        #             self.b_icons.append(tk.Button(self, image=self.img_inactive_Blank, bd=0.1, command=None))
+        #             self.b_icons[x].grid(row=i, column=j, padx=5, pady=5)
+        #             self.b_icons[x].bind("<Enter>", lambda event, x=x: self.on_enter(x))
+        #             self.b_icons[x].bind("<Leave>", lambda event, x=x: self.on_leave(x))
+        #
+        # # initialize team boxes
+        # self.f_teams = []
+        # if "Ban" in self.mode:
+        #     self.f_bans = []
+        # for i in range(2):
+        #     if "Ban" in self.mode:
+        #         self.f_bans.append(BanBox(parent=self, controller=self, team=i+1))
+        #         self.f_bans[i].grid(row=3, column=i*3, columnspan=3, padx=5, sticky="nsew")
+        #         self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
+        #         self.f_teams[i].grid(row=4, column=i*3, columnspan=3, padx=10, sticky="nsew")
+        #     else:
+        #         self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
+        #         self.f_teams[i].grid(row=3, column=i*3, columnspan=3, padx=10, pady=5, sticky="nsew")
+        #
+        # # initialize helpful tips box
+        # if "Random" not in self.mode:
+        #     self.helpbox = HelpBox(parent=self, controller=self)
+        #     if "Ban" in self.mode:
+        #         self.helpbox.grid(row=5, column=0, columnspan=6, pady=10)
+        #     else:
+        #         self.helpbox.grid(row=4, column=0, columnspan=6, pady=10)
+        #
+        # # initialize settings side bar
+        # self.settings = SettingsBar(parent=self, controller=self)
+        # self.settings.grid(row=0, column=7, rowspan=8, sticky="n")
 
     def playCPU(self):
         if self.vscpu.get():
@@ -130,34 +130,53 @@ class Battle(tk.Frame):
                                         self.f_teams[k].b_team_pokemon[m].config(image=self.img_pokemonIcons[i][0])
                                         break
 
-
     def activate(self):
-        # reset settings
-        self.activated = True
-        self.turn = 0
-        self.pokemonList = []
-        counter = 0
-        excludeTiers = []
-        for i in range(len(self.settings.tierExcludes)):
-            if self.settings.tierExcludes[i].get() != "":
-                excludeTiers.append(self.settings.tierExcludes[i].get())
+        # # reset settings
+        # self.activated = True
+        # self.turn = 0
+        # self.pokemonList = []
+        # counter = 0
+        # excludeTiers = []
+        # for i in range(len(self.settings.tierExcludes)):
+        #     if self.settings.tierExcludes[i].get() != "":
+        #         excludeTiers.append(self.settings.tierExcludes[i].get())
+        #
+        # # pick new pokemon
+        # while counter < 18:
+        #     newPokemon = random.choice(ALL_POKEMON)
+        #     if not self.pokemonList:
+        #         self.pokemonList.append(newPokemon)
+        #         counter += 1
+        #     else:
+        #         # check if pokemon should not be added
+        #         add = True
+        #         if newPokemon.name in (pkmn.name for pkmn in self.pokemonList):
+        #             add = False
+        #         if newPokemon.tier in excludeTiers:
+        #             add = False
+        #         if add:
+        #             self.pokemonList.append(newPokemon)
+        #             counter += 1
+        # # reset all button functionality
+        # self.pokemonNotPicked[i] = True
+        # if self.blind.get():
+        #     self.b_icons[i].config(image=self.img_pokemonIcons[i][4], command=lambda i=i: self.pickPokemon(i))
+        # else:
+        #     self.b_icons[i].config(image=self.img_pokemonIcons[i][0], command=lambda i=i: self.pickPokemon(i))
 
-        # pick new pokemon
-        while counter < 18:
-            newPokemon = random.choice(ALL_POKEMON)
-            if not self.pokemonList:
-                self.pokemonList.append(newPokemon)
-                counter += 1
-            else:
-                # check if pokemon should not be added
-                add = True
-                if newPokemon.name in (pkmn.name for pkmn in self.pokemonList):
-                    add = False
-                if newPokemon.tier in excludeTiers:
-                    add = False
-                if add:
-                    self.pokemonList.append(newPokemon)
-                    counter += 1
+        # # clear teams
+        # for i in range(2):
+        #     self.f_teams[i].reset_team()
+        #
+        # # get list of counters for each pokemon
+        # self.helpbox.counter_pokemon = [[] for j in range(18)]
+        # for j in range(18):
+        #     for k in range(18):
+        #         if j != k:
+        #             if type_logic(self.pokemonList[k], self.pokemonList[j]):
+        #                 self.helpbox.counter_pokemon[j].append(self.pokemonList[k].name)
+        # for counters in self.helpbox.counter_pokemon:
+        #     shuffle(counters)
 
         # get pokemon icons
         self.img_pokemonBase = [[] for i in range(18)]
@@ -173,26 +192,6 @@ class Battle(tk.Frame):
                 else:
                     self.img_pokemonBase[i][j].paste(self.img_border, (0, 0), self.img_border)
                 self.img_pokemonIcons[i].append(ImageTk.PhotoImage(self.img_pokemonBase[i][j]))
-            # reset all button functionality
-            self.pokemonNotPicked[i] = True
-            if self.blind.get():
-                self.b_icons[i].config(image=self.img_pokemonIcons[i][4], command=lambda i=i: self.pickPokemon(i))
-            else:
-                self.b_icons[i].config(image=self.img_pokemonIcons[i][0], command=lambda i=i: self.pickPokemon(i))
-
-        # clear teams
-        for i in range(2):
-            self.f_teams[i].reset_team()
-
-        # get list of counters for each pokemon
-        self.helpbox.counter_pokemon = [[] for j in range(18)]
-        for j in range(18):
-            for k in range(18):
-                if j != k:
-                    if type_logic(self.pokemonList[k], self.pokemonList[j]):
-                        self.helpbox.counter_pokemon[j].append(self.pokemonList[k].name)
-        for counters in self.helpbox.counter_pokemon:
-            shuffle(counters)
 
     def fade_in(self, i, button1, button2):
         if self.alpha > 1.0:

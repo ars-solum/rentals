@@ -406,6 +406,9 @@ def type_logic(attackingPokemon, defendingPokemon):
 
 ALL_POKEMON = []
 ABILITIES = {}
+MEGA_STONES = []
+Z_CRYSTALS = []
+BERRIES = []
 
 class Pokemon:
     def __init__(self, row):
@@ -441,3 +444,13 @@ with open('Abilities.csv', 'r') as fileName:
     reader = csv.reader(fileName)
     for row in reader:
         ABILITIES[row[0]] = [row[x] for x in range(1,4) if row[x] != '']
+
+with open('Items.csv', 'r') as fileName:
+    reader = csv.reader(fileName)
+    for row in reader:
+        if 'ite' in row[0] and (row[0] != 'Eviolite' or row[0] != 'White Herb'):
+            MEGA_STONES.append(row[0])
+        if 'ium Z' in row[0]:
+            Z_CRYSTALS.append(row[0])
+        if 'Berry' in row[0] and row[0] != 'Berry Juice':
+            BERRIES.append(row[0])
