@@ -46,7 +46,7 @@ class MainApp(tk.Tk):
 
         self.pages = {}
 
-        for Class in (Draft, Random, GenerateSettings, Banners):
+        for Class in (Draft, Random, DraftSettings, GenerateSettings, Banners):
             page_name = Class.__name__
             frame = Class(parent=self.main_frame, controller=self)
             self.pages[page_name] = frame
@@ -98,6 +98,12 @@ class Draft(tk.Frame):
         self.turn = 0
         self.game_activated = False
         self.pokemon_not_picked = [True for i in range(18)]
+        self.battle_mode = tk.StringVar()
+        self.battle_mode.set('Singles')
+        self.draft_mode = tk.StringVar()
+        self.draft_mode.set('Standard')
+        self.ban_number = tk.IntVar()
+        self.ban_number.set(2)
         for i in range(8):
             self.grid_rowconfigure(i, weight=1)
         for i in range(6):
@@ -153,6 +159,8 @@ class Draft(tk.Frame):
         ######################
 
         ##### Settings #####
+        self.mode_text = tk.Label(self, text="%s Draft" % self.draft_mode.get())
+        self.mode_text.grid(row=5, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
         self.settingsV1 = tk.Button(self, text="Draft Settings", command=lambda: self.controller.show_frame('DraftSettings'))
         self.settingsV1.grid(row=6, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
         self.settingsV2 = tk.Button(self, text="Generate Settings", command=lambda: self.controller.show_frame('GenerateSettings'))
@@ -175,28 +183,41 @@ class Draft(tk.Frame):
         self.pokemon_team_list = [[None for i in range(6)] for j in range(2)]
         self.pokemon_not_picked = [True for i in range(18)]
 
+        temp_exclude_tiers = list(filter(None, [i.get() for i in self.pokemon_exclusion_tiers_singles]))
+        temp_exclude_types = list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))
+        temp_exclude_gimmicks = list(filter(None, [i.get() for i in self.pokemon_exclusion_gimmicks]))
+        temp_list = []
+        for pokemon in ALL_POKEMON:
+            if ((pokemon.name in temp_list) or
+                (pokemon.tier in temp_exclude_tiers) or
+                (pokemon.type[0] in temp_exclude_types) or
+                (pokemon.type[1] and pokemon.type[1] in temp_exclude_types) or
+                (self.check_valid_generation(pokemon)) or
+                (self.check_valid_item(pokemon)) or
+                (pokemon.tag in temp_exclude_gimmicks)):
+                continue
+            else:
+                temp_list.append(pokemon)
         temp_counter = 0
         while temp_counter < 18:
-            temp_new_pokemon = random.choice(ALL_POKEMON)
+            temp_new_pokemon = random.choice(temp_list)
             if (self.check_validity(temp_new_pokemon)):
                 self.pokemon_pool_list.append(temp_new_pokemon)
                 temp_counter += 1
-        for pokemon in self.pokemon_pool_list:
-            debug(pokemon.name)
+        print([i.name for i in self.pokemon_pool_list])
         self.get_checks_and_counters()
         for i in range(18):
-            self.pool_buttons[i].config(text=self.pokemon_pool_list[i].name,
-                                        command=lambda i=i: self.add_to_team(i))
+            self.pool_buttons[i].config(text=self.pokemon_pool_list[i].name, command=lambda i=i: self.add_to_team(i))
 
     def check_validity(self, pokemon):
         if ((pokemon in self.pokemon_pool_list) or
             (pokemon.name in [pool.name for pool in self.pokemon_pool_list]) or
-            (pokemon.tier in [i.get() for i in self.pokemon_exclusion_tiers_singles]) or
-            (pokemon.type[0] in [i.get() for i in self.pokemon_exclusion_types]) or
-            (pokemon.type[1] and pokemon.type[1] in [i.get() for i in self.pokemon_exclusion_types]) or
+            (pokemon.tier in list(filter(None, [i.get() for i in self.pokemon_exclusion_tiers_singles]))) or
+            (pokemon.type[0] in list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))) or
+            (pokemon.type[1] and pokemon.type[1] in list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))) or
             (self.check_valid_generation(pokemon)) or
             (self.check_valid_item(pokemon)) or
-            (pokemon.tag in [i.get() for i in self.pokemon_exclusion_gimmicks])):
+            (pokemon.tag in list(filter(None, [i.get() for i in self.pokemon_exclusion_gimmicks])))):
             return False
         else:
             return True
@@ -231,17 +252,15 @@ class Draft(tk.Frame):
 
     def check_valid_item(self, pokemon):
         item_list = []
-        for item in [j.get() for j in self.pokemon_exclusion_items]:
+        for item in list(filter(None, [i.get() for i in self.pokemon_exclusion_items])):
             if item == 'Mega Stones':
                 item_list.extend(MEGA_STONES)
             elif item == 'Z-Crystals':
                 item_list.extend(Z_CRYSTALS)
             elif item == 'Berries':
                 item_list.extend(BERRIES)
-            elif item:
-                item_list.append(item)
             else:
-                continue
+                item_list.append(item)
         if pokemon.item in item_list:
             return True
         return False
@@ -262,8 +281,15 @@ class Draft(tk.Frame):
             if self.turn < 12: # 12 == all pokemon picked for both teams
                 self.pokemon_not_picked[pool_number] = False
                 self.pool_buttons[pool_number].config(text="- - - - -", command=None)
-                team_number = int(self.turn%2)
-                slot_number = int(self.turn/2)
+                if self.draft_mode.get() == 'Standard':
+                    team_number = int(self.turn%2)
+                    slot_number = int(self.turn/2)
+                if self.draft_mode.get() == 'Nemesis':
+                    team_number = int(self.turn+1%2)
+                    slot_number = int(self.turn/2)
+                if self.draft_mode.get() == 'First Pick':
+                    team_number = int(self.turn%2)
+                    slot_number = int(self.turn/2)
                 self.pokemon_team_list[team_number][slot_number] = self.pokemon_pool_list[pool_number]
                 self.team_buttons[team_number][slot_number].config(text=self.pokemon_pool_list[pool_number].name,
                                                                    command=lambda i=pool_number, j=team_number, k=slot_number: self.remove_from_team(i, j, k))
@@ -291,6 +317,49 @@ class DraftSettings(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
+        self.battle_mode_text = tk.Label(self, text="Battle Mode")
+        self.battle_mode_text.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.battle_mode_buttons = []
+        battle_modes = ['Singles', 'Doubles']
+        for i in range(len(battle_modes)):
+            self.battle_mode_buttons.append(tk.Radiobutton(self, text=battle_modes[i],
+                                                           variable=self.parent_page().battle_mode,
+                                                           indicatoron=0,
+                                                           width=10,
+                                                           value=battle_modes[i]))
+            self.battle_mode_buttons[i].grid(row=1+int(i/5), column=(i%5)+1, pady=5, sticky="w")
+
+        self.draft_mode_text = tk.Label(self, text="Draft Mode")
+        self.draft_mode_text.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.draft_mode_buttons = []
+        draft_modes = ['Standard', 'Nemesis', 'First Pick']
+        for i in range(len(draft_modes)):
+            self.draft_mode_buttons.append(tk.Radiobutton(self, text=draft_modes[i],
+                                                           variable=self.parent_page().draft_mode,
+                                                           indicatoron=0,
+                                                           width=10,
+                                                           value=draft_modes[i]))
+            self.draft_mode_buttons[i].grid(row=2+int(i/5), column=(i%5)+1, pady=5, sticky="w")
+
+        self.ban_number_text = tk.Label(self, text="Bans")
+        self.ban_number_text.grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.ban_number_buttons = []
+        ban_number = [0, 1, 2]
+        for i in range(len(ban_number)):
+            self.ban_number_buttons.append(tk.Radiobutton(self, text=ban_number[i],
+                                                           variable=self.parent_page().ban_number,
+                                                           indicatoron=0,
+                                                           width=10,
+                                                           value=ban_number[i]))
+            self.ban_number_buttons[i].grid(row=3+int(i/5), column=(i%5)+1, pady=5, sticky="w")
+
+        self.back_button = tk.Button(self, text="Back", command=lambda: self.controller.show_frame('Draft'))
+        self.back_button.grid(row=15, column=1, columnspan=2, pady=5, sticky="nsew")
+        for i in range(16):
+            self.grid_rowconfigure(i, weight=1)
+        for i in range(6):
+            self.grid_columnconfigure(i, weight=1)
 
     def parent_page(self):
         return self.controller.pages['Draft']
@@ -375,7 +444,8 @@ class GenerateSettings(tk.Frame):
         temp_counter = 0
         temp_list = []
         for pokemon in ALL_POKEMON:
-            if ((pokemon.name in temp_list) or
+            if ((pokemon.name in [i.name for i in temp_list]) or
+                (pokemon.dex in [j.dex for j in temp_list]) or
                 (pokemon.tier in temp_exclude_tiers) or
                 (pokemon.type[0] in temp_exclude_types) or
                 (pokemon.type[1] and pokemon.type[1] in temp_exclude_types) or
@@ -384,16 +454,17 @@ class GenerateSettings(tk.Frame):
                 (pokemon.tag in temp_exclude_gimmicks)):
                 continue
             else:
-                temp_list.append(pokemon.name)
+                temp_list.append(pokemon)
                 temp_counter += 1
-            if temp_counter >= 18:
-                break
         if temp_counter >= 18:
             self.controller.show_frame('Draft')
         else:
             top = tk.Toplevel(self.controller)
-            
-            # warning menu
+            top.grab_set()
+            message = tk.Label(top, text="Not enough Pokemon fit the criteria you have selected.\nPlease remove some restrictions.")
+            message.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+            back_button = tk.Button(top, text="Ok", command=top.destroy)
+            back_button.grid(row=1, column=0, padx=100, pady=5, sticky="nsew")
 
     def parent_page(self):
         return self.controller.pages['Draft']
@@ -404,6 +475,12 @@ class Random(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
+        for i in range(6):
+            self.grid_columnconfigure(i, weight=1)
+        for i in range(8):
+            self.grid_rowconfigure(i, weight=1)
+
 ###############################################################################
 
 ###############################################################################
