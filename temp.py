@@ -137,7 +137,7 @@ class Draft(tk.Frame):
         self.ban_buttons = [[], []]
         for i in range(2):
             for j in range(2):
-                self.ban_buttons[i].append(tk.Button(self, text="? ? ? ? ?", command=None))
+                self.ban_buttons[i].append(tk.Button(self, text="? ? ? ? ?", state="disabled", command=None))
                 if i == 0:
                     self.ban_buttons[i][j].grid(row=4, column=i*4+j, padx=5, pady=5, sticky="nsew")
                 else:
