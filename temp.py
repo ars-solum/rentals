@@ -102,8 +102,9 @@ class Draft(tk.Frame):
         self.battle_mode.set('Singles')
         self.draft_mode = tk.StringVar()
         self.draft_mode.set('Standard')
+        self.ban_phase_finished = True
         self.ban_number = tk.IntVar()
-        self.ban_number.set(2)
+        self.ban_number.set(0)
         for i in range(8):
             self.grid_rowconfigure(i, weight=1)
         for i in range(6):
@@ -131,7 +132,7 @@ class Draft(tk.Frame):
         ########################
 
         ##### Ban Boxes #####
-        self.pokemon_ban_list = [[], []]
+        self.pokemon_ban_list = [[None, None], [None, None]]
         self.ban_text = tk.Label(self, text="BANS")
         self.ban_text.grid(row=4, column=2, columnspan=2, sticky="nsew")
         self.ban_buttons = [[], []]
@@ -179,7 +180,7 @@ class Draft(tk.Frame):
         self.game_activated = True
         self.turn = 0
         self.pokemon_pool_list = []
-        self.pokemon_ban_list = [[], []]
+        self.pokemon_ban_list = [[None, None], [None, None]]
         self.pokemon_team_list = [[None for i in range(6)] for j in range(2)]
         self.pokemon_not_picked = [True for i in range(18)]
 
@@ -204,10 +205,19 @@ class Draft(tk.Frame):
             if (self.check_validity(temp_new_pokemon)):
                 self.pokemon_pool_list.append(temp_new_pokemon)
                 temp_counter += 1
+
         print([i.name for i in self.pokemon_pool_list])
+        print()
+
         self.get_checks_and_counters()
+
         for i in range(18):
             self.pool_buttons[i].config(text=self.pokemon_pool_list[i].name, command=lambda i=i: self.add_to_team(i))
+        for i in range(2):
+            for j in range(2):
+                self.ban_buttons[i][j].config(text="? ? ? ? ?", command=None)
+            for j in range(6):
+                self.team_buttons[i][j].config(text="? ? ? ? ?", command=None)
 
     def check_validity(self, pokemon):
         if ((pokemon in self.pokemon_pool_list) or
@@ -281,19 +291,32 @@ class Draft(tk.Frame):
             if self.turn < 12: # 12 == all pokemon picked for both teams
                 self.pokemon_not_picked[pool_number] = False
                 self.pool_buttons[pool_number].config(text="- - - - -", command=None)
-                if self.draft_mode.get() == 'Standard':
-                    team_number = int(self.turn%2)
-                    slot_number = int(self.turn/2)
-                if self.draft_mode.get() == 'Nemesis':
-                    team_number = int(self.turn+1%2)
-                    slot_number = int(self.turn/2)
-                if self.draft_mode.get() == 'First Pick':
-                    team_number = int(self.turn%2)
-                    slot_number = int(self.turn/2)
-                self.pokemon_team_list[team_number][slot_number] = self.pokemon_pool_list[pool_number]
-                self.team_buttons[team_number][slot_number].config(text=self.pokemon_pool_list[pool_number].name,
-                                                                   command=lambda i=pool_number, j=team_number, k=slot_number: self.remove_from_team(i, j, k))
-                self.update_turns()
+                if self.ban_number.get() != 0:
+                    self.ban_pokemon(pool_number)
+                if self.ban_phase_finished:
+                    if self.draft_mode.get() == 'Standard':
+                        team_number = int(self.turn%2)
+                        slot_number = int(self.turn/2)
+                    if self.draft_mode.get() == 'Nemesis':
+                        team_number = int((self.turn+1)%2)
+                        slot_number = int(self.turn/2)
+                    if self.draft_mode.get() == 'First Pick':
+                        if self.turn <= 1:
+                            team_number = 0
+                            slot_number = self.turn
+                        elif 6 <= self.turn <= 9:
+                            team_number = 0
+                            slot_number = self.turn - 4
+                        elif 2 <= self.turn <= 5:
+                            team_number = 1
+                            slot_number = self.turn - 2
+                        elif 10 <= self.turn <= 11:
+                            team_number = 1
+                            slot_number = self.turn - 6
+                    self.pokemon_team_list[team_number][slot_number] = self.pokemon_pool_list[pool_number]
+                    self.team_buttons[team_number][slot_number].config(text=self.pokemon_pool_list[pool_number].name,
+                                                                       command=lambda i=pool_number, j=team_number, k=slot_number: self.remove_from_team(i, j, k))
+                    self.update_turns()
 
     def remove_from_team(self, pool_number, team_number, slot_number):
         pokemon_name = self.pokemon_team_list[team_number][slot_number].name
@@ -303,12 +326,41 @@ class Draft(tk.Frame):
         self.team_buttons[team_number][slot_number].config(text="? ? ? ? ?", command=None)
         self.update_turns()
 
+    def ban_pokemon(self, pool_number):
+        # add pokemon to proper banlist
+        for i in range(2):
+            for j in range(self.ban_number.get()):
+                if not self.pokemon_ban_list[1-i][j]:
+                    self.pokemon_ban_list[1-i][j] = self.pokemon_pool_list[pool_number]
+                    self.ban_buttons[1-i][j].config(text=self.pokemon_pool_list[pool_number].name,
+                                                    command=None)
+                    break
+        if self.ban_number.get() == 1:
+            if self.pokemon_ban_list[0][0]:
+                self.ban_phase_finished = True
+        if self.ban_number.get() == 2:
+            
+
+
+
     def update_turns(self):
         next_turn = 0
-        for i in range(12):
-            if not self.pokemon_team_list[int(i%2)][int(i/2)]:
-                break
-            next_turn += 1
+        if self.draft_mode.get() == 'First Pick':
+            fp_team_order = [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1]
+            fp_slot_order = [0, 1, 0, 1, 2, 3, 2, 3, 4, 5, 4, 5]
+            for i in range(12):
+                if not self.pokemon_team_list[fp_team_order[i]][fp_slot_order[i]]:
+                    break
+                next_turn += 1
+        else:
+            for i in range(12):
+                if self.draft_mode.get() == 'Standard':
+                    if not self.pokemon_team_list[int(i%2)][int(i/2)]:
+                        break
+                if self.draft_mode.get() == 'Nemesis':
+                    if not self.pokemon_team_list[int((i+1)%2)][int(i/2)]:
+                        break
+                next_turn += 1
         self.turn = next_turn
 ###############################################################################
 
@@ -328,7 +380,7 @@ class DraftSettings(tk.Frame):
                                                            indicatoron=0,
                                                            width=10,
                                                            value=battle_modes[i]))
-            self.battle_mode_buttons[i].grid(row=1+int(i/5), column=(i%5)+1, pady=5, sticky="w")
+            self.battle_mode_buttons[i].grid(row=1+int(i/5), column=(i%5)+1, padx=5, pady=5, sticky="nsew")
 
         self.draft_mode_text = tk.Label(self, text="Draft Mode")
         self.draft_mode_text.grid(row=2, column=0, padx=5, pady=5, sticky="w")
@@ -340,7 +392,7 @@ class DraftSettings(tk.Frame):
                                                            indicatoron=0,
                                                            width=10,
                                                            value=draft_modes[i]))
-            self.draft_mode_buttons[i].grid(row=2+int(i/5), column=(i%5)+1, pady=5, sticky="w")
+            self.draft_mode_buttons[i].grid(row=2+int(i/5), column=(i%5)+1, padx=5, pady=5, sticky="nsew")
 
         self.ban_number_text = tk.Label(self, text="Bans")
         self.ban_number_text.grid(row=3, column=0, padx=5, pady=5, sticky="w")
@@ -351,15 +403,25 @@ class DraftSettings(tk.Frame):
                                                            variable=self.parent_page().ban_number,
                                                            indicatoron=0,
                                                            width=10,
-                                                           value=ban_number[i]))
-            self.ban_number_buttons[i].grid(row=3+int(i/5), column=(i%5)+1, pady=5, sticky="w")
+                                                           value=ban_number[i],
+                                                           command=self.activate_bans))
+            self.ban_number_buttons[i].grid(row=3+int(i/5), column=(i%5)+1, padx=5, pady=5, sticky="nsew")
 
         self.back_button = tk.Button(self, text="Back", command=lambda: self.controller.show_frame('Draft'))
-        self.back_button.grid(row=15, column=1, columnspan=2, pady=5, sticky="nsew")
-        for i in range(16):
+        self.back_button.grid(row=15, column=1, columnspan=2, padx=5, pady=5, sticky="nsew")
+
+        for i in range(8):
             self.grid_rowconfigure(i, weight=1)
-        for i in range(6):
+        for i in range(4):
             self.grid_columnconfigure(i, weight=1)
+
+    def activate_bans(self):
+        for i in range(2):
+            for j in range(0, self.parent_page().ban_number.get()):
+                self.parent_page().ban_buttons[i][j].config(state="normal", command=None)
+            for j in range(self.parent_page().ban_number.get(), 2):
+                self.parent_page().ban_buttons[i][j].config(state="disabled", command=None)
+        self.parent_page().ban_phase_finished = False
 
     def parent_page(self):
         return self.controller.pages['Draft']
