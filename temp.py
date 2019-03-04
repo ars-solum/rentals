@@ -13,15 +13,6 @@ from random import shuffle
 
 from Pokemon import *
 
-
-DEBUG = True
-def debug(message=None):
-    if DEBUG:
-        if message:
-            print(message)
-        else:
-            print()
-
 ROOT = os.path.dirname(os.path.realpath(__file__))
 
 TIERS_SINGLES = ['LC', 'LC Uber', 'Untiered', 'NFE', 'PU', 'NU', 'RU', 'UU', 'OU', 'Uber']
@@ -102,7 +93,9 @@ class Draft(tk.Frame):
         self.battle_mode.set('Singles')
         self.draft_mode = tk.StringVar()
         self.draft_mode.set('Standard')
-        self.ban_phase_finished = True
+        self.ban_phase_finished = False
+        self.ban_phase_1_finished = False
+        self.ban_phase_2_finished = False
         self.ban_number = tk.IntVar()
         self.ban_number.set(0)
         for i in range(8):
@@ -181,6 +174,9 @@ class Draft(tk.Frame):
         self.turn = 0
         self.pokemon_pool_list = []
         self.pokemon_ban_list = [[None, None], [None, None]]
+        self.ban_phase_finished = False
+        self.ban_phase_1_finished = False
+        self.ban_phase_2_finished = False
         self.pokemon_team_list = [[None for i in range(6)] for j in range(2)]
         self.pokemon_not_picked = [True for i in range(18)]
 
@@ -218,6 +214,7 @@ class Draft(tk.Frame):
                 self.ban_buttons[i][j].config(text="? ? ? ? ?", command=None)
             for j in range(6):
                 self.team_buttons[i][j].config(text="? ? ? ? ?", command=None)
+        self.finish_button.config(command=None)
 
     def check_validity(self, pokemon):
         if ((pokemon in self.pokemon_pool_list) or
@@ -287,61 +284,73 @@ class Draft(tk.Frame):
             shuffle(self.checks_and_counters[i])
 
     def add_to_team(self, pool_number):
-        if self.pokemon_not_picked[pool_number]:
-            if self.turn < 12: # 12 == all pokemon picked for both teams
-                self.pokemon_not_picked[pool_number] = False
-                self.pool_buttons[pool_number].config(text="- - - - -", command=None)
-                if self.ban_number.get() != 0:
-                    self.ban_pokemon(pool_number)
-                if self.ban_phase_finished:
-                    if self.draft_mode.get() == 'Standard':
-                        team_number = int(self.turn%2)
-                        slot_number = int(self.turn/2)
-                    if self.draft_mode.get() == 'Nemesis':
-                        team_number = int((self.turn+1)%2)
-                        slot_number = int(self.turn/2)
-                    if self.draft_mode.get() == 'First Pick':
-                        if self.turn <= 1:
-                            team_number = 0
-                            slot_number = self.turn
-                        elif 6 <= self.turn <= 9:
-                            team_number = 0
-                            slot_number = self.turn - 4
-                        elif 2 <= self.turn <= 5:
-                            team_number = 1
-                            slot_number = self.turn - 2
-                        elif 10 <= self.turn <= 11:
-                            team_number = 1
-                            slot_number = self.turn - 6
-                    self.pokemon_team_list[team_number][slot_number] = self.pokemon_pool_list[pool_number]
-                    self.team_buttons[team_number][slot_number].config(text=self.pokemon_pool_list[pool_number].name,
-                                                                       command=lambda i=pool_number, j=team_number, k=slot_number: self.remove_from_team(i, j, k))
-                    self.update_turns()
+        if self.game_activated:
+            if self.pokemon_not_picked[pool_number]:
+                if self.turn < 12:
+                    self.pokemon_not_picked[pool_number] = False
+                    self.pool_buttons[pool_number].config(text="- - - - -", command=None)
+                    if self.ban_number.get() != 0 and not self.ban_phase_finished:
+                        self.ban_pokemon(pool_number)
+                    else:
+                        if self.draft_mode.get() == 'Standard':
+                            team_number = int(self.turn%2)
+                            slot_number = int(self.turn/2)
+                        if self.draft_mode.get() == 'Nemesis':
+                            team_number = int((self.turn+1)%2)
+                            slot_number = int(self.turn/2)
+                        if self.draft_mode.get() == 'First Pick':
+                            if self.turn <= 1:
+                                team_number = 0
+                                slot_number = self.turn
+                            elif 6 <= self.turn <= 9:
+                                team_number = 0
+                                slot_number = self.turn - 4
+                            elif 2 <= self.turn <= 5:
+                                team_number = 1
+                                slot_number = self.turn - 2
+                            elif 10 <= self.turn <= 11:
+                                team_number = 1
+                                slot_number = self.turn - 6
+                        self.pokemon_team_list[team_number][slot_number] = self.pokemon_pool_list[pool_number]
+                        self.team_buttons[team_number][slot_number].config(text=self.pokemon_pool_list[pool_number].name,
+                                                                           command=lambda i=pool_number, j=team_number, k=slot_number: self.remove_from_team(i, j, k))
+                        self.update_turns()
 
     def remove_from_team(self, pool_number, team_number, slot_number):
-        pokemon_name = self.pokemon_team_list[team_number][slot_number].name
-        self.pokemon_not_picked[pool_number] = True
-        self.pokemon_team_list[team_number][slot_number] = None
-        self.pool_buttons[pool_number].config(text=pokemon_name, command=lambda i=pool_number: self.add_to_team(i))
-        self.team_buttons[team_number][slot_number].config(text="? ? ? ? ?", command=None)
-        self.update_turns()
+        if self.game_activated:
+            pokemon_name = self.pokemon_team_list[team_number][slot_number].name
+            self.pokemon_not_picked[pool_number] = True
+            self.pokemon_team_list[team_number][slot_number] = None
+            self.pool_buttons[pool_number].config(text=pokemon_name, command=lambda i=pool_number: self.add_to_team(i))
+            self.team_buttons[team_number][slot_number].config(text="? ? ? ? ?", command=None)
+            self.update_turns()
 
     def ban_pokemon(self, pool_number):
         # add pokemon to proper banlist
-        for i in range(2):
-            for j in range(self.ban_number.get()):
-                if not self.pokemon_ban_list[1-i][j]:
-                    self.pokemon_ban_list[1-i][j] = self.pokemon_pool_list[pool_number]
-                    self.ban_buttons[1-i][j].config(text=self.pokemon_pool_list[pool_number].name,
+        temp_done = False
+        for i in range(self.ban_number.get()):
+            for j in range(2):
+                if not self.pokemon_ban_list[1-j][i]:
+                    self.pokemon_ban_list[1-j][i] = self.pokemon_pool_list[pool_number]
+                    self.ban_buttons[1-j][i].config(text=self.pokemon_pool_list[pool_number].name,
                                                     command=None)
+                    temp_done = True
                     break
-        if self.ban_number.get() == 1:
-            if self.pokemon_ban_list[0][0]:
-                self.ban_phase_finished = True
-        if self.ban_number.get() == 2:
-            
-
-
+            if temp_done:
+                break
+        # end the ban phase
+        if ((self.turn == 0 and self.pokemon_ban_list[0][0]) and
+            (self.turn == 0 and self.pokemon_ban_list[1][0])):
+            self.ban_phase_1_finished = True
+        if (((self.turn == 8 and self.pokemon_ban_list[0][1] and self.draft_mode.get() == 'First Pick') and
+             (self.turn == 8 and self.pokemon_ban_list[1][1] and self.draft_mode.get() == 'First Pick')) or
+             ((self.turn == 6 and self.pokemon_ban_list[0][1] and self.draft_mode.get() != 'First Pick') and
+             (self.turn == 6 and self.pokemon_ban_list[1][1] and self.draft_mode.get() != 'First Pick'))):
+            self.ban_phase_2_finished = True
+        if ((self.turn == 0 and self.ban_phase_1_finished) or
+            ((self.turn == 8 and self.ban_phase_2_finished and self.draft_mode.get() == 'First Pick') or
+              (self.turn == 6 and self.ban_phase_2_finished and self.draft_mode.get() != 'First Pick'))):
+            self.ban_phase_finished = True
 
     def update_turns(self):
         next_turn = 0
@@ -362,6 +371,69 @@ class Draft(tk.Frame):
                         break
                 next_turn += 1
         self.turn = next_turn
+        if ((self.turn == 8 and self.ban_number.get() == 2 and self.draft_mode.get() == 'First Pick') or
+            (self.turn == 6 and self.ban_number.get() == 2 and self.draft_mode.get() != 'First Pick')):
+            self.ban_phase_finished = False
+        if self.turn >= 12:
+            self.finish_button.config(command=self.get_sets)
+
+    def get_sets(self):
+        self.controller.clipboard_clear()
+        sets = ''
+        for team in self.pokemon_team_list:
+            sets += '====================\n'
+            for pokemon in team:
+                if pokemon.item:
+                    sets += pokemon.name + ' @ ' + pokemon.item + '\n'
+                else:
+                    sets += 'pokemon.name\n'
+                if 'LC' in pokemon.tier:
+                    sets += 'Level: 5\n'
+                sets += 'Ability: ' + pokemon.ability + '\n'
+                sets += 'EVs: ' + pokemon.evSpread + '\n'
+                sets += pokemon.nature + ' Nature\n'
+                if pokemon.ivSpread:
+                    sets += 'IVs: ' + pokemon.ivSpread + '\n'
+                for move in pokemon.moves:
+                    if move:
+                        sets += '- ' + move + '\n'
+                sets += '\n'
+            sets += '\n'
+        self.controller.clipboard_append(sets)
+        self.update_statistics()
+
+    def update_statistics(self):
+        for team in self.pokemon_ban_list:
+            for pokemon in team:
+                if pokemon:
+                    pokemon.banned += 1
+        for pokemon in self.pokemon_pool_list:
+            if self.draft_mode.get() == 'Nemesis':
+                pokemon.generated_nemesis += 1
+            else:
+                pokemon.generated_draft += 1
+        for team in self.pokemon_team_list:
+            for pokemon in team:
+                if self.draft_mode.get() == 'Nemesis':
+                    pokemon.picked_nemesis += 1
+                else:
+                    pokemon.picked_draft += 1
+        with open('main_database_copy.csv', 'w') as fileName:
+            writer = csv.writer(fileName, delimiter=',')
+            writer.writerow(['POKEMON', 'DEX', 'TYPE 1', 'TYPE 2', 'TIER',
+                             'RARITY', 'TAG', 'ITEM', 'ABILITY', 'EV SPREAD',
+                             'NATURE', 'IV SPREAD', 'MOVE 1', 'MOVE 2', 'MOVE 3',
+                             'MOVE 4', 'STATUS', 'GENERATED (D)', 'GENERATED (N)',
+                             'GENERATED (R)', 'PICKED (D)', 'PICKED (N)', 'BANNED'])
+            for pokemon in ALL_POKEMON:
+                writer.writerow([pokemon.name, pokemon.dex, pokemon.type[0], pokemon.type[1],
+                                 pokemon.tier, pokemon.rarity, pokemon.tag, pokemon.item,
+                                 pokemon.ability, pokemon.evSpread, pokemon.nature,
+                                 pokemon.ivSpread, pokemon.moves[0], pokemon.moves[1],
+                                 pokemon.moves[2], pokemon.moves[3], pokemon.status,
+                                 str(pokemon.generated_draft), str(pokemon.generated_nemesis),
+                                 str(pokemon.generated_random), str(pokemon.picked_draft),
+                                 str(pokemon.picked_nemesis), str(pokemon.banned)])
 ###############################################################################
 
 ###############################################################################
@@ -407,7 +479,7 @@ class DraftSettings(tk.Frame):
                                                            command=self.activate_bans))
             self.ban_number_buttons[i].grid(row=3+int(i/5), column=(i%5)+1, padx=5, pady=5, sticky="nsew")
 
-        self.back_button = tk.Button(self, text="Back", command=lambda: self.controller.show_frame('Draft'))
+        self.back_button = tk.Button(self, text="Back", command=self.exit)
         self.back_button.grid(row=15, column=1, columnspan=2, padx=5, pady=5, sticky="nsew")
 
         for i in range(8):
@@ -425,6 +497,18 @@ class DraftSettings(tk.Frame):
 
     def parent_page(self):
         return self.controller.pages['Draft']
+
+    def exit(self):
+        if self.parent_page().game_activated:
+            self.parent_page().game_activated = False
+            for i in range(2):
+                for j in range(2):
+                    self.parent_page().ban_buttons[i][j].config(text="? ? ? ? ?", command=None)
+                for j in range(6):
+                    self.parent_page().team_buttons[i][j].config(text="? ? ? ? ?", command=None)
+            for i in range(18):
+                self.parent_page().pool_buttons[i].config(text="? ? ? ? ?", command=None)
+        self.controller.show_frame('Draft')
 ###############################################################################
 
 ###############################################################################
@@ -538,11 +622,85 @@ class Random(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        ##### Private Variables #####
+        # misc. variables
+        self.alpha = 0
+        self.battle_mode = tk.StringVar()
+        self.battle_mode.set('Singles')
         for i in range(6):
             self.grid_columnconfigure(i, weight=1)
         for i in range(8):
             self.grid_rowconfigure(i, weight=1)
+        # filter/exclusion variables
+        self.pokemon_exclusion_tiers_singles = [tk.StringVar() for i in range(len(TIERS_SINGLES))]
+        self.pokemon_exclusion_tiers_doubles = [tk.StringVar() for i in range(len(TIERS_DOUBLES))]
+        self.pokemon_exclusion_generations = [tk.StringVar() for i in range(len(GENERATIONS))]
+        self.pokemon_exclusion_types = [tk.StringVar() for i in range(len(TYPES))]
+        self.pokemon_exclusion_items = [tk.StringVar() for i in range(len(ITEMS))]
+        self.pokemon_exclusion_gimmicks = [tk.StringVar() for i in range(len(GIMMICKS))]
+        self.pokemon_exclusion_usages = []
 
+        ##### Team Boxes #####
+        self.team_text = []
+        self.pokemon_team_list = [[None for i in range(6)] for j in range(2)]
+        self.team_buttons = [[], []]
+        for team in range(2):
+            self.team_text.append(tk.Label(self, text="TEAM %s" % str(team+1)))
+            self.team_text[team].grid(row=1, column=team*4, columnspan=2, sticky="nsew")
+            for row in range(3):
+                for column in range(2):
+                    x = (row * 2) + column
+                    self.team_buttons[team].append(tk.Button(self, text="? ? ? ? ?", command=None))
+                    self.team_buttons[team][x].grid(row=row+2, column=(team*4)+column, padx=5, pady=5, sticky="nsew")
+        ######################
+
+        ##### Settings #####
+        self.mode_text = tk.Label(self, text="Random Battle")
+        self.mode_text.grid(row=2, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.settingsV1 = tk.Button(self, text="Draft Settings", command=None)
+        self.settingsV1.grid(row=3, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.settingsV2 = tk.Button(self, text="Generate Settings", command=None)
+        self.settingsV2.grid(row=4, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
+        ######################
+
+        ##### Start/Finish Buttons #####
+        self.start_button = tk.Button(self, text="New Game", command=None)
+        self.start_button.grid(row=5, column=2, padx=5, pady=5, sticky="nsew")
+        self.finish_button = tk.Button(self, text="Get Sets", command=None)
+        self.finish_button.grid(row=5, column=3, padx=5, pady=5, sticky="nsew")
+        ################################
+
+    def new_game(self):
+        # reset private variables
+        self.game_activated = True
+        self.pokemon_team_list = [[None for i in range(6)] for j in range(2)]
+
+        temp_exclude_tiers = list(filter(None, [i.get() for i in self.pokemon_exclusion_tiers_singles]))
+        temp_exclude_types = list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))
+        temp_exclude_gimmicks = list(filter(None, [i.get() for i in self.pokemon_exclusion_gimmicks]))
+        temp_list = []
+        for pokemon in ALL_POKEMON:
+            if ((pokemon.name in temp_list) or
+                (pokemon.tier in temp_exclude_tiers) or
+                (pokemon.type[0] in temp_exclude_types) or
+                (pokemon.type[1] and pokemon.type[1] in temp_exclude_types) or
+                (self.check_valid_generation(pokemon)) or
+                (self.check_valid_item(pokemon)) or
+                (pokemon.tag in temp_exclude_gimmicks)):
+                continue
+            else:
+                temp_list.append(pokemon)
+        temp_counter = 0
+        for i in range(2):
+            while temp_counter < 6:
+                temp_new_pokemon = random.choice(temp_list)
+                if (self.check_validity(temp_new_pokemon)): #add here
+                    self.pokemon_team_list[i].append(temp_new_pokemon)
+                    temp_counter += 1
+            temp_counter = 0
+
+
+        self.finish_button.config(command=None)
 ###############################################################################
 
 ###############################################################################

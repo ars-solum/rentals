@@ -43,12 +43,12 @@ class TeamBox(tk.Frame):
     #         self.team_list[pkmn] = None
     #         self.b_team_pokemon[pkmn].config(image=self.controller.img_inactive_Blank, command=None)
 
-    def find_pokemon(self, team_slot_num):
-        for i in range(18):
-            if self.team_list[team_slot_num] == self.controller.pokemonList[i].name:
-                x = i
-                break
-        return x
+    # def find_pokemon(self, team_slot_num):
+    #     for i in range(18):
+    #         if self.team_list[team_slot_num] == self.controller.pokemonList[i].name:
+    #             x = i
+    #             break
+    #     return x
 
     def on_enter(self, team_slot_num):
         if self.team_list[team_slot_num]:

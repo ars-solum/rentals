@@ -52,43 +52,43 @@ class Battle(tk.Frame):
         self.img_inactive_Blank = ImageTk.PhotoImage(self.img_inactive_Blank_base)
         self.img_active_Blank = ImageTk.PhotoImage(self.img_active_Blank_base)
 
-        # # initialize pool of pokemon buttons
-        # if "Random" not in self.mode:
-        #     self.b_icons = []
-        #     self.img_pokemon = [[] for i in range(18)]
-        #     for i in range(3):
-        #         for j in range(6):
-        #             x = (i*6)+j
-        #             self.b_icons.append(tk.Button(self, image=self.img_inactive_Blank, bd=0.1, command=None))
-        #             self.b_icons[x].grid(row=i, column=j, padx=5, pady=5)
-        #             self.b_icons[x].bind("<Enter>", lambda event, x=x: self.on_enter(x))
-        #             self.b_icons[x].bind("<Leave>", lambda event, x=x: self.on_leave(x))
-        #
-        # # initialize team boxes
-        # self.f_teams = []
-        # if "Ban" in self.mode:
-        #     self.f_bans = []
-        # for i in range(2):
-        #     if "Ban" in self.mode:
-        #         self.f_bans.append(BanBox(parent=self, controller=self, team=i+1))
-        #         self.f_bans[i].grid(row=3, column=i*3, columnspan=3, padx=5, sticky="nsew")
-        #         self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
-        #         self.f_teams[i].grid(row=4, column=i*3, columnspan=3, padx=10, sticky="nsew")
-        #     else:
-        #         self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
-        #         self.f_teams[i].grid(row=3, column=i*3, columnspan=3, padx=10, pady=5, sticky="nsew")
-        #
-        # # initialize helpful tips box
-        # if "Random" not in self.mode:
-        #     self.helpbox = HelpBox(parent=self, controller=self)
-        #     if "Ban" in self.mode:
-        #         self.helpbox.grid(row=5, column=0, columnspan=6, pady=10)
-        #     else:
-        #         self.helpbox.grid(row=4, column=0, columnspan=6, pady=10)
-        #
-        # # initialize settings side bar
-        # self.settings = SettingsBar(parent=self, controller=self)
-        # self.settings.grid(row=0, column=7, rowspan=8, sticky="n")
+        # initialize pool of pokemon buttons
+        if "Random" not in self.mode:
+            self.b_icons = []
+            self.img_pokemon = [[] for i in range(18)]
+            for i in range(3):
+                for j in range(6):
+                    x = (i*6)+j
+                    self.b_icons.append(tk.Button(self, image=self.img_inactive_Blank, bd=0.1, command=None))
+                    self.b_icons[x].grid(row=i, column=j, padx=5, pady=5)
+                    self.b_icons[x].bind("<Enter>", lambda event, x=x: self.on_enter(x))
+                    self.b_icons[x].bind("<Leave>", lambda event, x=x: self.on_leave(x))
+
+        # initialize team boxes
+        self.f_teams = []
+        if "Ban" in self.mode:
+            self.f_bans = []
+        for i in range(2):
+            if "Ban" in self.mode:
+                self.f_bans.append(BanBox(parent=self, controller=self, team=i+1))
+                self.f_bans[i].grid(row=3, column=i*3, columnspan=3, padx=5, sticky="nsew")
+                self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
+                self.f_teams[i].grid(row=4, column=i*3, columnspan=3, padx=10, sticky="nsew")
+            else:
+                self.f_teams.append(TeamBox(parent=self, controller=self, team=i+1))
+                self.f_teams[i].grid(row=3, column=i*3, columnspan=3, padx=10, pady=5, sticky="nsew")
+
+        # initialize helpful tips box
+        if "Random" not in self.mode:
+            self.helpbox = HelpBox(parent=self, controller=self)
+            if "Ban" in self.mode:
+                self.helpbox.grid(row=5, column=0, columnspan=6, pady=10)
+            else:
+                self.helpbox.grid(row=4, column=0, columnspan=6, pady=10)
+
+        # initialize settings side bar
+        self.settings = SettingsBar(parent=self, controller=self)
+        self.settings.grid(row=0, column=7, rowspan=8, sticky="n")
 
     def playCPU(self):
         if self.vscpu.get():

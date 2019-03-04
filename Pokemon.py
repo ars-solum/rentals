@@ -425,14 +425,13 @@ class Pokemon:
         self.ivSpread = row[11]
         self.moves = [row[12], row[13], row[14], row[15]]
         # statistics
-        self.generated_draft = row[17]
-        self.generated_nemesis = row[18]
-        self.generated_random = row[19]
-        self.generated_total = row[20]
-        self.picked_draft = row[21]
-        self.picked_nemesis = row[22]
-        self.picked_total = row[23]
-        self.banned_total = row[24]
+        self.status = row[16]
+        self.generated_draft = int(row[17])
+        self.generated_nemesis = int(row[18])
+        self.generated_random = int(row[19])
+        self.picked_draft = int(row[20])
+        self.picked_nemesis = int(row[21])
+        self.banned = int(row[22])
 
 with open('main_database.csv', 'r') as fileName:
     reader = csv.reader(fileName)
