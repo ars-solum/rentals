@@ -37,7 +37,7 @@ class MainApp(tk.Tk):
 
         self.pages = {}
 
-        for Class in (Draft, Random, DraftSettings, GenerateSettings, Banners):
+        for Class in (Draft, Random, DraftSettings, GenerateSettings, RandomSettings, Banners):
             page_name = Class.__name__
             frame = Class(parent=self.main_frame, controller=self)
             self.pages[page_name] = frame
@@ -189,8 +189,8 @@ class Draft(tk.Frame):
                 (pokemon.tier in temp_exclude_tiers) or
                 (pokemon.type[0] in temp_exclude_types) or
                 (pokemon.type[1] and pokemon.type[1] in temp_exclude_types) or
-                (self.check_valid_generation(pokemon)) or
-                (self.check_valid_item(pokemon)) or
+                (check_valid_generation(self, pokemon)) or
+                (check_valid_item(self, pokemon)) or
                 (pokemon.tag in temp_exclude_gimmicks)):
                 continue
             else:
@@ -198,7 +198,7 @@ class Draft(tk.Frame):
         temp_counter = 0
         while temp_counter < 18:
             temp_new_pokemon = random.choice(temp_list)
-            if (self.check_validity(temp_new_pokemon)):
+            if (check_validity(self, temp_new_pokemon)):
                 self.pokemon_pool_list.append(temp_new_pokemon)
                 temp_counter += 1
 
@@ -215,62 +215,6 @@ class Draft(tk.Frame):
             for j in range(6):
                 self.team_buttons[i][j].config(text="? ? ? ? ?", command=None)
         self.finish_button.config(command=None)
-
-    def check_validity(self, pokemon):
-        if ((pokemon in self.pokemon_pool_list) or
-            (pokemon.name in [pool.name for pool in self.pokemon_pool_list]) or
-            (pokemon.tier in list(filter(None, [i.get() for i in self.pokemon_exclusion_tiers_singles]))) or
-            (pokemon.type[0] in list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))) or
-            (pokemon.type[1] and pokemon.type[1] in list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))) or
-            (self.check_valid_generation(pokemon)) or
-            (self.check_valid_item(pokemon)) or
-            (pokemon.tag in list(filter(None, [i.get() for i in self.pokemon_exclusion_gimmicks])))):
-            return False
-        else:
-            return True
-
-    def check_valid_generation(self, pokemon):
-        dex_list = []
-        for generation in [j.get() for j in self.pokemon_exclusion_generations]:
-            if generation == 'Kanto':
-                for i in range(1, 152):
-                    dex_list.append(str(i))
-            if generation == 'Johto':
-                for i in range(152, 252):
-                    dex_list.append(str(i))
-            if generation == 'Hoenn':
-                for i in range(252, 387):
-                    dex_list.append(str(i))
-            if generation == 'Sinnoh':
-                for i in range(387, 494):
-                    dex_list.append(str(i))
-            if generation == 'Unova':
-                for i in range(494, 650):
-                    dex_list.append(str(i))
-            if generation == 'Kalos':
-                for i in range(650, 722):
-                    dex_list.append(str(i))
-            if generation == 'Alola':
-                for i in range(722, 807):
-                    dex_list.append(str(i))
-        if str(pokemon.dex) in dex_list:
-            return True
-        return False
-
-    def check_valid_item(self, pokemon):
-        item_list = []
-        for item in list(filter(None, [i.get() for i in self.pokemon_exclusion_items])):
-            if item == 'Mega Stones':
-                item_list.extend(MEGA_STONES)
-            elif item == 'Z-Crystals':
-                item_list.extend(Z_CRYSTALS)
-            elif item == 'Berries':
-                item_list.extend(BERRIES)
-            else:
-                item_list.append(item)
-        if pokemon.item in item_list:
-            return True
-        return False
 
     def get_checks_and_counters(self):
         self.checks_and_counters = [[] for i in range(18)]
@@ -375,65 +319,7 @@ class Draft(tk.Frame):
             (self.turn == 6 and self.ban_number.get() == 2 and self.draft_mode.get() != 'First Pick')):
             self.ban_phase_finished = False
         if self.turn >= 12:
-            self.finish_button.config(command=self.get_sets)
-
-    def get_sets(self):
-        self.controller.clipboard_clear()
-        sets = ''
-        for team in self.pokemon_team_list:
-            sets += '====================\n'
-            for pokemon in team:
-                if pokemon.item:
-                    sets += pokemon.name + ' @ ' + pokemon.item + '\n'
-                else:
-                    sets += 'pokemon.name\n'
-                if 'LC' in pokemon.tier:
-                    sets += 'Level: 5\n'
-                sets += 'Ability: ' + pokemon.ability + '\n'
-                sets += 'EVs: ' + pokemon.evSpread + '\n'
-                sets += pokemon.nature + ' Nature\n'
-                if pokemon.ivSpread:
-                    sets += 'IVs: ' + pokemon.ivSpread + '\n'
-                for move in pokemon.moves:
-                    if move:
-                        sets += '- ' + move + '\n'
-                sets += '\n'
-            sets += '\n'
-        self.controller.clipboard_append(sets)
-        self.update_statistics()
-
-    def update_statistics(self):
-        for team in self.pokemon_ban_list:
-            for pokemon in team:
-                if pokemon:
-                    pokemon.banned += 1
-        for pokemon in self.pokemon_pool_list:
-            if self.draft_mode.get() == 'Nemesis':
-                pokemon.generated_nemesis += 1
-            else:
-                pokemon.generated_draft += 1
-        for team in self.pokemon_team_list:
-            for pokemon in team:
-                if self.draft_mode.get() == 'Nemesis':
-                    pokemon.picked_nemesis += 1
-                else:
-                    pokemon.picked_draft += 1
-        with open('main_database_copy.csv', 'w') as fileName:
-            writer = csv.writer(fileName, delimiter=',')
-            writer.writerow(['POKEMON', 'DEX', 'TYPE 1', 'TYPE 2', 'TIER',
-                             'RARITY', 'TAG', 'ITEM', 'ABILITY', 'EV SPREAD',
-                             'NATURE', 'IV SPREAD', 'MOVE 1', 'MOVE 2', 'MOVE 3',
-                             'MOVE 4', 'STATUS', 'GENERATED (D)', 'GENERATED (N)',
-                             'GENERATED (R)', 'PICKED (D)', 'PICKED (N)', 'BANNED'])
-            for pokemon in ALL_POKEMON:
-                writer.writerow([pokemon.name, pokemon.dex, pokemon.type[0], pokemon.type[1],
-                                 pokemon.tier, pokemon.rarity, pokemon.tag, pokemon.item,
-                                 pokemon.ability, pokemon.evSpread, pokemon.nature,
-                                 pokemon.ivSpread, pokemon.moves[0], pokemon.moves[1],
-                                 pokemon.moves[2], pokemon.moves[3], pokemon.status,
-                                 str(pokemon.generated_draft), str(pokemon.generated_nemesis),
-                                 str(pokemon.generated_random), str(pokemon.picked_draft),
-                                 str(pokemon.picked_nemesis), str(pokemon.banned)])
+            self.finish_button.config(command=lambda: get_sets(self))
 ###############################################################################
 
 ###############################################################################
@@ -625,6 +511,7 @@ class Random(tk.Frame):
         ##### Private Variables #####
         # misc. variables
         self.alpha = 0
+        self.temp_list = []
         self.battle_mode = tk.StringVar()
         self.battle_mode.set('Singles')
         for i in range(6):
@@ -657,14 +544,14 @@ class Random(tk.Frame):
         ##### Settings #####
         self.mode_text = tk.Label(self, text="Random Battle")
         self.mode_text.grid(row=2, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
-        self.settingsV1 = tk.Button(self, text="Draft Settings", command=None)
+        self.settingsV1 = tk.Button(self, text="Random Settings", command=lambda: self.controller.show_frame('RandomSettings'))
         self.settingsV1.grid(row=3, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
         self.settingsV2 = tk.Button(self, text="Generate Settings", command=None)
         self.settingsV2.grid(row=4, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
         ######################
 
         ##### Start/Finish Buttons #####
-        self.start_button = tk.Button(self, text="New Game", command=None)
+        self.start_button = tk.Button(self, text="New Game", command=self.new_game)
         self.start_button.grid(row=5, column=2, padx=5, pady=5, sticky="nsew")
         self.finish_button = tk.Button(self, text="Get Sets", command=None)
         self.finish_button.grid(row=5, column=3, padx=5, pady=5, sticky="nsew")
@@ -678,37 +565,214 @@ class Random(tk.Frame):
         temp_exclude_tiers = list(filter(None, [i.get() for i in self.pokemon_exclusion_tiers_singles]))
         temp_exclude_types = list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))
         temp_exclude_gimmicks = list(filter(None, [i.get() for i in self.pokemon_exclusion_gimmicks]))
-        temp_list = []
+        self.temp_list = []
         for pokemon in ALL_POKEMON:
-            if ((pokemon.name in temp_list) or
+            if ((pokemon.name in self.temp_list) or
                 (pokemon.tier in temp_exclude_tiers) or
                 (pokemon.type[0] in temp_exclude_types) or
                 (pokemon.type[1] and pokemon.type[1] in temp_exclude_types) or
-                (self.check_valid_generation(pokemon)) or
-                (self.check_valid_item(pokemon)) or
+                (check_valid_generation(self, pokemon)) or
+                (check_valid_item(self, pokemon)) or
                 (pokemon.tag in temp_exclude_gimmicks)):
                 continue
             else:
-                temp_list.append(pokemon)
+                self.temp_list.append(pokemon)
         temp_counter = 0
         for i in range(2):
             while temp_counter < 6:
-                temp_new_pokemon = random.choice(temp_list)
-                if (self.check_validity(temp_new_pokemon)): #add here
-                    self.pokemon_team_list[i].append(temp_new_pokemon)
+                temp_new_pokemon = random.choice(self.temp_list)
+                if (check_validity(self, temp_new_pokemon, i)):
+                    self.pokemon_team_list[i][temp_counter] = temp_new_pokemon
                     temp_counter += 1
             temp_counter = 0
 
+        print([i.name for i in self.pokemon_team_list[0]])
+        print()
+        print([i.name for i in self.pokemon_team_list[1]])
+        print()
 
-        self.finish_button.config(command=None)
+        for i in range(2):
+            for j in range(6):
+                self.team_buttons[i][j].config(text=self.pokemon_team_list[i][j].name, command=lambda i=i, j=j: self.reroll(i, j))
+        self.finish_button.config(command=lambda: get_sets(self))
+
+    def reroll(self, team, slot):
+        while True:
+            temp_new_pokemon = random.choice(self.temp_list)
+            if (check_validity(self, temp_new_pokemon, team)):
+                self.pokemon_team_list[team][slot] = temp_new_pokemon
+                self.team_buttons[team][slot].config(text=temp_new_pokemon.name)
+                break
 ###############################################################################
+class RandomSettings(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
 
+        self.battle_mode_text = tk.Label(self, text="Battle Mode")
+        self.battle_mode_text.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.battle_mode_buttons = []
+        battle_modes = ['Singles', 'Doubles']
+        for i in range(len(battle_modes)):
+            self.battle_mode_buttons.append(tk.Radiobutton(self, text=battle_modes[i],
+                                                           variable=self.parent_page().battle_mode,
+                                                           indicatoron=0,
+                                                           width=10,
+                                                           value=battle_modes[i]))
+            self.battle_mode_buttons[i].grid(row=1+int(i/5), column=(i%5)+1, padx=5, pady=5, sticky="nsew")
+
+        self.back_button = tk.Button(self, text="Back", command=self.exit)
+        self.back_button.grid(row=15, column=1, columnspan=2, padx=5, pady=5, sticky="nsew")
+
+        for i in range(8):
+            self.grid_rowconfigure(i, weight=1)
+        for i in range(4):
+            self.grid_columnconfigure(i, weight=1)
+
+    def parent_page(self):
+        return self.controller.pages['Random']
+
+    def exit(self):
+        for team in self.parent_page().team_buttons:
+            for button in team:
+                button.config(text="? ? ? ? ?", command=None)
+        self.controller.show_frame('Random')
 ###############################################################################
 class Banners(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 ###############################################################################
+
+def check_validity(self, pokemon, i=0):
+    if hasattr(self, 'pokemon_pool_list'):
+        if ((pokemon in self.pokemon_pool_list) or
+            (pokemon.name in [pool.name for pool in self.pokemon_pool_list]) or
+            (pokemon.tier in list(filter(None, [i.get() for i in self.pokemon_exclusion_tiers_singles]))) or
+            (pokemon.type[0] in list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))) or
+            (pokemon.type[1] and pokemon.type[1] in list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))) or
+            (check_valid_generation(self, pokemon)) or
+            (check_valid_item(self, pokemon)) or
+            (pokemon.tag in list(filter(None, [i.get() for i in self.pokemon_exclusion_gimmicks])))):
+            return False
+        return True
+    else:
+        if ((pokemon in self.pokemon_team_list[i]) or
+            (pokemon.name in [slot.name for slot in self.pokemon_team_list[i] if slot != None]) or
+            (pokemon.tier in list(filter(None, [i.get() for i in self.pokemon_exclusion_tiers_singles]))) or
+            (pokemon.type[0] in list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))) or
+            (pokemon.type[1] and pokemon.type[1] in list(filter(None, [i.get() for i in self.pokemon_exclusion_types]))) or
+            (check_valid_generation(self, pokemon)) or
+            (check_valid_item(self, pokemon)) or
+            (pokemon.tag in list(filter(None, [i.get() for i in self.pokemon_exclusion_gimmicks])))):
+            return False
+        return True
+
+def check_valid_generation(self, pokemon):
+    dex_list = []
+    for generation in [j.get() for j in self.pokemon_exclusion_generations]:
+        if generation == 'Kanto':
+            for i in range(1, 152):
+                dex_list.append(str(i))
+        if generation == 'Johto':
+            for i in range(152, 252):
+                dex_list.append(str(i))
+        if generation == 'Hoenn':
+            for i in range(252, 387):
+                dex_list.append(str(i))
+        if generation == 'Sinnoh':
+            for i in range(387, 494):
+                dex_list.append(str(i))
+        if generation == 'Unova':
+            for i in range(494, 650):
+                dex_list.append(str(i))
+        if generation == 'Kalos':
+            for i in range(650, 722):
+                dex_list.append(str(i))
+        if generation == 'Alola':
+            for i in range(722, 807):
+                dex_list.append(str(i))
+    if str(pokemon.dex) in dex_list:
+        return True
+    return False
+
+def check_valid_item(self, pokemon):
+    item_list = []
+    for item in list(filter(None, [i.get() for i in self.pokemon_exclusion_items])):
+        if item == 'Mega Stones':
+            item_list.extend(MEGA_STONES)
+        elif item == 'Z-Crystals':
+            item_list.extend(Z_CRYSTALS)
+        elif item == 'Berries':
+            item_list.extend(BERRIES)
+        else:
+            item_list.append(item)
+    if pokemon.item in item_list:
+        return True
+    return False
+
+def get_sets(self):
+    self.controller.clipboard_clear()
+    sets = ''
+    for team in self.pokemon_team_list:
+        sets += '====================\n'
+        for pokemon in team:
+            if pokemon.item:
+                sets += pokemon.name + ' @ ' + pokemon.item + '\n'
+            else:
+                sets += 'pokemon.name\n'
+            if 'LC' in pokemon.tier:
+                sets += 'Level: 5\n'
+            sets += 'Ability: ' + pokemon.ability + '\n'
+            sets += 'EVs: ' + pokemon.evSpread + '\n'
+            sets += pokemon.nature + ' Nature\n'
+            if pokemon.ivSpread:
+                sets += 'IVs: ' + pokemon.ivSpread + '\n'
+            for move in pokemon.moves:
+                if move:
+                    sets += '- ' + move + '\n'
+            sets += '\n'
+        sets += '\n'
+    self.controller.clipboard_append(sets)
+    self.update_statistics(self)
+
+def update_statistics(self):
+    if hasattr(self, 'pokemon_ban_list'):
+        for team in self.pokemon_ban_list:
+            for pokemon in team:
+                if pokemon:
+                    pokemon.banned += 1
+    if hasattr(self, 'pokemon_pool_list'):
+        for pokemon in self.pokemon_pool_list:
+            if self.draft_mode.get() == 'Nemesis':
+                pokemon.generated_nemesis += 1
+            else:
+                pokemon.generated_draft += 1
+    for team in self.pokemon_team_list:
+        for pokemon in team:
+            if hasattr(self, 'draft_mode'):
+                if self.draft_mode.get() == 'Nemesis':
+                    pokemon.picked_nemesis += 1
+                else:
+                    pokemon.picked_draft += 1
+            else:
+                pokemon.generated_random += 1
+    with open('main_database_copy.csv', 'w') as fileName:
+        writer = csv.writer(fileName, delimiter=',')
+        writer.writerow(['POKEMON', 'DEX', 'TYPE 1', 'TYPE 2', 'TIER',
+                         'RARITY', 'TAG', 'ITEM', 'ABILITY', 'EV SPREAD',
+                         'NATURE', 'IV SPREAD', 'MOVE 1', 'MOVE 2', 'MOVE 3',
+                         'MOVE 4', 'STATUS', 'GENERATED (D)', 'GENERATED (N)',
+                         'GENERATED (R)', 'PICKED (D)', 'PICKED (N)', 'BANNED'])
+        for pokemon in ALL_POKEMON:
+            writer.writerow([pokemon.name, pokemon.dex, pokemon.type[0], pokemon.type[1],
+                             pokemon.tier, pokemon.rarity, pokemon.tag, pokemon.item,
+                             pokemon.ability, pokemon.evSpread, pokemon.nature,
+                             pokemon.ivSpread, pokemon.moves[0], pokemon.moves[1],
+                             pokemon.moves[2], pokemon.moves[3], pokemon.status,
+                             str(pokemon.generated_draft), str(pokemon.generated_nemesis),
+                             str(pokemon.generated_random), str(pokemon.picked_draft),
+                             str(pokemon.picked_nemesis), str(pokemon.banned)])
 
 if __name__ == "__main__":
     app = MainApp()
