@@ -22,6 +22,7 @@ TYPES = ['Bug', 'Dark', 'Dragon', 'Electric', 'Fairy', 'Fighting', 'Fire', 'Flyi
 ITEMS = ['Mega Stones', 'Z-Crystals', 'Berries', 'Choice Band', 'Choice Scarf', 'Choice Specs', 'Leftovers', 'Life Orb']
 GIMMICKS = ['Sun', 'Rain', 'Sand', 'Hail', 'Trick Room', 'Baton Pass', 'E-Terrain', 'G-Terrain', 'M-Terrain', 'P-Terrain']
 
+###############################################################################
 class MainApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -37,7 +38,7 @@ class MainApp(tk.Tk):
 
         self.pages = {}
 
-        for Class in (Draft, Random, DraftSettings, GenerateSettings, RandomSettings, Banners):
+        for Class in (Draft, Random, DraftSettings, GenerateSettings, RandomSettings, RandomGenerateSettings, Store):
             page_name = Class.__name__
             frame = Class(parent=self.main_frame, controller=self)
             self.pages[page_name] = frame
@@ -51,6 +52,7 @@ class MainApp(tk.Tk):
     def show_frame(self, page_name):
         frame = self.pages[page_name]
         frame.tkraise()
+###############################################################################
 
 ###############################################################################
 class Sidebar(tk.Frame):
@@ -60,7 +62,7 @@ class Sidebar(tk.Frame):
 
         self.label_text = ['Battle', 'League']
         self.labels = []
-        self.button_text = [['Draft', 'Random'], ['Banners']] # remove after getting images
+        self.button_text = [['Draft', 'Random'], ['Store']] # remove after getting images
         self.button_states = ['active', 'inactive']
         self.buttons = []
 
@@ -385,15 +387,7 @@ class DraftSettings(tk.Frame):
         return self.controller.pages['Draft']
 
     def exit(self):
-        if self.parent_page().game_activated:
-            self.parent_page().game_activated = False
-            for i in range(2):
-                for j in range(2):
-                    self.parent_page().ban_buttons[i][j].config(text="? ? ? ? ?", command=None)
-                for j in range(6):
-                    self.parent_page().team_buttons[i][j].config(text="? ? ? ? ?", command=None)
-            for i in range(18):
-                self.parent_page().pool_buttons[i].config(text="? ? ? ? ?", command=None)
+        clean_up(self)
         self.controller.show_frame('Draft')
 ###############################################################################
 
@@ -403,68 +397,7 @@ class GenerateSettings(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.tier_text = tk.Label(self, text="Tiers (Singles)")
-        self.tier_text.grid(row=1, column=0, rowspan=2, sticky="w")
-        self.tier_buttons = []
-        for i in range(len(TIERS_SINGLES)):
-            self.tier_buttons.append(tk.Checkbutton(self, text=TIERS_SINGLES[i],
-                                                    variable=self.parent_page().pokemon_exclusion_tiers_singles[i],
-                                                    onvalue=TIERS_SINGLES[i],
-                                                    offvalue=''))
-            self.tier_buttons[i].grid(row=1+int(i/5), column=(i%5)+1, sticky="w")
-
-        self.tier2_text = tk.Label(self, text="Tiers (Doubles)")
-        self.tier2_text.grid(row=3, column=0, sticky="w")
-        self.tier2_buttons = []
-        for i in range(len(TIERS_DOUBLES)):
-            self.tier2_buttons.append(tk.Checkbutton(self, text=TIERS_DOUBLES[i],
-                                                    variable=self.parent_page().pokemon_exclusion_tiers_doubles[i],
-                                                    onvalue=TIERS_DOUBLES[i],
-                                                    offvalue=''))
-            self.tier2_buttons[i].grid(row=3+int(i/5), column=(i%5)+1, sticky="w")
-
-        self.gen_text = tk.Label(self, text="Generations")
-        self.gen_text.grid(row=4, column=0, rowspan=2, sticky="w")
-        self.gen_buttons = []
-        for i in range(len(GENERATIONS)):
-            self.gen_buttons.append(tk.Checkbutton(self, text=GENERATIONS[i],
-                                                    variable=self.parent_page().pokemon_exclusion_generations[i],
-                                                    onvalue=GENERATIONS[i],
-                                                    offvalue=''))
-            self.gen_buttons[i].grid(row=4+int(i/5), column=(i%5)+1, sticky="w")
-
-        self.type_text = tk.Label(self, text="Types")
-        self.type_text.grid(row=6, column=0, rowspan=4, sticky="w")
-        self.type_buttons = []
-        for i in range(len(TYPES)):
-            self.type_buttons.append(tk.Checkbutton(self, text=TYPES[i],
-                                                    variable=self.parent_page().pokemon_exclusion_types[i],
-                                                    onvalue=TYPES[i],
-                                                    offvalue=''))
-            self.type_buttons[i].grid(row=6+int(i/5), column=(i%5)+1, sticky="w")
-
-        self.item_text = tk.Label(self, text="Items")
-        self.item_text.grid(row=10, column=0, rowspan=2, sticky="w")
-        self.item_buttons = []
-        for i in range(len(ITEMS)):
-            self.item_buttons.append(tk.Checkbutton(self, text=ITEMS[i],
-                                                    variable=self.parent_page().pokemon_exclusion_items[i],
-                                                    onvalue=ITEMS[i],
-                                                    offvalue=''))
-            self.item_buttons[i].grid(row=10+int(i/5), column=(i%5)+1, sticky="w")
-
-        self.gimmick_text = tk.Label(self, text="Gimmicks")
-        self.gimmick_text.grid(row=12, column=0, rowspan=2, sticky="w")
-        self.gimmick_buttons = []
-        for i in range(len(GIMMICKS)):
-            self.gimmick_buttons.append(tk.Checkbutton(self, text=GIMMICKS[i],
-                                                    variable=self.parent_page().pokemon_exclusion_gimmicks[i],
-                                                    onvalue=GIMMICKS[i],
-                                                    offvalue=''))
-            self.gimmick_buttons[i].grid(row=12+int(i/5), column=(i%5)+1, sticky="w")
-
-        self.usage_text = tk.Label(self, text="Usage")
-        self.usage_text.grid(row=14, column=0, sticky="w")
+        setup_settings(self)
 
         self.back_button = tk.Button(self, text="Back", command=self.validate)
         self.back_button.grid(row=15, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
@@ -481,14 +414,15 @@ class GenerateSettings(tk.Frame):
                 (pokemon.tier in temp_exclude_tiers) or
                 (pokemon.type[0] in temp_exclude_types) or
                 (pokemon.type[1] and pokemon.type[1] in temp_exclude_types) or
-                (self.parent_page().check_valid_generation(pokemon)) or
-                (self.parent_page().check_valid_item(pokemon)) or
+                (check_valid_generation(self.parent_page(), pokemon)) or
+                (check_valid_item(self.parent_page(), pokemon)) or
                 (pokemon.tag in temp_exclude_gimmicks)):
                 continue
             else:
                 temp_list.append(pokemon)
                 temp_counter += 1
         if temp_counter >= 18:
+            clean_up(self)
             self.controller.show_frame('Draft')
         else:
             top = tk.Toplevel(self.controller)
@@ -514,6 +448,8 @@ class Random(tk.Frame):
         self.temp_list = []
         self.battle_mode = tk.StringVar()
         self.battle_mode.set('Singles')
+        self.theme = tk.StringVar()
+        self.theme.set('Random')
         for i in range(6):
             self.grid_columnconfigure(i, weight=1)
         for i in range(8):
@@ -546,7 +482,7 @@ class Random(tk.Frame):
         self.mode_text.grid(row=2, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
         self.settingsV1 = tk.Button(self, text="Random Settings", command=lambda: self.controller.show_frame('RandomSettings'))
         self.settingsV1.grid(row=3, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
-        self.settingsV2 = tk.Button(self, text="Generate Settings", command=None)
+        self.settingsV2 = tk.Button(self, text="Generate Settings", command=lambda: self.controller.show_frame('RandomGenerateSettings'))
         self.settingsV2.grid(row=4, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
         ######################
 
@@ -580,15 +516,24 @@ class Random(tk.Frame):
         temp_counter = 0
         for i in range(2):
             while temp_counter < 6:
-                temp_new_pokemon = random.choice(self.temp_list)
-                if (check_validity(self, temp_new_pokemon, i)):
-                    self.pokemon_team_list[i][temp_counter] = temp_new_pokemon
-                    temp_counter += 1
+                if i == 1 and self.theme.get() == 'Balanced':
+                    temp_new_pokemon = random.choice(self.temp_list)
+                    if ((check_validity(self, temp_new_pokemon, i)) and
+                        (temp_new_pokemon.tier == self.pokemon_team_list[0][temp_counter].tier)):
+                            self.pokemon_team_list[i][temp_counter] = temp_new_pokemon
+                            temp_counter += 1
+                else:
+                    temp_new_pokemon = random.choice(self.temp_list)
+                    if (check_validity(self, temp_new_pokemon, i)):
+                        self.pokemon_team_list[i][temp_counter] = temp_new_pokemon
+                        temp_counter += 1
             temp_counter = 0
 
         print([i.name for i in self.pokemon_team_list[0]])
+        print([i.tier for i in self.pokemon_team_list[0]])
         print()
         print([i.name for i in self.pokemon_team_list[1]])
+        print([i.tier for i in self.pokemon_team_list[1]])
         print()
 
         for i in range(2):
@@ -603,6 +548,8 @@ class Random(tk.Frame):
                 self.pokemon_team_list[team][slot] = temp_new_pokemon
                 self.team_buttons[team][slot].config(text=temp_new_pokemon.name)
                 break
+###############################################################################
+
 ###############################################################################
 class RandomSettings(tk.Frame):
     def __init__(self, parent, controller):
@@ -624,7 +571,20 @@ class RandomSettings(tk.Frame):
         self.back_button = tk.Button(self, text="Back", command=self.exit)
         self.back_button.grid(row=15, column=1, columnspan=2, padx=5, pady=5, sticky="nsew")
 
-        for i in range(8):
+        self.theme_text = tk.Label(self, text="Theme")
+        self.theme_text.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.theme_buttons = []
+        themes = ['Random', 'Balanced', 'Monotype']
+        for i in range(len(themes)):
+            self.theme_buttons.append(tk.Radiobutton(self, text=themes[i],
+                                                           variable=self.parent_page().theme,
+                                                           indicatoron=0,
+                                                           width=10,
+                                                           value=themes[i]))
+            self.theme_buttons[i].grid(row=2+int(i/5), column=(i%5)+1, padx=5, pady=5, sticky="nsew")
+
+
+        for i in range(6):
             self.grid_rowconfigure(i, weight=1)
         for i in range(4):
             self.grid_columnconfigure(i, weight=1)
@@ -633,12 +593,57 @@ class RandomSettings(tk.Frame):
         return self.controller.pages['Random']
 
     def exit(self):
-        for team in self.parent_page().team_buttons:
-            for button in team:
-                button.config(text="? ? ? ? ?", command=None)
+        clean_up(self)
         self.controller.show_frame('Random')
 ###############################################################################
-class Banners(tk.Frame):
+
+###############################################################################
+class RandomGenerateSettings(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
+        setup_settings(self)
+
+        self.back_button = tk.Button(self, text="Back", command=self.validate)
+        self.back_button.grid(row=15, column=2, columnspan=2, padx=5, pady=5, sticky="nsew")
+
+    def validate(self):
+        temp_exclude_tiers = list(filter(None, [i.get() for i in self.parent_page().pokemon_exclusion_tiers_singles]))
+        temp_exclude_types = list(filter(None, [i.get() for i in self.parent_page().pokemon_exclusion_types]))
+        temp_exclude_gimmicks = list(filter(None, [i.get() for i in self.parent_page().pokemon_exclusion_gimmicks]))
+        temp_counter = 0
+        temp_list = []
+        for pokemon in ALL_POKEMON:
+            if ((pokemon.name in [i.name for i in temp_list]) or
+                (pokemon.dex in [j.dex for j in temp_list]) or
+                (pokemon.tier in temp_exclude_tiers) or
+                (pokemon.type[0] in temp_exclude_types) or
+                (pokemon.type[1] and pokemon.type[1] in temp_exclude_types) or
+                (check_valid_generation(self.parent_page(), pokemon)) or
+                (check_valid_item(self.parent_page(), pokemon)) or
+                (pokemon.tag in temp_exclude_gimmicks)):
+                continue
+            else:
+                temp_list.append(pokemon)
+                temp_counter += 1
+        if temp_counter >= 18:
+            clean_up(self)
+            self.controller.show_frame('Random')
+        else:
+            top = tk.Toplevel(self.controller)
+            top.grab_set()
+            message = tk.Label(top, text="Not enough Pokemon fit the criteria you have selected.\nPlease remove some restrictions.")
+            message.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+            back_button = tk.Button(top, text="Ok", command=top.destroy)
+            back_button.grid(row=1, column=0, padx=100, pady=5, sticky="nsew")
+
+    def parent_page(self):
+        return self.controller.pages['Random']
+###############################################################################
+
+###############################################################################
+class Store(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -773,6 +778,100 @@ def update_statistics(self):
                              str(pokemon.generated_draft), str(pokemon.generated_nemesis),
                              str(pokemon.generated_random), str(pokemon.picked_draft),
                              str(pokemon.picked_nemesis), str(pokemon.banned)])
+
+def clean_up(self):
+    if hasattr(self.parent_page(), 'game_activated'):
+        self.parent_page().game_activated = False
+    if hasattr(self.parent_page(), 'turn'):
+        self.parent_page().turn = 0
+    if hasattr(self.parent_page(), 'pokemon_pool_list'):
+        self.parent_page().pokemon_pool_list = []
+        for i in range(18):
+            self.parent_page().pool_buttons[i].config(text="? ? ? ? ?", command=None)
+    if hasattr(self.parent_page(), 'pokemon_ban_list'):
+        self.parent_page().pokemon_ban_list = [[None, None], [None, None]]
+    if hasattr(self.parent_page(), 'ban_phase_finished'):
+        self.parent_page().ban_phase_finished = False
+        self.parent_page().ban_phase_1_finished = False
+        self.parent_page().ban_phase_2_finished = False
+    self.parent_page().pokemon_team_list = [[None for i in range(6)] for j in range(2)]
+    if hasattr(self.parent_page(), 'pokemon_not_picked'):
+        self.parent_page().pokemon_not_picked = [True for i in range(18)]
+    for i in range(2):
+        if hasattr(self.parent_page(), 'ban_buttons'):
+            for j in range(2):
+                self.parent_page().ban_buttons[i][j].config(text="? ? ? ? ?", command=None)
+        for j in range(6):
+            self.parent_page().team_buttons[i][j].config(text="? ? ? ? ?", command=None)
+    if hasattr(self.parent_page(), 'mode_text'):
+        if hasattr(self, 'draft_mode_buttons'):
+            self.parent_page().mode_text.config(text="%s Draft" % self.parent_page().draft_mode.get())
+        if hasattr(self, 'theme_buttons'):
+            self.parent_page().mode_text.config(text="%s Battle" % self.parent_page().theme.get())
+
+def setup_settings(self):
+    self.tier_text = tk.Label(self, text="Tiers (Singles)")
+    self.tier_text.grid(row=1, column=0, rowspan=2, sticky="w")
+    self.tier_buttons = []
+    for i in range(len(TIERS_SINGLES)):
+        self.tier_buttons.append(tk.Checkbutton(self, text=TIERS_SINGLES[i],
+                                                variable=self.parent_page().pokemon_exclusion_tiers_singles[i],
+                                                onvalue=TIERS_SINGLES[i],
+                                                offvalue=''))
+        self.tier_buttons[i].grid(row=1+int(i/5), column=(i%5)+1, sticky="w")
+
+    self.tier2_text = tk.Label(self, text="Tiers (Doubles)")
+    self.tier2_text.grid(row=3, column=0, sticky="w")
+    self.tier2_buttons = []
+    for i in range(len(TIERS_DOUBLES)):
+        self.tier2_buttons.append(tk.Checkbutton(self, text=TIERS_DOUBLES[i],
+                                                variable=self.parent_page().pokemon_exclusion_tiers_doubles[i],
+                                                onvalue=TIERS_DOUBLES[i],
+                                                offvalue=''))
+        self.tier2_buttons[i].grid(row=3+int(i/5), column=(i%5)+1, sticky="w")
+
+    self.gen_text = tk.Label(self, text="Generations")
+    self.gen_text.grid(row=4, column=0, rowspan=2, sticky="w")
+    self.gen_buttons = []
+    for i in range(len(GENERATIONS)):
+        self.gen_buttons.append(tk.Checkbutton(self, text=GENERATIONS[i],
+                                                variable=self.parent_page().pokemon_exclusion_generations[i],
+                                                onvalue=GENERATIONS[i],
+                                                offvalue=''))
+        self.gen_buttons[i].grid(row=4+int(i/5), column=(i%5)+1, sticky="w")
+
+    self.type_text = tk.Label(self, text="Types")
+    self.type_text.grid(row=6, column=0, rowspan=4, sticky="w")
+    self.type_buttons = []
+    for i in range(len(TYPES)):
+        self.type_buttons.append(tk.Checkbutton(self, text=TYPES[i],
+                                                variable=self.parent_page().pokemon_exclusion_types[i],
+                                                onvalue=TYPES[i],
+                                                offvalue=''))
+        self.type_buttons[i].grid(row=6+int(i/5), column=(i%5)+1, sticky="w")
+
+    self.item_text = tk.Label(self, text="Items")
+    self.item_text.grid(row=10, column=0, rowspan=2, sticky="w")
+    self.item_buttons = []
+    for i in range(len(ITEMS)):
+        self.item_buttons.append(tk.Checkbutton(self, text=ITEMS[i],
+                                                variable=self.parent_page().pokemon_exclusion_items[i],
+                                                onvalue=ITEMS[i],
+                                                offvalue=''))
+        self.item_buttons[i].grid(row=10+int(i/5), column=(i%5)+1, sticky="w")
+
+    self.gimmick_text = tk.Label(self, text="Gimmicks")
+    self.gimmick_text.grid(row=12, column=0, rowspan=2, sticky="w")
+    self.gimmick_buttons = []
+    for i in range(len(GIMMICKS)):
+        self.gimmick_buttons.append(tk.Checkbutton(self, text=GIMMICKS[i],
+                                                variable=self.parent_page().pokemon_exclusion_gimmicks[i],
+                                                onvalue=GIMMICKS[i],
+                                                offvalue=''))
+        self.gimmick_buttons[i].grid(row=12+int(i/5), column=(i%5)+1, sticky="w")
+
+    self.usage_text = tk.Label(self, text="Usage")
+    self.usage_text.grid(row=14, column=0, sticky="w")
 
 if __name__ == "__main__":
     app = MainApp()
