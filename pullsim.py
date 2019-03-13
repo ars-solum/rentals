@@ -74,7 +74,7 @@ class Player:
 playerNames = ['Daniel', 'Jake', 'Yasmin']
 player_list = []
 for player in playerNames:
-    filename = os.path.join(fileDir, 'players/' + player + '.csv')
+    filename = os.path.join(fileDir, 'players', player + '.csv')
     try:
         with open(filename, 'r') as file:
             reader = csv.reader(file)

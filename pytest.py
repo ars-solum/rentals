@@ -27,12 +27,12 @@
 #         self.selection_set(0, 'end')
 #
 #
-root = tkinter.Tk()
-flb = FancyListbox(root, selectmode='multiple')
-for n in range(10):
-    flb.insert('end', n)
-flb.pack()
-root.mainloop()
+# root = tkinter.Tk()
+# flb = FancyListbox(root, selectmode='multiple')
+# for n in range(10):
+#     flb.insert('end', n)
+# flb.pack()
+# root.mainloop()
 
 import tkinter as tk
 from tkinter import ttk

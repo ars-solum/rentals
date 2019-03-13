@@ -1,7 +1,9 @@
 try:
     import Tkinter as tk
+    from Tkinter import ttk
 except ImportError:
     import tkinter as tk
+    from tkinter import ttk
 from PIL import Image, ImageTk
 
 import os
@@ -333,7 +335,7 @@ class DraftSettings(tk.Frame):
         self.battle_mode_text = tk.Label(self, text="Battle Mode")
         self.battle_mode_text.grid(row=1, column=0, padx=5, pady=5, sticky="w")
         self.battle_mode_buttons = []
-        battle_modes = ['Singles', 'Doubles']
+        battle_modes = ['Singles', 'Doubles', 'SRL']
         for i in range(len(battle_modes)):
             self.battle_mode_buttons.append(tk.Radiobutton(self, text=battle_modes[i],
                                                            variable=self.parent_page().battle_mode,
@@ -559,7 +561,7 @@ class RandomSettings(tk.Frame):
         self.battle_mode_text = tk.Label(self, text="Battle Mode")
         self.battle_mode_text.grid(row=1, column=0, padx=5, pady=5, sticky="w")
         self.battle_mode_buttons = []
-        battle_modes = ['Singles', 'Doubles']
+        battle_modes = ['Singles', 'Doubles', 'SRL']
         for i in range(len(battle_modes)):
             self.battle_mode_buttons.append(tk.Radiobutton(self, text=battle_modes[i],
                                                            variable=self.parent_page().battle_mode,
@@ -647,6 +649,55 @@ class Store(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
+        self.banner_num = 1
+        self.currentPlayer = tk.StringVar()
+        self.currentPlayer.set(playerNames[0])
+
+        self.banner_image = tk.Label(self, text="Banner %d Image" % self.banner_num)
+        self.banner_image.grid(row=0, column=0, rowspan=2, columnspan=3, sticky="nsew")
+        self.banner_info_text = tk.Label(self, text="Banner Info")
+        self.banner_info_text.grid(row=2, column=1, sticky="nsew")
+
+        self.scrollframe = tk.LabelFrame(self, text="Banner Info", border=2)
+        self.scrollframe.grid(row=3, column=0, rowspan=5, columnspan=3, padx=5, pady=5, sticky="nsew")
+        self.container = tk.Canvas(self.scrollframe, scrollregion=(0,0,400,400))
+        self.scrollbar = ttk.Scrollbar(self.scrollframe, orient='vertical', command=self.container.yview)
+        self.container.config(yscrollcommand=self.scrollbar.set)
+        self.container.bind('<Enter>', self._on_mousewheel)
+        self.container.bind('<Leave>', self._off_mousewheel)
+        self.scrollbar.pack(side='right', fill='y')
+        self.container.pack(side='left', expand=True, fill='both')
+
+        self.pokemon_icons = [[None for i in range(5)] for j in range(8)]
+        for i in range(8):
+            for j in range(5):
+                x = (i*5)+j
+                self.pokemon_icons[i][j] = tk.Button(self.container, text="Pokemon %d" % x, command=None)
+                self.container.create_window((j*100)+40, (i*50)+20, window=self.pokemon_icons[i][j])
+                #####################################
+        self.pull_result = tk.Label(self, text="? ? ?", command=None)
+        self.pull_result.grid(row=8, column=0, padx=5, pady=5, sticky="nsew")
+        self.player_name = tk.OptionMenu(self, self.currentPlayer, *playerNames, command=self.update_player_info)
+        self.player_name.grid(row=8, column=1, padx=5, pady=5, sticky="nsew")
+        self.pull_button = tk.Button(self, text="? ? ?", command=None)
+        self.pull_button.grid(row=8, column=2, padx=5, pady=5, sticky="nsew")
+
+        for i in range(9):
+            self.grid_rowconfigure(i, weight=1)
+        for i in range(3):
+            self.grid_columnconfigure(i, weight=1)
+
+    def _on_mousewheel(self, event):
+        self.container.bind_all('<MouseWheel>', self._scroll)
+    def _off_mousewheel(self, event):
+        self.container.unbind_all('<MouseWheel>')
+    def _scroll(self, event):
+        self.container.yview_scroll(int(-1*(event.delta/120)), "units")
+
+    def
+
+
 ###############################################################################
 
 def check_validity(self, pokemon, i=0):
