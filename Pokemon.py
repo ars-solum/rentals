@@ -404,11 +404,20 @@ def type_logic(attackingPokemon, defendingPokemon):
     else:
         return False
 
-ALL_POKEMON = []
+ALL_POKEMON_S = []
 ABILITIES = {}
 MEGA_STONES = []
 Z_CRYSTALS = []
 BERRIES = []
+PLAYERS = []
+playerNames = []
+TIERS_SINGLES = ['LC', 'LC Uber', 'Untiered', 'NFE', 'PU', 'NU', 'RU', 'UU', 'OU', 'Uber']
+TIERS_DOUBLES = ['LC', 'Untiered', 'DUU', 'DOU', 'DUber']
+GENERATIONS = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola']
+TYPES = ['Bug', 'Dark', 'Dragon', 'Electric', 'Fairy', 'Fighting', 'Fire', 'Flying', 'Ghost', 'Grass', 'Ground', 'Ice', 'Normal', 'Poison', 'Psychic', 'Rock', 'Steel', 'Water']
+ITEMS = ['Mega Stones', 'Z-Crystals', 'Berries', 'Choice Band', 'Choice Scarf', 'Choice Specs', 'Leftovers', 'Life Orb']
+GIMMICKS = ['Sun', 'Rain', 'Sand', 'Hail', 'Trick Room', 'Baton Pass', 'E-Terrain', 'G-Terrain', 'M-Terrain', 'P-Terrain']
+ALL_BANNERS = []
 
 class Pokemon:
     def __init__(self, row):
@@ -437,7 +446,7 @@ with open('main_database.csv', 'r') as fileName:
     reader = csv.reader(fileName)
     next(reader, None)
     for row in reader:
-        ALL_POKEMON.append(Pokemon(row))
+        ALL_POKEMON_S.append(Pokemon(row))
 
 with open('Abilities.csv', 'r') as fileName:
     reader = csv.reader(fileName)

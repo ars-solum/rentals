@@ -25,10 +25,10 @@ class Sidebar(tk.Frame):
         self.grid_columnconfigure(1, weight=1)
 
         # labels
-        self.label_text = ['battle', 'settings', 'league']
-        self.img_labels = []
-        for i in range(len(self.label_text)):
-            self.img_labels.append(RGBAImage(os.path.join(ROOT, 'media', 'Common', 'label_%s.png' % self.label_text[i])))
+        # self.label_text = ['battle', 'settings', 'league']
+        # self.img_labels = []
+        # for i in range(len(self.label_text)):
+        #     self.img_labels.append(RGBAImage(os.path.join(ROOT, 'media', 'Common', 'label_%s.png' % self.label_text[i])))
 
         # buttons
         # [1] active [2] inactive
