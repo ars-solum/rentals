@@ -33,6 +33,21 @@ class MainApp(tk.Tk):
         self.sidebar = Sidebar(parent=self.side_frame, controller=self)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
 
+        self.img_type = ['inactive', 'active', 'banned', 'unknown', 'picked']
+        self.img_blank_base = {'active': RGBAImage2(os.path.join(COMMON, 'button_active_Blank.png')),
+                               'inactive': RGBAImage2(os.path.join(COMMON, 'button_inactive_Blank.png'))}
+        self.img_border = {'Standard': RGBAImage2(os.path.join(COMMON, 'border_Standard.png')),
+                           'Nemesis': RGBAImage2(os.path.join(COMMON, 'border_Nemesis.png')),
+                           'COMMON': RGBAImage2(os.path.join(COMMON, 'border_COMMON.png')),
+                           'RARE': RGBAImage2(os.path.join(COMMON, 'border_RARE.png')),
+                           'ULTRA-RARE': RGBAImage2(os.path.join(COMMON, 'border_ULTRA-RARE.png'))}
+        self.img_blank_base['inactive'].paste(self.img_border['Standard'],
+                                              (0, 0), self.img_border['Standard'])
+        self.img_blank_base['active'].paste(self.img_border['Standard'],
+                                            (0, 0), self.img_border['Standard'])
+        self.img_blank = [ImageTk.PhotoImage(self.img_blank_base['inactive']),
+                          ImageTk.PhotoImage(self.img_blank_base['active'])]
+
         self.pages = {}
 
         for Class in (Draft, Random, DraftSettings, GenerateSettings,
@@ -102,7 +117,6 @@ class Draft(tk.Frame):
         self.controller = controller
 
         ##### Private Variables #####
-        # misc. variables
         self.alpha = 0
         self.turn = 0
         self.game_activated = False
@@ -116,25 +130,14 @@ class Draft(tk.Frame):
         self.ban_phase_2_finished = False
         self.ban_number = tk.IntVar()
         self.ban_number.set(0)
-        self.img_pkmn = [[] for i in range(5)]
-        self.img_type = ['inactive', 'active', 'banned', 'unknown', 'picked']
-        self.img_blank_base = {'active': RGBAImage2(os.path.join(COMMON, 'button_active_Blank.png')),
-                               'inactive': RGBAImage2(os.path.join(COMMON, 'button_inactive_Blank.png'))}
-        self.img_border = {'Standard': RGBAImage2(os.path.join(COMMON, 'border_Standard.png')),
-                           'Nemesis': RGBAImage2(os.path.join(COMMON, 'border_Nemesis.png')),
-                           'COMMON': RGBAImage2(os.path.join(COMMON, 'border_COMMON.png')),
-                           'RARE': RGBAImage2(os.path.join(COMMON, 'border_RARE.png')),
-                           'ULTRA-RARE': RGBAImage2(os.path.join(COMMON, 'border_ULTRA-RARE.png'))}
-        self.img_blank_base['inactive'].paste(self.img_border['Standard'],
-                                              (0, 0), self.img_border['Standard'])
-        self.img_blank_base['active'].paste(self.img_border['Standard'],
-                                            (0, 0), self.img_border['Standard'])
-        self.img_blank = [ImageTk.PhotoImage(self.img_blank_base['inactive'])]
+        self.img_pkmn = [[] for i in range(len(self.controller.img_type))]
+        self.separators = [ttk.Separator(self, orient='horizontal') for i in range(2)]
+
         for i in range(8):
             self.grid_rowconfigure(i, weight=1)
         for i in range(6):
             self.grid_columnconfigure(i, weight=1)
-        # filter/exclusion variables
+
         self.pkmn_excl_tiers_s = [tk.StringVar() for i in range(len(TIERS_SINGLES))]
         self.pkmn_excl_tiers_d = [tk.StringVar() for i in range(len(TIERS_DOUBLES))]
         self.pkmn_excl_gens = [tk.StringVar() for i in range(len(GENERATIONS))]
@@ -142,7 +145,7 @@ class Draft(tk.Frame):
         self.pkmn_excl_items = [tk.StringVar() for i in range(len(ITEMS))]
         self.pkmn_excl_gimmicks = [tk.StringVar() for i in range(len(GIMMICKS))]
         self.pkmn_excl_usage = []
-        # other pokemon variables
+
         self.checks_and_counters = [[] for i in range(18)]
         #############################
 
@@ -153,32 +156,36 @@ class Draft(tk.Frame):
             for j in range(6):
                 x = (i*6) + j
                 self.pool_buttons.append(tk.Button(self,
-                                                   image=self.img_blank,
+                                                   image=self.controller.img_blank[0],
                                                    bd=0.1,
                                                    command=None))
                 self.pool_buttons[x].grid(row=i, column=j, padx=5, pady=5,
                                           sticky="nsew")
         ########################
 
+        self.separators[0].grid(row=4, column=0, columnspan=6, sticky="nsew")
+
         ##### Ban Boxes #####
         self.pkmn_ban_list = [[None, None], [None, None]]
         self.ban_text = tk.Label(self, text="BANS")
-        self.ban_text.grid(row=4, column=2, columnspan=2, sticky="nsew")
+        self.ban_text.grid(row=5, column=2, columnspan=2, sticky="nsew")
         self.ban_buttons = [[], []]
         for i in range(2):
             for j in range(2):
                 self.ban_buttons[i].append(tk.Button(self,
-                                                     image=self.img_blank,
+                                                     image=self.controller.img_blank[0],
                                                      bd=0.1,
                                                      state="disabled",
                                                      command=None))
                 if i == 0:
-                    self.ban_buttons[i][j].grid(row=4, column=i*4+j, padx=5,
+                    self.ban_buttons[i][j].grid(row=5, column=i*4+j, padx=5,
                                                 pady=5, sticky="nsew")
                 else:
-                    self.ban_buttons[i][j].grid(row=4, column=i*5-j, padx=5,
+                    self.ban_buttons[i][j].grid(row=5, column=i*5-j, padx=5,
                                                 pady=5, sticky="nsew")
         #####################
+
+        self.separators[1].grid(row=6, column=0, columnspan=6, sticky="nsew")
 
         ##### Team Boxes #####
         self.team_text = []
@@ -186,16 +193,16 @@ class Draft(tk.Frame):
         self.team_buttons = [[], []]
         for team in range(2):
             self.team_text.append(tk.Label(self, text="TEAM %s" % str(team+1)))
-            self.team_text[team].grid(row=5, column=team*4, columnspan=2,
+            self.team_text[team].grid(row=7, column=team*4, columnspan=2,
                                       sticky="nsew")
             for row in range(3):
                 for column in range(2):
                     x = (row * 2) + column
                     self.team_buttons[team].append(tk.Button(self,
-                                                             image=self.img_blank,
+                                                             image=self.controller.img_blank[0],
                                                              bd=0.1,
                                                              command=None))
-                    self.team_buttons[team][x].grid(row=row+6,
+                    self.team_buttons[team][x].grid(row=row+8,
                                                     column=(team*4)+column,
                                                     padx=5, pady=5,
                                                     sticky="nsew")
@@ -203,23 +210,23 @@ class Draft(tk.Frame):
 
         ##### Settings #####
         self.mode_text = tk.Label(self, text="%s Draft" % self.draft_mode.get())
-        self.mode_text.grid(row=5, column=2, columnspan=2, padx=5, pady=5,
+        self.mode_text.grid(row=7, column=2, columnspan=2, padx=5, pady=5,
                             sticky="nsew")
         self.settingsV1 = tk.Button(self, text="Draft Settings",
             command=lambda: self.controller.show_frame('DraftSettings'))
-        self.settingsV1.grid(row=6, column=2, columnspan=2, padx=5, pady=5,
+        self.settingsV1.grid(row=8, column=2, columnspan=2, padx=5, pady=5,
                              sticky="nsew")
         self.settingsV2 = tk.Button(self, text="Generate Settings",
             command=lambda: self.controller.show_frame('GenerateSettings'))
-        self.settingsV2.grid(row=7, column=2, columnspan=2, padx=5, pady=5,
+        self.settingsV2.grid(row=9, column=2, columnspan=2, padx=5, pady=5,
                              sticky="nsew")
         ######################
 
         ##### Start/Finish Buttons #####
         self.start_button = tk.Button(self, text="New Game", command=self.new_game)
-        self.start_button.grid(row=8, column=2, padx=5, pady=5, sticky="nsew")
+        self.start_button.grid(row=10, column=2, padx=5, pady=5, sticky="nsew")
         self.finish_button = tk.Button(self, text="Get Sets", command=None)
-        self.finish_button.grid(row=8, column=3, padx=5, pady=5, sticky="nsew")
+        self.finish_button.grid(row=10, column=3, padx=5, pady=5, sticky="nsew")
         ################################
 
     def new_game(self):
@@ -233,7 +240,8 @@ class Draft(tk.Frame):
         self.ban_phase_2_finished = False
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
         self.pkmn_not_picked = [True for i in range(18)]
-        self.img_pkmn = [[] for i in range(5)]
+        # self.img_pkmn_base = [[] for i in range(len(self.controller.img_type))]
+        self.img_pkmn = [[] for i in range(len(self.controller.img_type))]
 
         temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
         temp_excl_types = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
@@ -255,7 +263,7 @@ class Draft(tk.Frame):
             temp_new_pokemon = random.choice(temp_list)
             if (check_validity(self, temp_new_pokemon)):
                 self.pkmn_pool_list.append(temp_new_pokemon)
-                for i in range(len(self.img_type)):
+                for i in range(len(self.controller.img_type)):
                     self.img_pkmn[i].append(temp_new_pokemon.name)
                 temp_counter += 1
 
@@ -265,6 +273,7 @@ class Draft(tk.Frame):
         self.get_checks_and_counters()
 
         for i in range(18):
+            self.get_pkmn_imgs(self.pkmn_pool_list[i].name)
             self.pool_buttons[i].config(text=self.pkmn_pool_list[i].name,
                                         command=lambda i=i: self.add_to_team(i))
         for i in range(2):
@@ -273,6 +282,23 @@ class Draft(tk.Frame):
             for j in range(6):
                 self.team_buttons[i][j].config(text="? ? ? ? ?", command=None)
         self.finish_button.config(command=None)
+
+    def get_pkmn_imgs(self, pkmn_name):
+        pkmn_name = pkmn_name.replace('-Small', '')
+        pkmn_name = pkmn_name.replace('-Large', '')
+        pkmn_name = pkmn_name.replace('-Super', '')
+        pkmn_name = pkmn_name.replace(':', '')
+        self.img_pkmn_base = [RGBAImage2(os.path.join(IMG_PKMN, pkmn_name + '_inactive.png')),
+                              RGBAImage2(os.path.join(IMG_PKMN, pkmn_name + '_active.png')),
+                              RGBAImage2(os.path.join(IMG_PKMN, pkmn_name + '_unknown.png')),
+                              RGBAImage2(os.path.join(IMG_PKMN, pkmn_name + '_banned.png')),
+                              RGBAImage2(os.path.join(IMG_PKMN, pkmn_name + '_picked.png'))]
+        for i in range(len(self.controller.img_type)):
+            self.img_pkmn_base[i].paste(self.controller.img_border[self.draft_mode.get()],
+                                        (0, 0),
+                                        self.controller.img_border[self.draft_mode.get()])
+        for i in range(len(self.controller.img_type)):
+            self.img_pkmn[i].append(ImageTk.PhotoImage(self.img_pkmn_base[i]))
 
     def get_checks_and_counters(self):
         self.checks_and_counters = [[] for i in range(18)]
@@ -461,7 +487,7 @@ class GenerateSettings(tk.Frame):
         setup_settings(self)
 
         self.back_button = tk.Button(self, text="Back", command=self.validate)
-        self.back_button.grid(row=15, column=2, columnspan=2, padx=5, pady=5,
+        self.back_button.grid(row=21, column=1, columnspan=4, padx=5, pady=5,
                               sticky="nsew")
 
     def validate(self):
@@ -979,59 +1005,74 @@ def setup_settings(self):
             offvalue=''))
         self.tier_buttons[i].grid(row=1+int(i/5), column=(i % 5)+1, sticky="w")
 
+    self.separators = [ttk.Separator(self, orient='horizontal') for i in range(7)]
+    self.separators[0].grid(row=3, column=0, columnspan=6, sticky="nsew")
+
+
     self.tier2_text = tk.Label(self, text="Tiers (Doubles)")
-    self.tier2_text.grid(row=3, column=0, sticky="w")
+    self.tier2_text.grid(row=4, column=0, sticky="w")
     self.tier2_buttons = []
     for i in range(len(TIERS_DOUBLES)):
         self.tier2_buttons.append(tk.Checkbutton(self, text=TIERS_DOUBLES[i],
             variable=self.parent_page().pkmn_excl_tiers_d[i],
             onvalue=TIERS_DOUBLES[i],
             offvalue=''))
-        self.tier2_buttons[i].grid(row=3+int(i/5), column=(i % 5)+1, sticky="w")
+        self.tier2_buttons[i].grid(row=4+int(i/5), column=(i % 5)+1, sticky="w")
+
+    self.separators[1].grid(row=5, column=0, columnspan=6, sticky="nsew")
 
     self.gen_text = tk.Label(self, text="Generations")
-    self.gen_text.grid(row=4, column=0, rowspan=2, sticky="w")
+    self.gen_text.grid(row=6, column=0, rowspan=2, sticky="w")
     self.gen_buttons = []
     for i in range(len(GENERATIONS)):
         self.gen_buttons.append(tk.Checkbutton(self, text=GENERATIONS[i],
             variable=self.parent_page().pkmn_excl_gens[i],
             onvalue=GENERATIONS[i],
             offvalue=''))
-        self.gen_buttons[i].grid(row=4+int(i/5), column=(i % 5)+1, sticky="w")
+        self.gen_buttons[i].grid(row=6+int(i/5), column=(i % 5)+1, sticky="w")
+
+    self.separators[2].grid(row=8, column=0, columnspan=6, sticky="nsew")
 
     self.type_text = tk.Label(self, text="Types")
-    self.type_text.grid(row=6, column=0, rowspan=4, sticky="w")
+    self.type_text.grid(row=9, column=0, rowspan=4, sticky="w")
     self.type_buttons = []
     for i in range(len(TYPES)):
         self.type_buttons.append(tk.Checkbutton(self, text=TYPES[i],
-                                                variable=self.parent_page(
-        ).pkmn_excl_types[i],
+            variable=self.parent_page().pkmn_excl_types[i],
             onvalue=TYPES[i],
             offvalue=''))
-        self.type_buttons[i].grid(row=6+int(i/5), column=(i % 5)+1, sticky="w")
+        self.type_buttons[i].grid(row=9+int(i/5), column=(i % 5)+1, sticky="w")
+
+    self.separators[3].grid(row=13, column=0, columnspan=6, sticky="nsew")
 
     self.item_text = tk.Label(self, text="Items")
-    self.item_text.grid(row=10, column=0, rowspan=2, sticky="w")
+    self.item_text.grid(row=14, column=0, rowspan=2, sticky="w")
     self.item_buttons = []
     for i in range(len(ITEMS)):
         self.item_buttons.append(tk.Checkbutton(self, text=ITEMS[i],
             variable=self.parent_page().pkmn_excl_items[i],
             onvalue=ITEMS[i],
             offvalue=''))
-        self.item_buttons[i].grid(row=10+int(i/5), column=(i % 5)+1, sticky="w")
+        self.item_buttons[i].grid(row=14+int(i/5), column=(i % 5)+1, sticky="w")
+
+    self.separators[4].grid(row=16, column=0, columnspan=6, sticky="nsew")
 
     self.gimmick_text = tk.Label(self, text="Gimmicks")
-    self.gimmick_text.grid(row=12, column=0, rowspan=2, sticky="w")
+    self.gimmick_text.grid(row=17, column=0, rowspan=2, sticky="w")
     self.gimmick_buttons = []
     for i in range(len(GIMMICKS)):
         self.gimmick_buttons.append(tk.Checkbutton(self, text=GIMMICKS[i],
             variable=self.parent_page().pkmn_excl_gimmicks[i],
             onvalue=GIMMICKS[i],
             offvalue=''))
-        self.gimmick_buttons[i].grid(row=12+int(i/5), column=(i % 5)+1, sticky="w")
+        self.gimmick_buttons[i].grid(row=17+int(i/5), column=(i % 5)+1, sticky="w")
+
+    self.separators[5].grid(row=19, column=0, columnspan=6, sticky="nsew")
 
     self.usage_text = tk.Label(self, text="Usage")
-    self.usage_text.grid(row=14, column=0, sticky="w")
+    self.usage_text.grid(row=20, column=0, sticky="w")
+
+    self.separators[6].grid(row=21, column=0, columnspan=6, sticky="nsew")
 
 
 def init_player_information():
