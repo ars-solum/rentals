@@ -263,8 +263,6 @@ class Draft(tk.Frame):
             temp_new_pokemon = random.choice(temp_list)
             if (check_validity(self, temp_new_pokemon)):
                 self.pkmn_pool_list.append(temp_new_pokemon)
-                for i in range(len(self.controller.img_type)):
-                    self.img_pkmn[i].append(temp_new_pokemon.name)
                 temp_counter += 1
 
         print([i.name for i in self.pkmn_pool_list])
@@ -274,7 +272,8 @@ class Draft(tk.Frame):
 
         for i in range(18):
             self.get_pkmn_imgs(self.pkmn_pool_list[i].name)
-            self.pool_buttons[i].config(text=self.pkmn_pool_list[i].name,
+            self.pool_buttons[i].config(image=self.img_pkmn[0][i],
+                                        bd=0.1,
                                         command=lambda i=i: self.add_to_team(i))
         for i in range(2):
             for j in range(2):
