@@ -426,15 +426,15 @@ class Pokemon:
         self.type = [row[2], row[3]]
         self.tier = row[4]
         self.rarity = row[5]
-        self.tag = row[6]
-        self.item = row[7]
-        self.ability = row[8]
-        self.evSpread = row[9]
-        self.nature = row[10]
-        self.ivSpread = row[11]
-        self.moves = [row[12], row[13], row[14], row[15]]
+        self.srl_group = int(row[6])
+        self.tag = row[7]
+        self.item = row[8]
+        self.ability = row[9]
+        self.evSpread = row[10]
+        self.nature = row[11]
+        self.ivSpread = row[12]
+        self.moves = [row[13], row[14], row[15], row[16]]
         # statistics
-        self.status = row[16]
         self.generated_draft = int(row[17])
         self.generated_nemesis = int(row[18])
         self.generated_random = int(row[19])
