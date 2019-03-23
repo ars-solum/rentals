@@ -19,6 +19,7 @@ ROOT = os.path.dirname(os.path.realpath(__file__))
 MEDIA = os.path.join(ROOT, 'media')
 COMMON = os.path.join(MEDIA, 'Common')
 IMG_PKMN_DIR = os.path.join(MEDIA, 'pokemon')
+PLAYER_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'players')
 
 class MainApp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -851,7 +852,6 @@ class Store(tk.Frame):
                     image=self.img_pkmn[self.banner_num][0][x],
                     bd=0.1,
                     command=None)
-                ###self.pkmn_buttons[i][j].bind("<Enter>", lambda event:)
                 self.container.create_window((j*100)+50, (i*70)+30,
                                              window=self.pkmn_buttons[i][j])
 
@@ -881,8 +881,6 @@ class Store(tk.Frame):
         for i in range(self.banner_num, self.banner_num+2):
             for j in range(44):
                 pkmn_name = ALL_BANNERS[i][j].replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
-                if pkmn_name.startswith('Mega '):
-                    pkmn_name = pkmn_name.replace('Mega ', '')
                 self.img_pkmn_base = [RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_inactive.png')),
                                       RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_active.png')),
                                       RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_picked.png'))]
@@ -965,9 +963,8 @@ class Store(tk.Frame):
         pass
 
     def update_player_csv(self, slot):
-        player_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                        'players')
-        with open(os.path.join(player_directory, self.current_player.get() + '.csv'), 'w', newline='') as fileName:
+
+        with open(os.path.join(PLAYER_DIR, self.current_player.get() + '.csv'), 'w', newline='') as fileName:
             writer = csv.writer(fileName, delimiter=',')
             for pokemon in PLAYERS[slot].pkmn_list:
                 writer.writerow([pokemon.name, pokemon.dex, pokemon.type[0], pokemon.type[1],
@@ -1238,18 +1235,18 @@ def setup_settings(self):
 
 def init_player_information():
     directory = os.path.dirname(os.path.realpath(__file__))
-    player_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+    PLAYER_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                     'players')
     with open(os.path.join(directory, 'Banners.csv'), 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             ALL_BANNERS.append(row)
-    if not os.path.isdir(player_directory):
-        os.mkdir(player_directory)
+    if not os.path.isdir(PLAYER_DIR):
+        os.mkdir(PLAYER_DIR)
         print("Made Player directory")
-    for filename in os.listdir(player_directory):
+    for filename in os.listdir(PLAYER_DIR):
         if filename.endswith(".csv"):
-            with open(os.path.join(player_directory, filename)) as file:
+            with open(os.path.join(PLAYER_DIR, filename)) as file:
                 player_name = os.path.splitext(os.path.basename(file.name))[0]
                 reader = csv.reader(file)
                 temp_pkmn_list = []
