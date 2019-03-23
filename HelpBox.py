@@ -1,16 +1,3 @@
-try:
-    import Tkinter as tk
-except ImportError:
-    import tkinter as tk
-from PIL import Image, ImageTk
-from RGBAImage import RGBAImage
-
-from Pokemon import Pokemon, ALL_POKEMON, ABILITIES, TypeChart, type_logic
-
-BATTLE_OPTIONS = ["StandardDraft", "RandomBattle", "NemesisDraft", "BanDraft"]
-AUCTION_OPTIONS = ["Trainers", "Auctions", "Leaderboards", "Prizes"]
-IMGTYPE = ["inactive", "active", "picked", "banned", "unknown"]
-
 class HelpBox(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
