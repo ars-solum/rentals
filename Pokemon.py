@@ -442,7 +442,7 @@ class Pokemon:
         self.picked_nemesis = int(row[21])
         self.banned = int(row[22])
 
-with open('main_database.csv', 'r') as fileName:
+with open('Singles.csv', 'r') as fileName:
     reader = csv.reader(fileName)
     next(reader, None)
     for row in reader:
