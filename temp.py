@@ -1285,21 +1285,15 @@ class NewPull(tk.Frame):
                 if ('Bug' in pkmn.type or 'Electric' in pkmn.type or
                     'Flying' in pkmn.type or 'Ice' in pkmn.type):
                     self.box_list[0].append(pkmn)
-                elif ('Fire' in pkmn.type or 'Poison' in pkmn.type or
+                if ('Fire' in pkmn.type or 'Poison' in pkmn.type or
                       'Water' in pkmn.type or 'Ground' in pkmn.type):
                     self.box_list[1].append(pkmn)
-                elif ('Fire' in pkmn.type or 'Poison' in pkmn.type or
-                      'Water' in pkmn.type or 'Ground' in pkmn.type):
-                    self.box_list[1].append(pkmn)
-                elif ('Fire' in pkmn.type or 'Poison' in pkmn.type or
-                      'Water' in pkmn.type or 'Ground' in pkmn.type):
-                    self.box_list[1].append(pkmn)
-                else:
-                    pass
-            'Grass', 'Rock' 'Psychic', 'Dark'
-            'Steel', 'Ghost', 'Fighting', 'Fairy'
-
-
+                if ('Grass' in pkmn.type or 'Rock' in pkmn.type or
+                      'Psychic' in pkmn.type or 'Dark' in pkmn.type):
+                    self.box_list[2].append(pkmn)
+                if ('Steel' in pkmn.type or 'Ghost' in pkmn.type or
+                      'Fighting' in pkmn.type or 'Normal' in pkmn.type):
+                    self.box_list[3].append(pkmn)
 
         self.frames[1].grid_columnconfigure(0, weight=1)
         self.frames[1].grid_columnconfigure(4, weight=1)
