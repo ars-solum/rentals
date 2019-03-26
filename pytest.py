@@ -34,6 +34,25 @@
 # flb.pack()
 # root.mainloop()
 
-string = 'Daniel'
-name = string + '-Mega'
-print(name)
+# import tkinter as tk
+# from PIL import Image, ImageTk
+# import os
+#
+# ROOT = os.path.dirname(os.path.realpath(__file__))
+# MEDIA = os.path.join(ROOT, 'media')
+# COMMON = os.path.join(MEDIA, 'Common')
+#
+# def RGBAImage(path):
+#     return ImageTk.PhotoImage(Image.open(path).convert('RGBA'))
+#
+# root = tk.Tk()
+# root.image = RGBAImage(os.path.join(COMMON, '798Kartana.png'))
+# label = tk.Button(root, image=root.image, bg='white', activebackground='white')
+# #root.overrideredirect(True)
+# #root.geometry("+250+250")
+# #root.lift()
+# #root.wm_attributes("-topmost", True)
+# #root.wm_attributes("-disabled", True)
+# root.wm_attributes("-transparentcolor", "white")
+# label.pack()
+# label.mainloop()
