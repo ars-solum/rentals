@@ -654,6 +654,12 @@ class DraftSettings(tk.Frame):
     def parent_page(self):
         return self.controller.pages['Draft']
 
+    def back_on_enter(self):
+        self.back_button.config(image=self.back_button_img[1])
+
+    def back_on_leave(self):
+        self.back_button.config(image=self.back_button_img[0])
+
     def exit(self):
         self.parent_page().replace_images()
         self.controller.show_frame('Draft')
@@ -665,6 +671,12 @@ class DraftGenerateSettings(tk.Frame):
         self.controller = controller
 
         setup_settings(self, 'Draft')
+
+    def back_on_enter(self):
+        self.back_button.config(image=self.back_button_img[1])
+
+    def back_on_leave(self):
+        self.back_button.config(image=self.back_button_img[0])
 
     def parent_page(self):
         return self.controller.pages['Draft']
@@ -903,6 +915,12 @@ class RandomSettings(tk.Frame):
     def parent_page(self):
         return self.controller.pages['Random']
 
+    def back_on_enter(self):
+        self.back_button.config(image=self.back_button_img[1])
+
+    def back_on_leave(self):
+        self.back_button.config(image=self.back_button_img[0])
+
     def exit(self):
         self.parent_page().replace_images()
         self.controller.show_frame('Random')
@@ -914,6 +932,12 @@ class RandomGenerateSettings(tk.Frame):
         self.controller = controller
 
         setup_settings(self, 'Random')
+
+    def back_on_enter(self):
+        self.back_button.config(image=self.back_button_img[1])
+
+    def back_on_leave(self):
+        self.back_button.config(image=self.back_button_img[0])
 
     def parent_page(self):
         return self.controller.pages['Random']
@@ -1404,7 +1428,12 @@ class NewPull(tk.Frame):
                 self.pkmn_buttons[x].bind('<Enter>', lambda event, x=x: self.team_on_enter(x))
                 self.pkmn_buttons[x].bind('<Leave>', lambda event, x=x: self.team_on_leave(x))
 
-        self.back_button = tk.Button(self.frames[1], text="Finish", state='disabled', command=self.back)
+        self.back_button_img = []
+        self.button_states = ['inactive', 'active']
+        for i in range(2):
+            self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_' + self.button_states[i] + '_finishpull.png')))
+        self.back_button = tk.Button(self.frames[1], image=self.back_button_img[0],
+                                     bd=0.1, state='disabled', command=self.back)
         self.back_button.grid(row=0, column=5, rowspan=2, sticky="nsew")
         self.box_img = RGBAImage(os.path.join(COMMON, 'label_box.png'))
         self.box_label = tk.Label(self.frames[2], image=self.box_img)
@@ -1476,7 +1505,7 @@ class NewPull(tk.Frame):
         for i in range(6):
             self.pkmn_buttons[i].config(image=self.img_pkmn[0][i],
                 command=lambda i=i: self.reroll(i))
-        self.back_button.config(state='normal')
+        self.back_button.config(image=self.back_button_img[1], state='normal')
 
     def reroll(self, slot):
         self.pkmn_list[slot] = None
@@ -1507,7 +1536,7 @@ class NewPull(tk.Frame):
         for i in range(2):
             for j in range(2):
                 self.box_buttons[i][j].config(state='normal')
-        self.back_button.config(state='disabled')
+        self.back_button.config(image=self.back_button_img[0], state='disabled')
 
     def back(self):
         PLAYERS[-1].pkmn_list = self.pkmn_list
@@ -1925,11 +1954,19 @@ def setup_settings(self, page):
     self.usage_text.grid(row=20, column=0, sticky='w')
 
     self.separators[6].grid(row=21, column=0, columnspan=6, sticky='nsew')
-    self.back_button = tk.Button(self, text='Back', command=lambda: validate(self, page))
+    self.back_button_img = []
+    self.button_states = ['inactive', 'active']
+    for i in range(2):
+        self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_' + self.button_states[i] + '_back.png')))
+    self.back_button = tk.Button(self, image=self.back_button_img[0], bd=0.1,
+                                 command=lambda: validate(self, page))
     self.back_button.grid(row=22, column=1, columnspan=4, padx=5, pady=5,
                           sticky='nsew')
+    self.back_button.bind('<Enter>', lambda event: self.back_on_enter())
+    self.back_button.bind('<Leave>', lambda event: self.back_on_leave())
     for i in range(22):
         self.grid_rowconfigure(i, weight=1)
+
 
 def setup_game_settings(self, page):
     self.rules_img = RGBAImage(os.path.join(COMMON, 'label_rules.png'))
@@ -2006,9 +2043,16 @@ def setup_game_settings(self, page):
         self.mega_buttons[i].grid(row=4+ int(i/5), column=(i % 5) + 1,
                                   padx=5, pady=5, sticky='nsew')
 
-    self.back_button = tk.Button(self, text='Back', command=self.exit)
+    self.back_button_img = []
+    self.button_states = ['inactive', 'active']
+    for i in range(2):
+        self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_' + self.button_states[i] + '_back.png')))
+    self.back_button = tk.Button(self, image=self.back_button_img[0], bd=0.1,
+                                 command=self.exit)
     self.back_button.grid(row=15, column=1, columnspan=2,
                           padx=5, pady=5, sticky='nsew')
+    self.back_button.bind('<Enter>', lambda event: self.back_on_enter())
+    self.back_button.bind('<Leave>', lambda event: self.back_on_leave())
 
     for i in range(8):
         self.grid_rowconfigure(i, weight=1)
