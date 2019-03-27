@@ -34,25 +34,23 @@
 # flb.pack()
 # root.mainloop()
 
-# import tkinter as tk
-# from PIL import Image, ImageTk
-# import os
-#
-# ROOT = os.path.dirname(os.path.realpath(__file__))
-# MEDIA = os.path.join(ROOT, 'media')
-# COMMON = os.path.join(MEDIA, 'Common')
-#
-# def RGBAImage(path):
-#     return ImageTk.PhotoImage(Image.open(path).convert('RGBA'))
-#
-# root = tk.Tk()
-# root.image = RGBAImage(os.path.join(COMMON, '798Kartana.png'))
-# label = tk.Button(root, image=root.image, bg='white', activebackground='white')
-# #root.overrideredirect(True)
-# #root.geometry("+250+250")
-# #root.lift()
-# #root.wm_attributes("-topmost", True)
-# #root.wm_attributes("-disabled", True)
-# root.wm_attributes("-transparentcolor", "white")
-# label.pack()
-# label.mainloop()
+import os
+from Pokemon import *
+
+ROOT = os.path.dirname(os.path.realpath(__file__))
+MEDIA = os.path.join(ROOT, 'media')
+PKMN_DIR = os.path.join(MEDIA, 'pokemon')
+
+EXT = ['_active.png', '_banned.png', '_inactive.png', '_picked.png', '_unknown.png']
+names = [i.name for i in ALL_POKEMON_S]
+ALL_NAMES = sorted(list(set(names)))
+ALL_FILES = []
+for i in ALL_NAMES:
+    for j in range(5):
+        ALL_FILES.append(i + EXT[j])
+
+for file in os.listdir(PKMN_DIR):
+    if file in ALL_FILES:
+        pass
+    else:
+        print(file)
