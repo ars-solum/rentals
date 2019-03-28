@@ -11,7 +11,7 @@ import csv
 import time
 import random
 from random import shuffle
-
+from datetime import date
 
 from Pokemon import *
 
@@ -20,6 +20,8 @@ MEDIA = os.path.join(ROOT, 'media')
 COMMON = os.path.join(MEDIA, 'Common')
 IMG_PKMN_DIR = os.path.join(MEDIA, 'pokemon')
 PLAYER_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'players')
+month = int(str(date.today().strftime('%m')))
+day = int(str(date.today().strftime('%d')))
 
 class MainApp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -102,6 +104,8 @@ class MainApp(tk.Tk):
             frame.tkraise()
         else:
             if page_name == 'Draft' or page_name == 'Random':
+                for button in self.sidebar.buttons:
+                    button.config(state='normal')
                 self.sidebar.settingsV1.config(state='normal',
                     command=lambda:self.show_frame('%sSettings' % page_name))
                 self.sidebar.settingsV2.config(state='normal',
@@ -112,13 +116,16 @@ class MainApp(tk.Tk):
                     self.sidebar.finish_button.config(state='disabled')
                 else:
                     if hasattr(self.pages[page_name], 'turn'):
-                        if self.pages[page_name] >= 12:
+                        if self.pages[page_name].turn >= 12:
                             self.sidebar.finish_button.config(state='normal')
                     else:
                         if self.pages[page_name].game_activated:
                             self.sidebar.finish_button.config(state='normal')
 
             else:
+                if page_name in ['DraftSettings', 'DraftGenerateSettings', 'RandomSettings', 'RandomGenerateSettings']:
+                    for button in self.sidebar.buttons:
+                        button.config(state='disabled')
                 self.sidebar.settingsV1.config(state='disabled')
                 self.sidebar.settingsV2.config(state='disabled')
                 self.sidebar.start_button.config(state='disabled')
@@ -191,12 +198,12 @@ class Sidebar(tk.Frame):
         self.settingsV2.bind('<Enter>', lambda event: self.on_enter_settings(1))
         self.settingsV2.bind('<Leave>', lambda event: self.on_leave_settings(1))
         self.start_button = tk.Button(self, image=self.img_button[1][2][2], bd=0.1,
-                                      command=None)
+                                      command=lambda: None)
         self.start_button.grid(row=8, column=0, sticky='nsew')
         self.start_button.bind('<Enter>', lambda event: self.on_enter_settings(2))
         self.start_button.bind('<Leave>', lambda event: self.on_leave_settings(2))
         self.finish_button = tk.Button(self, image=self.img_button[1][2][3], bd=0.1,
-                                       state='disabled', command=None)
+                                       state='disabled', command=lambda: None)
         self.finish_button.grid(row=9, column=0, sticky='nsew')
         self.finish_button.bind('<Enter>', lambda event: self.on_enter_settings(3))
         self.finish_button.bind('<Leave>', lambda event: self.on_leave_settings(3))
@@ -255,6 +262,14 @@ class Draft(tk.Frame):
         self.ban_number.set(0)
         self.show_megas = tk.StringVar()
         self.show_megas.set('No')
+        self.hidden = tk.StringVar()
+        self.hidden.set('No')
+        self.current_player = [tk.StringVar(), tk.StringVar()]
+        for i in range(2):
+            if len(playerNames) < 2:
+                self.current_player[i].set('')
+            else:
+                self.current_player[i].set(playerNames[i])
         self.img_pkmn = [[] for i in range(len(self.controller.img_type))]
         self.separators = [ttk.Separator(self, orient='horizontal') for i in range(2)]
 
@@ -285,7 +300,7 @@ class Draft(tk.Frame):
                 self.pool_buttons.append(tk.Button(self,
                                                    image=self.controller.img_blank[0],
                                                    bd=0.1,
-                                                   command=None))
+                                                   command=lambda: None))
                 self.pool_buttons[x].grid(row=i+1, column=j, pady=5)
                 self.pool_buttons[x].bind('<Enter>', lambda event, x=x: self.pool_on_enter(x))
                 self.pool_buttons[x].bind('<Leave>', lambda event, x=x: self.pool_on_leave(x))
@@ -305,7 +320,7 @@ class Draft(tk.Frame):
                                                      image=self.controller.img_blank[0],
                                                      bd=0.1,
                                                      state='disabled',
-                                                     command=None))
+                                                     command=lambda: None))
                 if i == 0:
                     self.ban_buttons[i][j].grid(row=5, column=i*4+j,
                                                 pady=5)
@@ -332,7 +347,7 @@ class Draft(tk.Frame):
                     self.team_buttons[team].append(tk.Button(self,
                                                              image=self.controller.img_blank[0],
                                                              bd=0.1,
-                                                             command=None))
+                                                             command=lambda: None))
                     self.team_buttons[team][x].grid(row=row+8,
                                                     column=(team*4)+column,
                                                     pady=5)
@@ -358,18 +373,29 @@ class Draft(tk.Frame):
             filter(None, [i.get() for i in self.pkmn_excl_types]))
         temp_excl_gimmicks = list(
             filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
-        temp_list = []
-        for pkmn in ALL_POKEMON_S:
-            if ((pkmn.name in [i.name for i in temp_list]) or
-                (pkmn.tier in temp_excl_tiers) or
-                (pkmn.type[0] in temp_excl_types) or
-                (pkmn.type[1] and pkmn.type[1] in temp_excl_types) or
-                (check_valid_generation(self, pkmn)) or
-                (check_valid_item(self, pkmn)) or
-                (pkmn.tag in temp_excl_gimmicks)):
-                continue
+        if self.battle_mode.get() == 'SRL':
+            if self.current_player[0].get():
+                list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list
             else:
-                temp_list.append(pkmn)
+                list1 = []
+            if self.current_player[1].get():
+                list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list
+            else:
+                list2 = []
+            temp_list = list1 + list2
+        else:
+            temp_list = []
+            for pkmn in ALL_POKEMON_S:
+                if ((pkmn.name in [i.name for i in temp_list]) or
+                    (pkmn.tier in temp_excl_tiers) or
+                    (pkmn.type[0] in temp_excl_types) or
+                    (pkmn.type[1] and pkmn.type[1] in temp_excl_types) or
+                    (check_valid_generation(self, pkmn)) or
+                    (check_valid_item(self, pkmn)) or
+                    (pkmn.tag in temp_excl_gimmicks)):
+                    continue
+                else:
+                    temp_list.append(pkmn)
         temp_counter = 0
         while temp_counter < 18:
             temp_new_pkmn = random.choice(temp_list)
@@ -396,18 +422,23 @@ class Draft(tk.Frame):
             else:
                 pkmn_name = self.pkmn_pool_list[i].name
             self.get_pkmn_imgs(pkmn_name)
-            self.pool_buttons[i].config(image=self.img_pkmn[0][i],
-                                        bd=0.1,
-                                        command=lambda i=i: self.add_to_team(i))
+            if self.hidden.get() == 'No':
+                self.pool_buttons[i].config(image=self.img_pkmn[0][i],
+                                            bd=0.1,
+                                            command=lambda i=i: self.add_to_team(i))
+            else:
+                self.pool_buttons[i].config(image=self.img_pkmn[2][i],
+                                            bd=0.1,
+                                            command=lambda i=i: self.add_to_team(i))
         for i in range(2):
             for j in range(2):
                 self.ban_buttons[i][j].config(image=self.controller.img_blank[0],
-                                              command=None)
+                                              command=lambda: None)
             for j in range(6):
                 self.team_buttons[i][j].config(image=self.controller.img_blank[0],
-                                               command=None)
+                                               command=lambda: None)
         self.controller.sidebar.finish_button.config(state='disabled',
-                                                     command=None)
+                                                     command=lambda: None)
 
     def get_pkmn_imgs(self, pkmn_name):
         pkmn_name = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
@@ -439,12 +470,12 @@ class Draft(tk.Frame):
                     if self.ban_number.get() != 0 and not self.ban_phase_finished:
                         self.pool_buttons[pool_number].config(
                             image=self.img_pkmn[3][pool_number],
-                            command=None)
+                            command=lambda: None)
                         self.ban_pkmn(pool_number)
                     else:
                         self.pool_buttons[pool_number].config(
                             image=self.img_pkmn[4][pool_number],
-                            command=None)
+                            command=lambda: None)
                         if self.draft_mode.get() == 'Standard':
                             team_number = int(self.turn % 2)
                             slot_number = int(self.turn/2)
@@ -474,12 +505,17 @@ class Draft(tk.Frame):
         if self.game_activated:
             self.pkmn_not_picked[pool_number] = True
             self.pkmn_team_list[team_number][slot_number] = None
-            self.pool_buttons[pool_number].config(
-                image=self.img_pkmn[0][pool_number],
-                command=lambda i=pool_number: self.add_to_team(i))
+            if self.hidden.get() == 'No':
+                self.pool_buttons[pool_number].config(
+                    image=self.img_pkmn[0][pool_number],
+                    command=lambda i=pool_number: self.add_to_team(i))
+            else:
+                self.pool_buttons[pool_number].config(
+                    image=self.img_pkmn[2][pool_number],
+                    command=lambda i=pool_number: self.add_to_team(i))
             self.team_buttons[team_number][slot_number].config(
                 image=self.controller.img_blank[0],
-                command=None)
+                command=lambda: None)
             self.update_turns()
 
     def ban_pkmn(self, pool_number):
@@ -491,7 +527,7 @@ class Draft(tk.Frame):
                     self.pkmn_ban_list[1-j][i] = self.pkmn_pool_list[pool_number]
                     self.ban_buttons[1-j][i].config(
                         image=self.img_pkmn[0][pool_number],
-                        command=None)
+                        command=lambda: None)
                     temp_done = True
                     break
             if temp_done:
@@ -539,19 +575,28 @@ class Draft(tk.Frame):
     def pool_on_enter(self, x):
         if self.game_activated:
             if self.pkmn_not_picked[x]:
-                self.pool_buttons[x].config(image=self.img_pkmn[1][x])
+                if self.hidden.get() == 'No':
+                    self.pool_buttons[x].config(image=self.img_pkmn[1][x])
+                else:
+                    pass
             else:
                 pass
         else:
             if self.pkmn_not_picked[x]:
-                self.pool_buttons[x].config(image=self.controller.img_blank[1])
+                if self.hidden.get() == 'No':
+                    self.pool_buttons[x].config(image=self.controller.img_blank[1])
+                else:
+                    pass
             else:
                 pass
 
     def pool_on_leave(self, x):
         if self.game_activated:
             if self.pkmn_not_picked[x]:
-                self.pool_buttons[x].config(image=self.img_pkmn[0][x])
+                if self.hidden.get() == 'No':
+                    self.pool_buttons[x].config(image=self.img_pkmn[0][x])
+                else:
+                    pass
             else:
                 pass
         else:
@@ -603,7 +648,10 @@ class Draft(tk.Frame):
                         self.img_pkmn[i][j] = ImageTk.PhotoImage(self.img_pkmn_base)
             for i in range(len(self.img_pkmn[0])):
                 if self.pkmn_not_picked[i]:
-                    self.pool_buttons[i].config(image=self.img_pkmn[0][i])
+                    if self.hidden.get() == 'No':
+                        self.pool_buttons[i].config(image=self.img_pkmn[0][i])
+                    else:
+                        self.pool_buttons[i].config(image=self.img_pkmn[2][i])
                 else:
                     self.pool_buttons[i].config(image=self.img_pkmn[4][i])
             for i in range(2):
@@ -636,15 +684,43 @@ class DraftSettings(tk.Frame):
                 self.controller.pages['DraftGenerateSettings'].tier_buttons[i].config(state='disabled')
             for i in range(len(self.controller.pages['DraftGenerateSettings'].tier2_buttons)):
                 self.controller.pages['DraftGenerateSettings'].tier2_buttons[i].config(state='normal')
+        if self.parent_page().battle_mode.get() == 'SRL':
+            for i in range(2):
+                self.player_option[i].grid()
+        else:
+            for i in range(2):
+                self.player_option[i].grid_remove()
 
     def activate_bans(self):
+        if self.parent_page().game_activated:
+            top = tk.Toplevel(self.controller)
+            top.grab_set()
+            text = 'Changing the number of bans has caused the current game to be erased.'
+            text2 = '\nPlease start a new game.'
+            message = tk.Label(top, text=text+text2)
+            message.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
+            back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
+            back_button.grid(row=1, column=0, padx=100, pady=5, sticky='nsew')
+            self.parent_page().game_activated = False
         for i in range(2):
             for j in range(0, self.parent_page().ban_number.get()):
-                self.parent_page().ban_buttons[i][j].config(state='normal',
-                                                            command=None)
+                self.parent_page().ban_buttons[i][j].config(image=self.controller.img_blank[0],
+                                                            state='normal',
+                                                            command=lambda: None)
             for j in range(self.parent_page().ban_number.get(), 2):
-                self.parent_page().ban_buttons[i][j].config(state='disabled',
-                                                            command=None)
+                self.parent_page().ban_buttons[i][j].config(image=self.controller.img_blank[0],
+                                                            state='disabled',
+                                                            command=lambda: None)
+        for i in range(18):
+            self.parent_page().pool_buttons[i].config(image=self.controller.img_blank[0],
+                                                      command=lambda: None)
+        self.parent_page().pkmn_pool_list = []
+        self.parent_page().pkmn_not_picked = [True for i in range(18)]
+        for i in range(2):
+            for j in range(6):
+                self.parent_page().team_buttons[i][j].config(image=self.controller.img_blank[0],
+                                                             command=lambda: None)
+                self.parent_page().pkmn_team_list[i][j] = None
         self.parent_page().ban_phase_finished = False
         if self.parent_page().ban_number.get() == 0:
             self.parent_page().ban_text.config(state='disabled')
@@ -659,10 +735,6 @@ class DraftSettings(tk.Frame):
 
     def back_on_leave(self):
         self.back_button.config(image=self.back_button_img[0])
-
-    def exit(self):
-        self.parent_page().replace_images()
-        self.controller.show_frame('Draft')
 
 
 class DraftGenerateSettings(tk.Frame):
@@ -700,6 +772,14 @@ class Random(tk.Frame):
         self.grid_columnconfigure(0, weight=1)
         for i in range(3):
             self.grid_rowconfigure(i, weight=1)
+        self.hidden = tk.StringVar()
+        self.hidden.set('No')
+        self.current_player = [tk.StringVar(), tk.StringVar()]
+        for i in range(2):
+            if len(playerNames) < 2:
+                self.current_player[i].set('')
+            else:
+                self.current_player[i].set(playerNames[i])
 
         self.img_pkmn = [[] for i in range(2)]
         self.frames = []
@@ -738,7 +818,7 @@ class Random(tk.Frame):
                     self.team_buttons[team].append(tk.Button(self.frames[1],
                                                              image=self.controller.img_blank[0],
                                                              bd=0.1,
-                                                             command=None))
+                                                             command=lambda: None))
                     self.team_buttons[team][x].grid(row=row+2,
                                                     column=(team*3)+column+1,
                                                     padx=10, pady=10)
@@ -754,7 +834,18 @@ class Random(tk.Frame):
         temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
         temp_excl_types = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
         temp_excl_gimmicks = list(filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
-        self.temp_list = []
+        if self.battle_mode.get() == 'SRL':
+            if self.current_player[0].get():
+                list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list
+            else:
+                list1 = []
+            if self.current_player[1].get():
+                list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list
+            else:
+                list2 = []
+            self.temp_list = list1 + list2
+        else:
+            self.temp_list = []
         for pkmn in ALL_POKEMON_S:
             if ((pkmn.name in [i.name for i in self.temp_list]) or
                 (pkmn.tier in temp_excl_tiers) or
@@ -911,6 +1002,12 @@ class RandomSettings(tk.Frame):
                 self.controller.pages['RandomGenerateSettings'].tier_buttons[i].config(state='disabled')
             for i in range(len(self.controller.pages['RandomGenerateSettings'].tier2_buttons)):
                 self.controller.pages['RandomGenerateSettings'].tier2_buttons[i].config(state='normal')
+        if self.parent_page().battle_mode.get() == 'SRL':
+            for i in range(2):
+                self.player_option[i].grid()
+        else:
+            for i in range(2):
+                self.player_option[i].grid_remove()
 
     def parent_page(self):
         return self.controller.pages['Random']
@@ -920,10 +1017,6 @@ class RandomSettings(tk.Frame):
 
     def back_on_leave(self):
         self.back_button.config(image=self.back_button_img[0])
-
-    def exit(self):
-        self.parent_page().replace_images()
-        self.controller.show_frame('Random')
 
 
 class RandomGenerateSettings(tk.Frame):
@@ -1009,7 +1102,7 @@ class Store(tk.Frame):
                 self.pkmn_buttons[i][j] = tk.Button(self.container,
                     image=self.img_pkmn[self.current_page][0][x],
                     bd=0.1,
-                    command=None)
+                    command=lambda: None)
                 self.container.create_window((j*100)+50, (i*70)+30,
                                              window=self.pkmn_buttons[i][j])
 
@@ -1223,7 +1316,7 @@ class Players(tk.Frame):
         # add new player
         self.new_player_img = RGBAImage(os.path.join(COMMON, 'label_new_player.png'))
         self.new_player_label = tk.Label(self, image=self.new_player_img)
-        self.new_player_label.grid(row=0, column=0, columnspan=2, pady=4, sticky='nsw')
+        self.new_player_label.grid(row=0, column=0, columnspan=2, pady=2, sticky='nsw')
         # new player text | entry widget | add button?
         self.name_img = RGBAImage(os.path.join(COMMON, 'label_name.png'))
         self.name_text = tk.Label(self, image=self.name_img, justify='right')
@@ -1423,7 +1516,7 @@ class NewPull(tk.Frame):
                 x = (row * 3) + column
                 self.pkmn_buttons.append(tk.Button(self.frames[1],
                                                    image=self.controller.img_blank[0],
-                                                   bd=0.1, command=None))
+                                                   bd=0.1, command=lambda: None))
                 self.pkmn_buttons[x].grid(row=row, column=column+1, padx=10, pady=10)
                 self.pkmn_buttons[x].bind('<Enter>', lambda event, x=x: self.team_on_enter(x))
                 self.pkmn_buttons[x].bind('<Leave>', lambda event, x=x: self.team_on_leave(x))
@@ -1532,7 +1625,7 @@ class NewPull(tk.Frame):
         self.pkmn_list = []
         for i in range(6):
             self.img_pkmn = []
-            self.pkmn_buttons[i].config(image=self.controller.img_blank[0], command=None)
+            self.pkmn_buttons[i].config(image=self.controller.img_blank[0], command=lambda: None)
         for i in range(2):
             for j in range(2):
                 self.box_buttons[i][j].config(state='normal')
@@ -1830,7 +1923,7 @@ def clean_up(self):
     if hasattr(self.parent_page(), 'pkmn_pool_list'):
         self.parent_page().pkmn_pool_list = []
         for i in range(18):
-            self.parent_page().pool_buttons[i].config(command=None)
+            self.parent_page().pool_buttons[i].config(command=lambda: None)
     if hasattr(self.parent_page(), 'pkmn_ban_list'):
         self.parent_page().pkmn_ban_list = [[None, None], [None, None]]
     if hasattr(self.parent_page(), 'ban_phase_finished'):
@@ -1843,26 +1936,26 @@ def clean_up(self):
     for i in range(2):
         if hasattr(self.parent_page(), 'ban_buttons'):
             for j in range(2):
-                self.parent_page().ban_buttons[i][j].config(command=None)
+                self.parent_page().ban_buttons[i][j].config(command=lambda: None)
         for j in range(6):
-            self.parent_page().team_buttons[i][j].config(command=None)
+            self.parent_page().team_buttons[i][j].config(command=lambda: None)
     if hasattr(self.parent_page(), 'pool_buttons'):
         for i in range(len(self.parent_page().pool_buttons)):
             self.parent_page().pool_buttons[i].config(
                 image=self.parent_page().controller.img_blank[0],
-                command=None)
+                command=lambda: None)
     if hasattr(self.parent_page(), 'ban_buttons'):
         for i in range(len(self.parent_page().ban_buttons)):
             for j in range(len(self.parent_page().ban_buttons[i])):
                 self.parent_page().ban_buttons[i][j].config(
                     image=self.parent_page().controller.img_blank[0],
-                    command=None)
+                    command=lambda: None)
     if hasattr(self.parent_page(), 'team_buttons'):
         for i in range(len(self.parent_page().team_buttons)):
             for j in range(len(self.parent_page().team_buttons[i])):
                 self.parent_page().team_buttons[i][j].config(
                     image=self.parent_page().controller.img_blank[0],
-                    command=None)
+                    command=lambda: None)
 
 
 def setup_settings(self, page):
@@ -2040,15 +2133,35 @@ def setup_game_settings(self, page):
             indicatoron=0,
             value=megas[i],
             command=self.parent_page().replace_images))
-        self.mega_buttons[i].grid(row=4+ int(i/5), column=(i % 5) + 1,
+        self.mega_buttons[i].grid(row=4 + int(i/5), column=(i % 5) + 1,
                                   padx=5, pady=5, sticky='nsew')
+
+    self.hidden_text = tk.Label(self, text='Hide Pokemon')
+    self.hidden_text.grid(row=5, column=0, padx=5, pady=5, sticky='w')
+    self.hidden_buttons = []
+    hidden = ['No', 'Yes']
+    for i in range(len(hidden)):
+        self.hidden_buttons.append(tk.Radiobutton(self,
+            text=hidden[i],
+            variable=self.parent_page().hidden,
+            indicatoron=0,
+            value=hidden[i]))
+        self.hidden_buttons[i].grid(row=5 + int(i/5), column=(i % 5) + 1,
+                                 padx=5, pady=5, sticky='nsew')
+
+    self.player_option = []
+    for i in range(2):
+        self.player_option.append(tk.OptionMenu(self, self.parent_page().current_player[i],
+                                                *playerNames))
+        self.player_option[i].grid(row=6, column=i*2, columnspan=2, padx=5, pady=5, sticky='ew')
+        self.player_option[i].grid_remove()
 
     self.back_button_img = []
     self.button_states = ['inactive', 'active']
     for i in range(2):
         self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_' + self.button_states[i] + '_back.png')))
     self.back_button = tk.Button(self, image=self.back_button_img[0], bd=0.1,
-                                 command=self.exit)
+                                 command=lambda page=page: exit(self, page))
     self.back_button.grid(row=15, column=1, columnspan=2,
                           padx=5, pady=5, sticky='nsew')
     self.back_button.bind('<Enter>', lambda event: self.back_on_enter())
@@ -2058,6 +2171,50 @@ def setup_game_settings(self, page):
         self.grid_rowconfigure(i, weight=1)
     for i in range(4):
         self.grid_columnconfigure(i, weight=1)
+
+
+def exit(self, page):
+    if self.parent_page().current_player[0].get():
+        list1 = len(PLAYERS[playerNames.index(self.parent_page().current_player[0].get())].pkmn_list)
+    else:
+        list1 = 0
+    if self.parent_page().current_player[1].get():
+        list2 = len(PLAYERS[playerNames.index(self.parent_page().current_player[1].get())].pkmn_list)
+    else:
+        list2 = 0
+    list_total = list1+list2
+    if (self.parent_page().battle_mode.get() == 'SRL' and
+        self.parent_page().current_player[0].get() == self.parent_page().current_player[1].get()):
+        top = tk.Toplevel(self.controller)
+        top.grab_set()
+        text = 'Player 1 and Player 2 cannot be the same person.'
+        text2 = '\nPlease choose another person for Player 2.'
+        message = tk.Label(top, text=text+text2)
+        message.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
+        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
+        back_button.grid(row=1, column=0, padx=100, pady=5, sticky='nsew')
+    elif (self.parent_page().battle_mode.get() == 'SRL' and list_total < 18 and
+          page == 'Draft'):
+        top = tk.Toplevel(self.controller)
+        top.grab_set()
+        text = 'Not enough Pokemon required to Draft (18 needed).'
+        message = tk.Label(top, text=text)
+        message.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
+        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
+        back_button.grid(row=1, column=0, padx=100, pady=5, sticky='nsew')
+    elif (self.parent_page().battle_mode.get() == 'SRL' and
+          (list1 < 12 or list2 < 12) and
+          page == 'Random'):
+        top = tk.Toplevel(self.controller)
+        top.grab_set()
+        text = 'Not enough Pokemon required for Random (12 needed per player).'
+        message = tk.Label(top, text=text)
+        message.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
+        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
+        back_button.grid(row=1, column=0, padx=100, pady=5, sticky='nsew')
+    else:
+        self.parent_page().replace_images()
+        self.controller.show_frame(page)
 
 
 def RGBAImage(path):

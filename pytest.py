@@ -34,23 +34,27 @@
 # flb.pack()
 # root.mainloop()
 
-import os
-from Pokemon import *
-
-ROOT = os.path.dirname(os.path.realpath(__file__))
-MEDIA = os.path.join(ROOT, 'media')
-PKMN_DIR = os.path.join(MEDIA, 'pokemon')
-
-EXT = ['_active.png', '_banned.png', '_inactive.png', '_picked.png', '_unknown.png']
-names = [i.name for i in ALL_POKEMON_S]
-ALL_NAMES = sorted(list(set(names)))
-ALL_FILES = []
-for i in ALL_NAMES:
-    for j in range(5):
-        ALL_FILES.append(i + EXT[j])
-
-for file in os.listdir(PKMN_DIR):
-    if file in ALL_FILES:
-        pass
-    else:
-        print(file)
+# import os
+# from Pokemon import *
+#
+# ROOT = os.path.dirname(os.path.realpath(__file__))
+# MEDIA = os.path.join(ROOT, 'media')
+# PKMN_DIR = os.path.join(MEDIA, 'pokemon')
+#
+# EXT = ['_active.png', '_banned.png', '_inactive.png', '_picked.png', '_unknown.png']
+# names = [i.name for i in ALL_POKEMON_S]
+# ALL_NAMES = sorted(list(set(names)))
+# ALL_FILES = []
+# for i in ALL_NAMES:
+#     for j in range(5):
+#         ALL_FILES.append(i + EXT[j])
+#
+# for file in os.listdir(PKMN_DIR):
+#     if file in ALL_FILES:
+#         pass
+#     else:
+#         print(file)
+list1 = []
+list2 = ['a', 'b']
+list3 = list1+list2
+print(list3)
