@@ -59,11 +59,23 @@ class MainApp(tk.Tk):
         self.img_blank = [ImageTk.PhotoImage(self.img_blank_base['inactive']),
                           ImageTk.PhotoImage(self.img_blank_base['active'])]
 
+        self.team_text_img = []
+        for i in range(2):
+            self.team_text_img.append(RGBAImage(os.path.join(COMMON, 'label_team%d.png' %int(i+1))))
+
+        self.help_img = []
+        for i in ['inactive', 'active']:
+            self.help_img.append(RGBAImage(os.path.join(COMMON, 'button_%s_help.png' %i)))
+
+        self.back_button_img = []
+        for i in ['inactive', 'active']:
+            self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_%s_back.png' %i)))
+
         self.pages = {}
 
         for Class in (Draft, Random, DraftSettings, DraftGenerateSettings,
                       RandomSettings, RandomGenerateSettings, Store, Players,
-                      DraftHelpPage, StoreHelpPage, NewPull):
+                      DraftHelpPage, StoreHelpPage, PullHelpPage, NewPull):
             page_name = Class.__name__
             frame = Class(parent=self.main_frame, controller=self)
             self.pages[page_name] = frame
@@ -124,7 +136,7 @@ class MainApp(tk.Tk):
                             self.sidebar.finish_button.config(state='normal')
 
             else:
-                if 'Settings' in page_name or 'Help' in page_name:
+                if 'Settings' in page_name or 'Help' in page_name or 'NewPull' in page_name:
                     for button in self.sidebar.buttons:
                         button.config(state='disabled')
                 else:
@@ -296,10 +308,8 @@ class Draft(tk.Frame):
         self.pool_img = RGBAImage(os.path.join(COMMON, 'label_pool.png'))
         self.pool_text = tk.Label(self, image=self.pool_img)
         self.pool_text.grid(row=0, column=0, columnspan=5, sticky='nsw')
-        self.help_img = []
-        for i in ['inactive', 'active']:
-            self.help_img.append(RGBAImage(os.path.join(COMMON, 'button_%s_help.png' %i)))
-        self.help_button = tk.Button(self, image=self.help_img[0], bd=0.1, command=lambda: self.controller.show_frame('DraftHelpPage'))
+        self.help_button = tk.Button(self, image=self.controller.help_img[0],
+            bd=0.1, command=lambda: self.controller.show_frame('DraftHelpPage'))
         self.help_button.grid(row=0, column=5)
         self.help_button.bind('<Enter>', lambda event: help_on_enter(self))
         self.help_button.bind('<Leave>', lambda event: help_on_leave(self))
@@ -310,9 +320,9 @@ class Draft(tk.Frame):
             for j in range(6):
                 x = (i*6) + j
                 self.pool_buttons.append(tk.Button(self,
-                                                   image=self.controller.img_blank[0],
-                                                   bd=0.1,
-                                                   command=lambda: None))
+                    image=self.controller.img_blank[0],
+                    bd=0.1,
+                    command=lambda: None))
                 self.pool_buttons[x].grid(row=i+1, column=j, pady=5)
                 self.pool_buttons[x].bind('<Enter>', lambda event, x=x: self.pool_on_enter(x))
                 self.pool_buttons[x].bind('<Leave>', lambda event, x=x: self.pool_on_leave(x))
@@ -329,37 +339,32 @@ class Draft(tk.Frame):
         for i in range(2):
             for j in range(2):
                 self.ban_buttons[i].append(tk.Button(self,
-                                                     image=self.controller.img_blank[0],
-                                                     bd=0.1,
-                                                     state='disabled',
-                                                     command=lambda: None))
+                    image=self.controller.img_blank[0],
+                    bd=0.1,
+                    state='disabled',
+                    command=lambda: None))
                 if i == 0:
-                    self.ban_buttons[i][j].grid(row=5, column=i*4+j,
-                                                pady=5)
+                    self.ban_buttons[i][j].grid(row=5, column=i*4+j, pady=5)
                 else:
-                    self.ban_buttons[i][j].grid(row=5, column=i*5-j,
-                                                pady=5)
+                    self.ban_buttons[i][j].grid(row=5, column=i*5-j, pady=5)
 
         self.separators[1].grid(row=6, column=0, columnspan=6, sticky='nsew')
 
         ##### Team Boxes #####
-        self.team_text_img = []
-        for i in range(2):
-            self.team_text_img.append(RGBAImage(os.path.join(COMMON, 'label_team%d.png' %int(i+1))))
         self.team_text = []
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
         self.team_buttons = [[], []]
         for team in range(2):
-            self.team_text.append(tk.Label(self, image=self.team_text_img[team]))
+            self.team_text.append(tk.Label(self, image=self.controller.team_text_img[team]))
             self.team_text[team].grid(row=7, column=team*4, columnspan=2,
                                       sticky='nsew')
             for row in range(3):
                 for column in range(2):
                     x = (row * 2) + column
                     self.team_buttons[team].append(tk.Button(self,
-                                                             image=self.controller.img_blank[0],
-                                                             bd=0.1,
-                                                             command=lambda: None))
+                        image=self.controller.img_blank[0],
+                        bd=0.1,
+                        command=lambda: None))
                     self.team_buttons[team][x].grid(row=row+8,
                                                     column=(team*4)+column,
                                                     pady=5)
@@ -1616,13 +1621,51 @@ class DraftHelpPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        self.scrollframe = tk.Frame(self)
+        self.scrollframe.grid(row=0, column=0, sticky='nsew')
+        self.container = tk.Canvas(self.scrollframe,
+                                   scrollregion=(0, 0, 400, 3000))
+        self.scrollbar = ttk.Scrollbar(self.scrollframe, orient='vertical',
+                                       command=self.container.yview)
+        self.container.config(yscrollcommand=self.scrollbar.set)
+        self.container.bind('<Enter>', self._on_mousewheel)
+        self.container.bind('<Leave>', self._off_mousewheel)
+        self.scrollbar.pack(side='right', fill='y')
+        self.container.pack(side='left', expand=True, fill='both')
+
+        self.help_img = RGBAImage(os.path.join(COMMON, 'help_play.png'))
+        self.help = tk.Label(self.container, image=self.help_img)
+        self.container.create_window(255, 1480,
+                                     window=self.help)
+
+        self.back_button = tk.Button(self, image=self.controller.back_button_img[0], bd=0.1,
+                                     command=lambda: self.controller.show_frame('Draft'))
+        self.back_button.grid(row=1, column=0, padx=5, pady=5)
+        self.back_button.bind('<Enter>', lambda event: self.back_on_enter())
+        self.back_button.bind('<Leave>', lambda event: self.back_on_leave())
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+    def _on_mousewheel(self, event):
+        self.container.bind_all('<MouseWheel>', self._scroll)
+
+    def _off_mousewheel(self, event):
+        self.container.unbind_all('<MouseWheel>')
+
+    def _scroll(self, event):
+        self.container.yview_scroll(int(-1*(event.delta/120)), 'units')
+
+    def back_on_enter(self):
+        self.back_button.config(image=self.controller.back_button_img[1])
+
+    def back_on_leave(self):
+        self.back_button.config(image=self.controller.back_button_img[0])
+
 
 class StoreHelpPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-
-        self.page_num = 0
 
         self.scrollframe = tk.Frame(self)
         self.scrollframe.grid(row=0, column=0, sticky='nsew')
@@ -1641,10 +1684,7 @@ class StoreHelpPage(tk.Frame):
         self.container.create_window(255, 580,
                                      window=self.help)
 
-        self.back_button_img = []
-        for i in ['inactive', 'active']:
-            self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_%s_back.png' %i)))
-        self.back_button = tk.Button(self, image=self.back_button_img[0], bd=0.1,
+        self.back_button = tk.Button(self, image=self.controller.back_button_img[0], bd=0.1,
                                      command=lambda: self.controller.show_frame('Store'))
         self.back_button.grid(row=1, column=0, padx=5, pady=5)
         self.back_button.bind('<Enter>', lambda event: self.back_on_enter())
@@ -1662,10 +1702,35 @@ class StoreHelpPage(tk.Frame):
         self.container.yview_scroll(int(-1*(event.delta/120)), 'units')
 
     def back_on_enter(self):
-        self.back_button.config(image=self.back_button_img[1])
+        self.back_button.config(image=self.controller.back_button_img[1])
 
     def back_on_leave(self):
-        self.back_button.config(image=self.back_button_img[0])
+        self.back_button.config(image=self.controller.back_button_img[0])
+
+
+class PullHelpPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.help_img = RGBAImage(os.path.join(COMMON, 'help_starter.png'))
+        self.help_label = tk.Label(self, image=self.help_img)
+        self.help_label.grid(row=0, column=0, sticky='nsew')
+
+        self.back_button = tk.Button(self, image=self.controller.back_button_img[0], bd=0.1,
+                                     command=lambda: self.controller.show_frame('NewPull'))
+        self.back_button.grid(row=1, column=0, padx=5, pady=5)
+        self.back_button.bind('<Enter>', lambda event: self.back_on_enter())
+        self.back_button.bind('<Leave>', lambda event: self.back_on_leave())
+
+    def back_on_enter(self):
+        self.back_button.config(image=self.controller.back_button_img[1])
+
+    def back_on_leave(self):
+        self.back_button.config(image=self.controller.back_button_img[0])
 
 
 class NewPull(tk.Frame):
@@ -1688,6 +1753,11 @@ class NewPull(tk.Frame):
         self.newpull_img = RGBAImage(os.path.join(COMMON, 'label_newpull.png'))
         self.newpull_label = tk.Label(self.frames[0], image=self.newpull_img)
         self.newpull_label.grid(row=0, column=0, sticky='nsw')
+        self.help_button = tk.Button(self.frames[0], image=self.controller.help_img[0], bd=0.1,
+                                     command=lambda: self.controller.show_frame('PullHelpPage'))
+        self.help_button.grid(row=0, column=1)
+        self.frames[0].grid_columnconfigure(0, weight=1)
+        self.frames[0].grid_columnconfigure(1, weight=1)
         for row in range(2):
             for column in range(3):
                 x = (row * 3) + column
@@ -2416,11 +2486,11 @@ def exit(self, page):
 
 
 def help_on_enter(self):
-    self.help_button.config(image=self.help_img[1])
+    self.help_button.config(image=self.controller.help_img[1])
 
 
 def help_on_leave(self):
-    self.help_button.config(image=self.help_img[0])
+    self.help_button.config(image=self.controller.help_img[0])
 
 
 def RGBAImage(path):
