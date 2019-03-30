@@ -443,18 +443,18 @@ class Pokemon:
         self.picked_nemesis = int(row[21])
         self.banned = int(row[22])
 
-with open('Singles.csv', 'r') as fileName:
+with open('Singles.csv', 'r', encoding='utf-8') as fileName:
     reader = csv.reader(fileName)
     next(reader, None)
     for row in reader:
         ALL_POKEMON_S.append(Pokemon(row))
 
-with open('Abilities.csv', 'r') as fileName:
+with open('Abilities.csv', 'r', encoding='utf-8') as fileName:
     reader = csv.reader(fileName)
     for row in reader:
         ABILITIES[row[0]] = [row[x] for x in range(1,4) if row[x] != '']
 
-with open('Items.csv', 'r') as fileName:
+with open('Items.csv', 'r', encoding='utf-8') as fileName:
     reader = csv.reader(fileName)
     for row in reader:
         if row[0].endswith('ite') and row[0] != 'Eviolite':

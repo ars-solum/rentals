@@ -1,3 +1,4 @@
+# -- coding: utf-8 --
 try:
     import Tkinter as tk
     from Tkinter import ttk
@@ -1417,7 +1418,7 @@ class Store(tk.Frame):
 
     def update_player_csv(self, slot):
         file = os.path.join(PLAYER_DIR, self.current_player.get() + '.csv')
-        with open(file, 'w', newline='') as fileName:
+        with open(file, 'w', encoding='utf-8', newline='') as fileName:
             writer = csv.writer(fileName, delimiter=',')
             for pkmn in PLAYERS[slot].pkmn_list:
                 writer.writerow(
@@ -1881,7 +1882,7 @@ class NewPull(tk.Frame):
     def back(self):
         PLAYERS[-1].pkmn_list = self.pkmn_list
         filename = PLAYERS[-1].name + '.csv'
-        with open(os.path.join(PLAYER_DIR, filename), 'w', newline='') as file:
+        with open(os.path.join(PLAYER_DIR, filename), 'w', encoding='utf-8', newline='') as file:
             writer = csv.writer(file, delimiter=',')
             for pkmn in PLAYERS[-1].pkmn_list:
                 writer.writerow(
@@ -2139,7 +2140,7 @@ def update_statistics(self):
             else:
                 pkmn.generated_random += 1
     file = 'main_database_copy.csv'
-    with open(file, 'w', newline='') as fileName:
+    with open(file, 'w', encoding='utf-8', newline='') as fileName:
         writer = csv.writer(fileName, delimiter=',')
         writer.writerow(['POKEMON', 'DEX', 'TYPE 1', 'TYPE 2', 'TIER',
                          'RARITY', 'SRL', 'TAG', 'ITEM', 'ABILITY', 'EV SPREAD',
@@ -2511,7 +2512,7 @@ def init_player_information():
     directory = os.path.dirname(os.path.realpath(__file__))
     PLAYER_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                     'players')
-    with open(os.path.join(directory, 'Banners.csv'), 'r') as file:
+    with open(os.path.join(directory, 'Banners.csv'), 'r', encoding='utf-8') as file:
         reader = csv.reader(file)
         for row in reader:
             ALL_BANNERS.append(row)
@@ -2522,7 +2523,7 @@ def init_player_information():
             pass
     for filename in os.listdir(PLAYER_DIR):
         if filename.endswith('.csv'):
-            with open(os.path.join(PLAYER_DIR, filename), 'r') as file:
+            with open(os.path.join(PLAYER_DIR, filename), 'r', encoding='utf-8') as file:
                 player_name = os.path.splitext(os.path.basename(file.name))[0]
                 reader = csv.reader(file)
                 temp_pkmn_list = []

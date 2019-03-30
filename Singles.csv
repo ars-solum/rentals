@@ -1,4 +1,4 @@
-POKEMON,DEX,TYPE 1,TYPE 2,TIER,RARITY,SRL,TAG,ITEM,ABILITY,EV SPREAD,NATURE,IV SPREAD,MOVE 1,MOVE 2,MOVE 3,MOVE 4,GENERATED (D),GENERATED (N),GENERATED (R),PICKED (D),PICKED (N),BANNED
+ï»¿POKEMON,DEX,TYPE 1,TYPE 2,TIER,RARITY,SRL,TAG,ITEM,ABILITY,EV SPREAD,NATURE,IV SPREAD,MOVE 1,MOVE 2,MOVE 3,MOVE 4,GENERATED (D),GENERATED (N),GENERATED (R),PICKED (D),PICKED (N),BANNED
 Bulbasaur,1,Grass,Poison,LC,NONE,-1,SUN,Normalium Z,Chlorophyll,44 Def / 160 SpA / 240 Spe,Modest,0 Atk,Celebrate,Sludge Bomb,Giga Drain,Hidden Power [Fire],0,0,0,0,0,0
 Ivysaur,2,Grass,Poison,NFE,COMMON,0,,Eviolite,Overgrow,252 HP / 252 Def / 4 SpD,Bold,0 Atk,Giga Drain,Sludge Bomb,Sleep Powder,Synthesis,0,0,0,0,0,0
 Ivysaur,2,Grass,Poison,NFE,COMMON,0,,Life Orb,Overgrow,252 HP / 4 Def / 252 SpA,Modest,0 Atk,Synthesis,Hidden Power [Fire],Sludge Bomb,Giga Drain,0,0,0,0,0,0
@@ -2524,7 +2524,7 @@ Pyroar,668,Fire,Normal,NU,COMMON,8,,Choice Band,Moxie,252 Atk / 4 Def / 252 Spe,
 Pyroar,668,Fire,Normal,NU,COMMON,8,,Choice Specs,Unnerve,4 Def / 252 SpA / 252 Spe,Timid,0 Atk,Fire Blast,Hyper Voice,Hidden Power [Ice],Dark Pulse,0,0,0,0,0,0
 Pyroar,668,Fire,Normal,NU,COMMON,8,,Grassium Z,Unnerve,4 Def / 252 SpA / 252 Spe,Timid,0 Atk,Solar Beam,Hyper Voice,Fire Blast,Taunt,0,0,0,0,0,0
 Pyroar,668,Fire,Normal,NU,COMMON,8,,Normalium Z,Unnerve,4 Def / 252 SpA / 252 Spe,Timid,0 Atk,Hyper Voice,Fire Blast,Taunt,Hidden Power [Grass],0,0,0,0,0,0
-Flabébé,669,Fairy,,LC,NONE,-1,,Eviolite,Flower Veil,164 HP / 204 Def / 108 SpA / 20 Spe,Bold,0 Atk,Calm Mind,Synthesis,Moonblast,Psychic,0,0,0,0,0,0
+FlabÃ©bÃ©,669,Fairy,,LC,NONE,-1,,Eviolite,Flower Veil,164 HP / 204 Def / 108 SpA / 20 Spe,Bold,0 Atk,Calm Mind,Synthesis,Moonblast,Psychic,0,0,0,0,0,0
 Floette,670,Fairy,,NFE,COMMON,13,,Eviolite,Flower Veil,252 HP / 252 Def / 4 SpD,Bold,0 Atk,Wish,Protect,Aromatherapy,Moonblast,0,0,0,0,0,0
 Florges,671,Fairy,,RU,RARE,13,,Leftovers,Flower Veil,168 HP / 172 Def / 168 Spe,Bold,0 Atk,Calm Mind,Wish,Psychic,Moonblast,0,0,0,0,0,0
 Florges,671,Fairy,,RU,RARE,13,,Babiri Berry,Flower Veil,4 Def / 252 SpA / 252 Spe,Timid,0 Atk,Synthesis,Calm Mind,Moonblast,Hidden Power [Fire],0,0,0,0,0,0
