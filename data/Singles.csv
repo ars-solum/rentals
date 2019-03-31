@@ -439,12 +439,12 @@ Chansey,113,Normal,,OU,ULTRA-RARE,11,,Eviolite,Natural Cure,252 HP / 252 Def / 4
 Tangela,114,Grass,,PU,COMMON,7,,Eviolite,Regenerator,168 HP / 168 Def / 172 SpA,Bold,0 Atk,Giga Drain,Sleep Powder,Synthesis,Hidden Power [Fire],0,0,0,0,0,0
 Tangela,114,Grass,,PU,COMMON,7,,Choice Specs,Regenerator,252 HP / 252 SpA / 4 SpD,Modest,0 Atk,Leaf Storm,Hidden Power [Fire],Sludge Bomb,Ancient Power,0,0,0,0,0,0
 Tangela,114,Grass,,PU,COMMON,7,,Eviolite,Regenerator,252 HP / 4 SpA / 252 SpD,Calm,0 Atk,Leech Seed,Toxic,Giga Drain,Protect,0,0,0,0,0,0
-Kangaskhan,115,Normal,,Uber,ULTRA-RARE,7,,Kangaskhanite,Early Bird,252 Atk / 4 Def / 252 Spe,Adamant,,Power-Up Punch,Double-Edge,Earthquake,Sucker Punch,0,0,0,0,0,0
-Kangaskhan,115,Normal,,Uber,ULTRA-RARE,7,,Kangaskhanite,Early Bird,252 Atk / 4 SpD / 252 Spe,Jolly,,Fake Out,Seismic Toss,Body Slam,Crunch,0,0,0,0,0,0
 Kangaskhan,115,Normal,,PU,COMMON,2,,Leftovers,Scrappy,168 HP / 168 Atk / 172 Def,Impish,,Drain Punch,Circle Throw,Sucker Punch,Substitute,0,0,0,0,0,0
-Kangaskhan,115,Normal,,Uber,ULTRA-RARE,7,,Kangaskhanite,Scrappy,168 HP / 172 Atk / 168 Def,Adamant,,Power-Up Punch,Return,Sleep Talk,Rest,0,0,0,0,0,0
 Kangaskhan,115,Normal,,PU,COMMON,2,,Leftovers,Early Bird,252 HP / 4 Atk / 252 SpD,Careful,,Rest,Body Slam,Seismic Toss,Toxic,0,0,0,0,0,0
 Kangaskhan,115,Normal,,PU,COMMON,2,,Silk Scarf,Scrappy,252 Atk / 4 Def / 252 Spe,Adamant,,Fake Out,Double-Edge,Sucker Punch,Earthquake,0,0,0,0,0,0
+Kangaskhan,115,Normal,,Uber,ULTRA-RARE,7,,Kangaskhanite,Early Bird,252 Atk / 4 Def / 252 Spe,Adamant,,Power-Up Punch,Double-Edge,Earthquake,Sucker Punch,0,0,0,0,0,0
+Kangaskhan,115,Normal,,Uber,ULTRA-RARE,7,,Kangaskhanite,Early Bird,252 Atk / 4 SpD / 252 Spe,Jolly,,Fake Out,Seismic Toss,Body Slam,Crunch,0,0,0,0,0,0
+Kangaskhan,115,Normal,,Uber,ULTRA-RARE,7,,Kangaskhanite,Scrappy,168 HP / 172 Atk / 168 Def,Adamant,,Power-Up Punch,Return,Sleep Talk,Rest,0,0,0,0,0,0
 Horsea,116,Water,,LC,NONE,-1,RAIN,Life Orb,Swift Swim,36 Def / 200 SpA / 196 Spe,Modest,0 Atk,Hydro Pump,Ice Beam,Rain Dance,Hidden Power [Grass],0,0,0,0,0,0
 Seadra,117,Water,,NFE,COMMON,2,,Eviolite,Poison Point,252 HP / 252 SpA / 4 SpD,Modest,0 Atk,Clear Smog,Scald,Ice Beam,Hidden Power [Grass],0,0,0,0,0,0
 Seadra,117,Water,,NFE,COMMON,2,,Eviolite,Poison Point,252 HP / 4 Atk / 252 SpD,Careful,,Dragon Dance,Waterfall,Rest,Sleep Talk,0,0,0,0,0,0

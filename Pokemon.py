@@ -1,4 +1,11 @@
 import csv
+import os
+
+ROOT = os.path.dirname(os.path.realpath(__file__))
+COMMON = os.path.join(ROOT, 'media', 'Common')
+IMG_PKMN_DIR = os.path.join(ROOT, 'media', 'pokemon')
+PLAYER_DIR = os.path.join(ROOT, 'players')
+DATA = os.path.join(ROOT, 'data')
 
 TypeChart = {
     ('Bug', 'Bug')      : 0,
@@ -443,18 +450,18 @@ class Pokemon:
         self.picked_nemesis = int(row[21])
         self.banned = int(row[22])
 
-with open('Singles.csv', 'r', encoding='utf-8') as fileName:
+with open(os.path.join(DATA, 'Singles.csv'), 'r', encoding='utf-8') as fileName:
     reader = csv.reader(fileName)
     next(reader, None)
     for row in reader:
         ALL_POKEMON_S.append(Pokemon(row))
 
-with open('Abilities.csv', 'r', encoding='utf-8') as fileName:
+with open(os.path.join(DATA, 'Abilities.csv'), 'r', encoding='utf-8') as fileName:
     reader = csv.reader(fileName)
     for row in reader:
         ABILITIES[row[0]] = [row[x] for x in range(1,4) if row[x] != '']
 
-with open('Items.csv', 'r', encoding='utf-8') as fileName:
+with open(os.path.join(DATA, 'Items.csv'), 'r', encoding='utf-8') as fileName:
     reader = csv.reader(fileName)
     for row in reader:
         if row[0].endswith('ite') and row[0] != 'Eviolite':
@@ -463,3 +470,8 @@ with open('Items.csv', 'r', encoding='utf-8') as fileName:
             Z_CRYSTALS.append(row[0])
         if row[0].endswith('Berry'):
             BERRIES.append(row[0])
+
+with open(os.path.join(DATA, 'Banners.csv'), 'r', encoding='utf-8') as file:
+    reader = csv.reader(file)
+    for row in reader:
+        ALL_BANNERS.append(row)
