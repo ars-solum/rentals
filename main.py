@@ -73,6 +73,7 @@ class MainApp(tk.Tk):
             self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_%s_back.png' %i)))
 
         self.error_img = RGBAImage(os.path.join(COMMON, 'error.png'))
+        self.info_img = RGBAImage(os.path.join(COMMON, 'info.png'))
 
         self.pages = {}
 
@@ -130,12 +131,15 @@ class MainApp(tk.Tk):
             if page_name == 'Draft' or page_name == 'Random':
                 for button in self.sidebar.buttons:
                     button.config(state='normal')
+                self.sidebar.settingsV1.grid()
                 self.sidebar.settingsV1.config(state='normal',
                     command=lambda:self.show_frame('%sSettings' % page_name))
+                self.sidebar.settingsV2.grid()
                 self.sidebar.settingsV2.config(state='normal',
                     command=lambda:self.show_frame('%sGenerateSettings' % page_name))
                 self.sidebar.start_button.config(state='normal',
                     command=self.pages[page_name].new_game)
+                self.sidebar.start_button.grid()
                 if self.pages[page_name].game_activated == False:
                     self.sidebar.finish_button.config(state='disabled')
                 else:
@@ -145,6 +149,7 @@ class MainApp(tk.Tk):
                     else:
                         if self.pages[page_name].game_activated:
                             self.sidebar.finish_button.config(state='normal')
+                self.sidebar.finish_button.grid()
 
             else:
                 if 'Settings' in page_name or 'Help' in page_name or 'NewPull' in page_name:
@@ -154,9 +159,13 @@ class MainApp(tk.Tk):
                     for button in self.sidebar.buttons:
                         button.config(state='normal')
                 self.sidebar.settingsV1.config(state='disabled')
+                self.sidebar.settingsV1.grid_remove()
                 self.sidebar.settingsV2.config(state='disabled')
+                self.sidebar.settingsV2.grid_remove()
                 self.sidebar.start_button.config(state='disabled')
+                self.sidebar.start_button.grid_remove()
                 self.sidebar.finish_button.config(state='disabled')
+                self.sidebar.finish_button.grid_remove()
             if page_name == 'Players':
                 self.pages[page_name].display_pkmn(self.pages[page_name].current_player.get())
 
@@ -169,8 +178,7 @@ class Sidebar(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        for i in range(10):
-            self.grid_rowconfigure(i, weight=1)
+        self.grid_rowconfigure(3, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
         self.label_text = ['Battle', 'League']
@@ -216,22 +224,22 @@ class Sidebar(tk.Frame):
 
         self.settingsV1 = tk.Button(self, image=self.img_button[1][2][0], bd=0.1,
             command=lambda: self.controller.show_frame('DraftSettings'))
-        self.settingsV1.grid(row=6, column=0, sticky='nsew')
+        self.settingsV1.grid(row=4, column=0, sticky='nsew')
         self.settingsV1.bind('<Enter>', lambda event: self.on_enter_settings(0))
         self.settingsV1.bind('<Leave>', lambda event: self.on_leave_settings(0))
         self.settingsV2 = tk.Button(self, image=self.img_button[1][2][1], bd=0.1,
             command=lambda: self.controller.show_frame('DraftGenerateSettings'))
-        self.settingsV2.grid(row=7, column=0, sticky='nsew')
+        self.settingsV2.grid(row=5, column=0, sticky='nsew')
         self.settingsV2.bind('<Enter>', lambda event: self.on_enter_settings(1))
         self.settingsV2.bind('<Leave>', lambda event: self.on_leave_settings(1))
         self.start_button = tk.Button(self, image=self.img_button[1][2][2], bd=0.1,
                                       command=lambda: None)
-        self.start_button.grid(row=8, column=0, sticky='nsew')
+        self.start_button.grid(row=6, column=0, sticky='nsew')
         self.start_button.bind('<Enter>', lambda event: self.on_enter_settings(2))
         self.start_button.bind('<Leave>', lambda event: self.on_leave_settings(2))
         self.finish_button = tk.Button(self, image=self.img_button[1][2][3], bd=0.1,
                                        state='disabled', command=lambda: None)
-        self.finish_button.grid(row=9, column=0, sticky='nsew')
+        self.finish_button.grid(row=7, column=0, sticky='nsew')
         self.finish_button.bind('<Enter>', lambda event: self.on_enter_settings(3))
         self.finish_button.bind('<Leave>', lambda event: self.on_leave_settings(3))
 
@@ -1200,7 +1208,7 @@ class Store(tk.Frame):
             self.banner_num = 12
         if month == 7 and 21 <= day <= 27:
             self.banner_num = 14
-        # self.banner_num = 6
+        self.banner_num = 6
         self.current_page = 0
         self.remaining = 44
         self.current_player = tk.StringVar()
@@ -1298,7 +1306,7 @@ class Store(tk.Frame):
     def get_pkmn_imgs(self):
         for i in range(2):
             for j in range(44):
-                cur_banner = i + self.banner_num
+                cur_banner = self.banner_num + i
                 pkmn_name = ALL_BANNERS[cur_banner][j].replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
                 if pkmn_name == 'Blank':
                     for k in range(3):
@@ -1402,7 +1410,7 @@ class Store(tk.Frame):
         player_pkmn_name_list = [i.name for i in player_pkmn_list]
 
         temp_pkmn_list = []
-        for pkmn in self.pkmn_lists[current_banner]:
+        for pkmn in self.pkmn_lists[self.current_page]:
             if pkmn.name == get_true_name(ALL_BANNERS[current_banner][x]):
                 temp_pkmn_list.append(pkmn)
         temp_new_pkmn = random.choice(temp_pkmn_list)
@@ -1447,12 +1455,18 @@ class Store(tk.Frame):
             self.current_page = page_num
             self.banner_image.config(image=self.img_banners[self.current_page])
             self.switch_player(self.current_player.get())
+            if self.current_page + self.banner_num == 7 or self.current_page + self.banner_num == 15:
+                self.pull_button.config(state='disabled')
+            else:
+                self.pull_button.config(state='normal')
 
     def on_enter(self):
-        self.pull_button.config(image=self.pull_img[1])
+        if self.pull_button.cget('state') != 'disabled':
+            self.pull_button.config(image=self.pull_img[1])
 
     def on_leave(self):
-        self.pull_button.config(image=self.pull_img[0])
+        if self.pull_button.cget('state') != 'disabled':
+            self.pull_button.config(image=self.pull_img[0])
 
     def update_player_csv(self, slot):
         file = os.path.join(PLAYER_DIR, self.current_player.get() + '.csv')
@@ -1617,6 +1631,8 @@ class Players(tk.Frame):
         x = app.winfo_x()
         y = app.winfo_y()
         top.geometry('+%d+%d' % (x + 100, y + 200))
+        info = tk.Label(top, image=self.controller.info_img)
+        info.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
         text = "Copied all of %s's Pokemon." %cur_player.name
         message = tk.Label(top, text=text)
         message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
@@ -1644,6 +1660,8 @@ class Players(tk.Frame):
         x = app.winfo_x()
         y = app.winfo_y()
         top.geometry('+%d+%d' % (x + 100, y + 200))
+        info = tk.Label(top, image=self.controller.info_img)
+        info.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
         text = "Copied %s's Set Info." %pkmn.name
         message = tk.Label(top, text=text)
         message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
@@ -1725,7 +1743,7 @@ class StoreHelpPage(tk.Frame):
 
         self.help_img = RGBAImage(os.path.join(COMMON, 'help_store.png'))
         self.help = tk.Label(self.container, image=self.help_img)
-        self.container.create_window(255, 580,
+        self.container.create_window(255, 590,
                                      window=self.help)
 
         self.back_button = tk.Button(self, image=self.controller.back_button_img[0], bd=0.1,
@@ -1956,13 +1974,29 @@ class NewPull(tk.Frame):
 def update_all_optionmenus(self):
     menu1 = self.pages['Store'].player_option['menu']
     menu2 = self.pages['Players'].player_option['menu']
+    menu3 = self.pages['DraftSettings'].player_option[0]['menu']
+    menu4 = self.pages['DraftSettings'].player_option[1]['menu']
+    menu5 = self.pages['RandomSettings'].player_option[0]['menu']
+    menu6 = self.pages['RandomSettings'].player_option[1]['menu']
     menu1.delete(0, 'end')
     menu2.delete(0, 'end')
+    menu3.delete(0, 'end')
+    menu4.delete(0, 'end')
+    menu5.delete(0, 'end')
+    menu6.delete(0, 'end')
     for player in playerNames:
         menu1.add_command(label=player,
             command=lambda player=player: self.pages['Store'].switch_player(player))
         menu2.add_command(label=player,
             command=lambda player=player: self.pages['Players'].display_pkmn(player))
+        menu3.add_command(label=player,
+            command=lambda player=player: self.pages['Draft'].current_player[0].set(player))
+        menu4.add_command(label=player,
+            command=lambda player=player: self.pages['Draft'].current_player[1].set(player))
+        menu5.add_command(label=player,
+            command=lambda player=player: self.pages['Random'].current_player[0].set(player))
+        menu6.add_command(label=player,
+            command=lambda player=player: self.pages['Random'].current_player[1].set(player))
 
 
 def get_true_name(name):
@@ -1982,28 +2016,29 @@ def get_mega_name(pkmn):
 
 def get_rarity(name):
     for pkmn in ALL_POKEMON_S:
-        if name.endswith('-Mega'):
-            temp_name = name.replace('-Mega', '')
-            if (pkmn.name == temp_name and
-                (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or
-                 pkmn.item.endswith('ite Y'))):
-                rarity = pkmn.rarity
-                break
+        if name.endswith('-Mega') or name.endswith('Mega-Y') or name.endswith('Mega-X'):
+            temp_name = name.replace('-Mega-Y', '').replace('-Mega-X', '').replace('-Mega', '')
+            if pkmn.name == temp_name:
+                if (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or
+                    pkmn.item.endswith('ite Y')):
+                    rarity = pkmn.rarity
+                    break
         elif name.endswith('-Ash'):
             temp_name = name.replace('-Ash', '')
-            if (pkmn.name == temp_name and pkmn.ability == 'Battle Bond'):
-                rarity = pkmn.rarity
-                break
+            if pkmn.name == temp_name:
+                if pkmn.ability == 'Battle Bond':
+                    rarity = pkmn.rarity
+                    break
         else:
-            if pkmn.name == name:
+            temp_name = name
+            if pkmn.name == temp_name:
                 if pkmn.item == 'Eviolite':
                     rarity = pkmn.rarity
                     break
-                else:
-                    if not (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or
-                            pkmn.item.endswith('ite Y')):
-                        rarity = pkmn.rarity
-                        break
+                if not (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or
+                    pkmn.item.endswith('ite Y')):
+                    rarity = pkmn.rarity
+                    break
     return rarity
 
 
@@ -2115,7 +2150,7 @@ def validate(self, page):
         top.grab_set()
         x = app.winfo_x()
         y = app.winfo_y()
-        top.geometry('+%d+%d' % (w, h, x + 100, y + 200))
+        top.geometry('+%d+%d' % (x + 100, y + 200))
         text = 'Not enough Pokemon fit the criteria you have selected.'
         text2 = '\nPlease remove some restrictions.'
         error = tk.Label(top, image=self.controller.error_img)
@@ -2155,6 +2190,8 @@ def get_sets(self):
     x = app.winfo_x()
     y = app.winfo_y()
     top.geometry('+%d+%d' % (x + 100, y + 200))
+    info = tk.Label(top, image=self.controller.info_img)
+    info.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
     text = "Copied all sets."
     message = tk.Label(top, text=text)
     message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
