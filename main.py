@@ -1208,7 +1208,7 @@ class Store(tk.Frame):
             self.banner_num = 12
         if month == 7 and 21 <= day <= 27:
             self.banner_num = 14
-        self.banner_num = 6
+        # self.banner_num = 0
         self.current_page = 0
         self.remaining = 44
         self.current_player = tk.StringVar()
@@ -1522,7 +1522,7 @@ class Players(tk.Frame):
         self.player_option = tk.OptionMenu(self, self.current_player,
                                          *playerNames, command=self.display_pkmn)
         self.player_option.grid(row=3, column=1, sticky='ew')
-        self.get_sets_button = tk.Button(self, text='Copy All Set Info', command=self.get_sets)
+        self.get_sets_button = tk.Button(self, text='Copy All Sets', command=self.get_sets)
         self.get_sets_button.grid(row=3, column=2, padx=10, sticky='ew')
         # [grid with pokemon icons]
         self.scrollframe = tk.LabelFrame(self,
@@ -1662,7 +1662,7 @@ class Players(tk.Frame):
         top.geometry('+%d+%d' % (x + 100, y + 200))
         info = tk.Label(top, image=self.controller.info_img)
         info.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-        text = "Copied %s's Set Info." %pkmn.name
+        text = "Copied %s's set." %pkmn.name
         message = tk.Label(top, text=text)
         message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
         back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
