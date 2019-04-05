@@ -2220,7 +2220,7 @@ def update_statistics(self):
                     pkmn.picked_draft += 1
             else:
                 pkmn.generated_random += 1
-    file = 'main_database_copy.csv'
+    file = os.path.join(DATA, 'Singles_copy.csv')
     with open(file, 'w', encoding='utf-8', newline='') as fileName:
         writer = csv.writer(fileName, delimiter=',')
         writer.writerow(['POKEMON', 'DEX', 'TYPE 1', 'TYPE 2', 'TIER',
