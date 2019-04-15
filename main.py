@@ -146,9 +146,10 @@ class MainApp(tk.Tk):
                     if hasattr(self.pages[page_name], 'turn'):
                         if self.pages[page_name].turn >= 12:
                             self.sidebar.finish_button.config(state='normal')
+                        else:
+                            self.sidebar.finish_button.config(state='disabled')
                     else:
-                        if self.pages[page_name].game_activated:
-                            self.sidebar.finish_button.config(state='normal')
+                        self.sidebar.finish_button.config(state='normal')
                 self.sidebar.finish_button.grid()
 
             else:
@@ -1042,8 +1043,12 @@ class Random(tk.Frame):
                     pkmn_name = self.pkmn_team_list[i][j].name
                 self.get_pkmn_imgs(pkmn_name)
                 x = (i * 6) + j
-                self.team_buttons[i][j].config(image=self.img_pkmn[0][x],
-                                               command=lambda i=i, j=j: self.reroll(i, j))
+                if self.hidden.get() == 'Yes':
+                    self.team_buttons[i][j].config(image=self.img_pkmn[2][x],
+                        command=lambda i=i, j=j: self.reroll(i, j))
+                else:
+                    self.team_buttons[i][j].config(image=self.img_pkmn[0][x],
+                        command=lambda i=i, j=j: self.reroll(i, j))
         self.controller.sidebar.finish_button.config(state='normal',
                                                      command=lambda: get_sets(self))
 
@@ -1829,10 +1834,14 @@ class NewPull(tk.Frame):
         self.box_label = tk.Label(self.frames[2], image=self.box_img)
         self.box_label.grid(row=0, column=0, sticky='nsw')
         for i in range(4):
-            self.box_buttons[int(i/2)].append(tk.Button(self.frames[3], image=self.box_images[0][i], bd=0.1, command=lambda i=i: self.pullbox(i)))
+            self.box_buttons[int(i/2)].append(tk.Button(self.frames[3],
+                image=self.box_images[0][i], bd=0.1,
+                command=lambda i=i: self.pullbox(i)))
             self.box_buttons[int(i/2)][i%2].grid(row=int(i/2), column=i%2)
-            self.box_buttons[int(i/2)][i%2].bind('<Enter>', lambda event, i=i: self.box_on_enter(i))
-            self.box_buttons[int(i/2)][i%2].bind('<Leave>', lambda event, i=i: self.box_on_leave(i))
+            self.box_buttons[int(i/2)][i%2].bind('<Enter>',
+                lambda event, i=i: self.box_on_enter(i))
+            self.box_buttons[int(i/2)][i%2].bind('<Leave>',
+                lambda event, i=i: self.box_on_leave(i))
 
         self.box_list = [[] for i in range(4)]
         for pkmn in ALL_POKEMON_S:
