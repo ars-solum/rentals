@@ -1,44 +1,50 @@
-# -- coding: utf-8 --
-try:
-    import Tkinter as tk
-    from Tkinter import ttk
-except ImportError:
-    import tkinter as tk
-    from tkinter import ttk
-from PIL import Image, ImageTk
+"""
+main.py
+Purpose : Creates an interactive GUI for the Pokemon Rentals Database and
+          related streaming activities.
 
-import os
+Author  : Ars Solum
+Version : 2.2.0
+"""
+
+################################################################################
+# system includes                                                              #
+################################################################################
 import csv
-import time
-import random
-from random import shuffle
 from datetime import date
+import os
+from PIL import Image, ImageTk
+from random import random
+from random import shuffle
+import tkinter as tk
+from tkinter import ttk
 
+################################################################################
+# local includes                                                               #
+################################################################################
 from Pokemon import *
 
-ROOT = os.path.dirname(os.path.realpath(__file__))
-COMMON = os.path.join(ROOT, 'media', 'Common')
-IMG_PKMN_DIR = os.path.join(ROOT, 'media', 'pokemon')
-PLAYER_DIR = os.path.join(ROOT, 'players')
-DATA = os.path.join(ROOT, 'data')
-month = int(date.today().strftime('%m'))
-day = int(date.today().strftime('%d'))
-
+# base interface window
 class MainApp(tk.Tk):
+
+    # function   : __init__
+    # purpose    : Initializes the GUI's base window and its components.
+    # @param[in] : *args Any required Tk arguments.
+    # @param[in] : **kwargs Any optional Tk arguments.
+    # @return    : None.
+    #
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+        self.init_vars()
+        self.init_side_menu()
+        self.init_main_menu()
 
-        self.side_frame = tk.Frame(self)
-        self.side_frame.grid(row=0, column=0, sticky='nsew')
-        self.side_frame.grid_rowconfigure(0, weight=1)
-        self.side_frame.grid_columnconfigure(0, weight=1)
-
-        self.main_frame = tk.Frame(self)
-        self.main_frame.grid(row=0, column=1, sticky='nsew')
-
-        self.sidebar = Sidebar(parent=self.side_frame, controller=self)
-        self.sidebar.grid(row=0, column=0, sticky='nsew')
-
+    # function   : init_vars
+    # purpose    : Initializes MainApp's private and pseudo-global variables.
+    # @param[in] : None
+    # @return    : None
+    def init_vars(self):
+        # TODO FIXME: Move these image-related variables to a global space
         self.img_type = ['inactive', 'active', 'unknown', 'banned', 'picked']
         self.img_blank_base = {
             'active': RGBAImage2(os.path.join(COMMON, 'button_active_Blank.png')),
@@ -74,6 +80,19 @@ class MainApp(tk.Tk):
 
         self.error_img = RGBAImage(os.path.join(COMMON, 'error.png'))
         self.info_img = RGBAImage(os.path.join(COMMON, 'info.png'))
+
+    def init_side_menu(self):
+        self.frame_side_menu = tk.Frame(self)
+        self.frame_side_menu.grid(row=0, column=0, sticky='nsew')
+        self.frame_side_menu.grid_rowconfigure(0, weight=1)
+        self.frame_side_menu.grid_columnconfigure(0, weight=1)
+
+        self.sidebar = Sidebar(parent=self.frame_side_menu, controller=self)
+        self.sidebar.grid(row=0, column=0, sticky='nsew')
+
+    def init_main_menu(self):
+        self.main_frame = tk.Frame(self)
+        self.main_frame.grid(row=0, column=1, sticky='nsew')
 
         self.pages = {}
 
@@ -2637,8 +2656,21 @@ def init_player_information():
 
 
 if __name__ == '__main__':
+    # global variables
+    VERSION = '2.2.0'
+    ROOT = os.path.dirname(os.path.realpath(__file__))
+    COMMON = os.path.join(ROOT, 'media', 'Common')
+    IMG_PKMN_DIR = os.path.join(ROOT, 'media', 'pokemon')
+    PLAYER_DIR = os.path.join(ROOT, 'players')
+    DATA = os.path.join(ROOT, 'data')
+    month = int(date.today().strftime('%m'))
+    day = int(date.today().strftime('%d'))
+
+    # before starting the GUI, gather any player info
     init_player_information()
     app = MainApp()
-    app.resizable(0, 0)
-    app.title('Rentals v2.1.0')
+    # disable resizing of window
+    app.resizable(False, False)
+    # set the title of the window (and top-level windows)
+    app.title('Rentals v%s' %VERSION)
     app.mainloop()
