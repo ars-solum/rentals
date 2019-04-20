@@ -24,31 +24,33 @@ from tkinter import ttk
 ################################################################################
 from Pokemon import *
 
-# base interface window
 class MainApp(tk.Tk):
 
-    # function   : __init__
-    # purpose    : Initializes the GUI's base window and its components.
-    # @param[in] : *args Any required Tk arguments.
-    # @param[in] : **kwargs Any optional Tk arguments.
-    # @return    : None.
-    #
+    """function : __init__
+    purpose     : Initializes the GUI's base window and its components.
+    @param[in]  : *args Any required Tk arguments.
+    @param[in]  : **kwargs Any optional Tk arguments.
+    @return     : None.
+    """
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.init_vars()
         self.init_side_menu()
         self.init_main_menu()
+        self.show_frame('Draft')
 
-    # function   : init_vars
-    # purpose    : Initializes MainApp's private and pseudo-global variables.
-    # @param[in] : None
-    # @return    : None
+    """function : init_vars
+    purpose     : Initializes MainApp's private and pseudo-global variables.
+    @param[in]  : self An instance of MainApp
+    @return     : None.
+    """
     def init_vars(self):
         # TODO FIXME: Move these image-related variables to a global space
         self.img_type = ['inactive', 'active', 'unknown', 'banned', 'picked']
         self.img_blank_base = {
             'active': RGBAImage2(os.path.join(COMMON, 'button_active_Blank.png')),
-            'inactive': RGBAImage2(os.path.join(COMMON, 'button_inactive_Blank.png'))}
+            'inactive': RGBAImage2(os.path.join(COMMON, 'button_inactive_Blank.png'))
+        }
         self.img_border = {
             'Standard': RGBAImage2(os.path.join(COMMON, 'border_Standard.png')),
             'Nemesis': RGBAImage2(os.path.join(COMMON, 'border_Nemesis.png')),
@@ -56,31 +58,42 @@ class MainApp(tk.Tk):
             'First Pick': RGBAImage2(os.path.join(COMMON, 'border_First Pick.png')),
             'COMMON': RGBAImage2(os.path.join(COMMON, 'border_COMMON.png')),
             'RARE': RGBAImage2(os.path.join(COMMON, 'border_RARE.png')),
-            'ULTRA-RARE': RGBAImage2(os.path.join(COMMON, 'border_ULTRA-RARE.png'))}
-        self.img_blank_base['inactive'].paste(self.img_border['Standard'],
-                                              (0, 0),
-                                              self.img_border['Standard'])
-        self.img_blank_base['active'].paste(self.img_border['Standard'],
-                                            (0, 0),
-                                            self.img_border['Standard'])
-        self.img_blank = [ImageTk.PhotoImage(self.img_blank_base['inactive']),
-                          ImageTk.PhotoImage(self.img_blank_base['active'])]
+            'ULTRA-RARE': RGBAImage2(os.path.join(COMMON, 'border_ULTRA-RARE.png'))
+        }
 
-        self.team_text_img = []
-        for i in range(2):
-            self.team_text_img.append(RGBAImage(os.path.join(COMMON, 'label_team%d.png' %int(i+1))))
+        for key in self.img_blank_base:
+            self.img_blank_base[key].paste(self.img_border['Standard'],
+                                           (0, 0),
+                                           self.img_border['Standard'])
 
-        self.help_img = []
-        for i in ['inactive', 'active']:
-            self.help_img.append(RGBAImage(os.path.join(COMMON, 'button_%s_help.png' %i)))
+        self.img_blank = {
+            'inactive': ImageTk.PhotoImage(self.img_blank_base['inactive']),
+            'active': ImageTk.PhotoImage(self.img_blank_base['active'])
+        }
 
-        self.back_button_img = []
-        for i in ['inactive', 'active']:
-            self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_%s_back.png' %i)))
+        self.team_text_img = {
+            'team 1': RGBAImage(os.path.join(COMMON, 'label_team1.png')),
+            'team 2': RGBAImage(os.path.join(COMMON, 'label_team2.png'))
+        }
+
+        self.help_img = {
+            'active': RGBAImage(os.path.join(COMMON, 'button_active_help.png')),
+            'inactive': RGBAImage(os.path.join(COMMON, 'button_inactive_help.png'))
+        }
+
+        self.back_button_img = {
+            'active': RGBAImage(os.path.join(COMMON, 'button_active_back.png')),
+            'inactive': RGBAImage(os.path.join(COMMON, 'button_inactive_back.png'))
+        }
 
         self.error_img = RGBAImage(os.path.join(COMMON, 'error.png'))
         self.info_img = RGBAImage(os.path.join(COMMON, 'info.png'))
 
+    """function : init_side_menu
+    purpose     : Initializes the sidebar menu and its components for the GUI.
+    @param[in]  : self An instance of MainApp
+    @return     : None.
+    """
     def init_side_menu(self):
         self.frame_side_menu = tk.Frame(self)
         self.frame_side_menu.grid(row=0, column=0, sticky='nsew')
@@ -90,60 +103,57 @@ class MainApp(tk.Tk):
         self.sidebar = Sidebar(parent=self.frame_side_menu, controller=self)
         self.sidebar.grid(row=0, column=0, sticky='nsew')
 
+        self.sidebar.start_button.config(command=self.pages['Draft'].new_game)
+
+    """function : init_main_menu
+    purpose     : Initializes the main frame and its components for the GUI.
+    @param[in]  : self An instance of MainApp
+    @return     : None.
+    """
     def init_main_menu(self):
         self.main_frame = tk.Frame(self)
         self.main_frame.grid(row=0, column=1, sticky='nsew')
-
-        self.pages = {}
-
-        for Class in (Draft, Random, DraftSettings, DraftGenerateSettings,
-                      RandomSettings, RandomGenerateSettings, Store, Players,
-                      DraftHelpPage, StoreHelpPage, PullHelpPage, NewPull):
-            page_name = Class.__name__
-            frame = Class(parent=self.main_frame, controller=self)
-            self.pages[page_name] = frame
-            frame.grid(row=0, column=0, sticky='nsew')
-
-        self.show_frame('Draft')
-
-        self.sidebar.start_button.config(command=self.pages['Draft'].new_game)
-
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
+        self.pages = {}
+
+        # TODO FIXME: Cleaning this section up (make it less hacky)
+        for page in (Draft, Random, DraftSettings, DraftGenerateSettings,
+                      RandomSettings, RandomGenerateSettings, Store, Players,
+                      DraftHelpPage, StoreHelpPage, PullHelpPage, NewPull):
+            page_name = page.__name__
+            frame = page(parent=self.main_frame, controller=self)
+            self.pages[page_name] = frame
+            frame.grid(row=0, column=0, sticky='nsew')
+
+    """function : show_frame
+    purpose     : Changes the current page based on the button clicked.  The
+                  function will also check the state of each page and modify
+                  the sidebar's buttons accordingly.
+    @param[in]  : self An instance of MainApp
+    @param[in]  : page_name The name of the page to switch to (string)
+    @return     : None.
+    """
     def show_frame(self, page_name):
-        if page_name == 'Store' and len(PLAYERS) == 1 and len(PLAYERS[0].pkmn_list) == 0:
-            top = tk.Toplevel(self)
-            top.grab_set()
-            x = app.winfo_x()
-            y = app.winfo_y()
-            top.geometry('+%d+%d' % (x + 100, y + 200))
-            text = 'You cannot visit the store right now.\n'
-            text2 = 'Please roll for your first team.'
-            error = tk.Label(top, image=self.error_img)
-            error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-            message = tk.Label(top, text=text+text2)
-            message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-            back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-            back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
-        elif page_name == 'Players' and len(PLAYERS) == 1 and len(PLAYERS[0].pkmn_list) == 0:
-            top = tk.Toplevel(self)
-            top.grab_set()
-            x = app.winfo_x()
-            y = app.winfo_y()
-            top.geometry('+%d+%d' % (x + 100, y + 200))
-            text = "Welcome Virgo! Let's get your starter Pokemon!"
-            message = tk.Label(top, text=text)
-            message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-            back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-            back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
-            self.wait_window(top)
+        if (page_name == 'Store' and len(PLAYERS) == 1 and len(PLAYERS[0].pkmn_list) == 0):
+            popup_message(self,
+                          'ERROR',
+                          'You cannot visit the store right now.',
+                          text2='\nPlease roll for your first team.')
+        elif (page_name == 'Players' and len(PLAYERS) == 1 and len(PLAYERS[0].pkmn_list) == 0):
+            popup_message(self,
+                          'INFO',
+                          "Welcome Virgo! Let's get your starter Pokemon!")
+
+            # disable all sidebar buttons
             for button in self.sidebar.buttons:
                 button.config(state='disabled')
             self.sidebar.settingsV1.config(state='disabled')
             self.sidebar.settingsV2.config(state='disabled')
             self.sidebar.start_button.config(state='disabled')
             self.sidebar.finish_button.config(state='disabled')
+
             frame = self.pages['NewPull']
             frame.tkraise()
         else:
@@ -555,19 +565,10 @@ class Draft(tk.Frame):
                             team_number = 1
                             slot_number = self.turn - 6
                     if self.pkmn_pool_list[pool_number].dex in [i.dex for i in self.pkmn_team_list[team_number] if i is not None]:
-                        top = tk.Toplevel(self.controller)
-                        top.grab_set()
-                        x = app.winfo_x()
-                        y = app.winfo_y()
-                        top.geometry('+%d+%d' % (x + 100, y + 200))
-                        text = "Sorry, you cannot add %s to Player %s's team" %(self.pkmn_pool_list[pool_number].name, str(team_number+1))
-                        text2 = "\ndue to the Species Clause."
-                        error = tk.Label(top, image=self.controller.error_img)
-                        error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-                        message = tk.Label(top, text=text+text2)
-                        message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-                        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-                        back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+                        popup_message(self.controller,
+                                      'ERROR',
+                                      "Sorry, you cannot add %s to Player %s's team" % (self.pkmn_pool_list[pool_number].name, str(team_number+1)),
+                                      text2="\ndue to the Species Clause.")
                     else:
                         self.pkmn_not_picked[pool_number] = False
                         if self.ban_number.get() != 0 and not self.ban_phase_finished:
@@ -809,19 +810,10 @@ class DraftSettings(tk.Frame):
 
     def change_draft_mode(self):
         if self.parent_page().game_activated:
-            top = tk.Toplevel(self.controller)
-            top.grab_set()
-            x = app.winfo_x()
-            y = app.winfo_y()
-            top.geometry('+%d+%d' % (x + 100, y + 200))
-            text = 'Changing the draft mode has caused the current game to be erased.'
-            text2 = '\nPlease start a new game.'
-            error = tk.Label(top, image=self.controller.error_img)
-            error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-            message = tk.Label(top, text=text+text2)
-            message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-            back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-            back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+            popup_message(self.controller,
+                          'ERROR',
+                          'Changing the draft mode has caused the current game to be erased.',
+                          text2='\nPlease start a new game.')
             self.parent_page().game_activated = False
         for i in range(2):
             for j in range(0, self.parent_page().ban_number.get()):
@@ -851,19 +843,10 @@ class DraftSettings(tk.Frame):
 
     def activate_bans(self):
         if self.parent_page().game_activated:
-            top = tk.Toplevel(self.controller)
-            top.grab_set()
-            x = app.winfo_x()
-            y = app.winfo_y()
-            top.geometry('+%d+%d' % (x + 100, y + 200))
-            text = 'Changing the number of bans has caused the current game to be erased.'
-            text2 = '\nPlease start a new game.'
-            error = tk.Label(top, image=self.controller.error_img)
-            error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-            message = tk.Label(top, text=text+text2)
-            message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-            back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-            back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+            popup_message(self.controller,
+                          'ERROR',
+                          'Changing the number of bans has caused the current game to be erased.',
+                          text2='\nPlease start a new game.')
             self.parent_page().game_activated = False
         for i in range(2):
             for j in range(0, self.parent_page().ban_number.get()):
@@ -1391,18 +1374,9 @@ class Store(tk.Frame):
 
     def pull(self):
         if self.remaining <= 0:
-            top = tk.Toplevel(self.controller)
-            top.grab_set()
-            x = app.winfo_x()
-            y = app.winfo_y()
-            top.geometry('+%d+%d' % (x + 100, y + 200))
-            text = 'No Pokemon remaining!'
-            error = tk.Label(top, image=self.controller.error_img)
-            error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-            message = tk.Label(top, text=text)
-            message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-            back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-            back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+            popup_message(self.controller,
+                          'ERROR',
+                          'No Pokemon remaining!')
         else:
             slot = playerNames.index(self.current_player.get())
             player_pkmn_list = PLAYERS[slot].pkmn_list
@@ -1584,18 +1558,9 @@ class Players(tk.Frame):
             self.controller.show_frame('NewPull')
 
         elif player_name.lower() in [i.lower() for i in playerNames]:
-            top = tk.Toplevel(self.controller)
-            top.grab_set()
-            x = app.winfo_x()
-            y = app.winfo_y()
-            top.geometry('+%d+%d' % (x + 100, y + 200))
-            text = player_name + ' is already in use. Please choose another name.'
-            error = tk.Label(top, image=self.controller.error_img)
-            error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-            message = tk.Label(top, text=text)
-            message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-            back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-            back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+            popup_message(self.controller,
+                          'ERROR',
+                          player_name + ' is already in use. Please choose another name.')
         else:
             pass
 
@@ -1650,18 +1615,9 @@ class Players(tk.Frame):
                     sets += '- ' + move + '\n'
             sets += '\n'
         self.controller.clipboard_append(sets)
-        top = tk.Toplevel(self.controller)
-        top.grab_set()
-        x = app.winfo_x()
-        y = app.winfo_y()
-        top.geometry('+%d+%d' % (x + 100, y + 200))
-        info = tk.Label(top, image=self.controller.info_img)
-        info.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-        text = "Copied all of %s's Pokemon." %cur_player.name
-        message = tk.Label(top, text=text)
-        message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-        back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+        popup_message(self.controller,
+                      'INFO',
+                      "Copied all of %s's Pokemon to clipboard." % cur_player.name)
 
     def get_specific_set(self, pkmn):
         self.controller.clipboard_clear()
@@ -1679,18 +1635,9 @@ class Players(tk.Frame):
             if move:
                 sets += '- ' + move + '\n'
         self.controller.clipboard_append(sets)
-        top = tk.Toplevel(self.controller)
-        top.grab_set()
-        x = app.winfo_x()
-        y = app.winfo_y()
-        top.geometry('+%d+%d' % (x + 100, y + 200))
-        info = tk.Label(top, image=self.controller.info_img)
-        info.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-        text = "Copied %s's set." %pkmn.name
-        message = tk.Label(top, text=text)
-        message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-        back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+        popup_message(self.controller,
+                      'INFO',
+                      "Copied %s's set to clipboard." % pkmn.name)
 
     def _on_mousewheel(self, event):
         self.container.bind_all('<MouseWheel>', self._scroll)
@@ -2174,19 +2121,10 @@ def validate(self, page):
     if temp_counter >= 18:
         self.controller.show_frame(page)
     else:
-        top = tk.Toplevel(self.controller)
-        top.grab_set()
-        x = app.winfo_x()
-        y = app.winfo_y()
-        top.geometry('+%d+%d' % (x + 100, y + 200))
-        text = 'Not enough Pokemon fit the criteria you have selected.'
-        text2 = '\nPlease remove some restrictions.'
-        error = tk.Label(top, image=self.controller.error_img)
-        error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-        message = tk.Label(top, text=text+text2)
-        message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-        back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+        popup_message(self.controller,
+                      'ERROR',
+                      'Not enough Pokemon fit the criteria you have selected.',
+                      text2='\nPlease remove some restrictions.')
 
 
 def get_sets(self):
@@ -2213,18 +2151,9 @@ def get_sets(self):
         sets += '\n'
     self.controller.clipboard_append(sets)
     update_statistics(self)
-    top = tk.Toplevel(self.controller)
-    top.grab_set()
-    x = app.winfo_x()
-    y = app.winfo_y()
-    top.geometry('+%d+%d' % (x + 100, y + 200))
-    info = tk.Label(top, image=self.controller.info_img)
-    info.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-    text = "Copied all sets."
-    message = tk.Label(top, text=text)
-    message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-    back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-    back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+    popup_message(self.controller,
+                  'INFO',
+                  'Copied all sets to clipboard.')
 
 
 def update_statistics(self):
@@ -2559,48 +2488,21 @@ def exit(self, page):
     list_total = list1+list2
     if (self.parent_page().battle_mode.get() == 'SRL' and
         self.parent_page().current_player[0].get() == self.parent_page().current_player[1].get()):
-        top = tk.Toplevel(self.controller)
-        top.grab_set()
-        x = app.winfo_x()
-        y = app.winfo_y()
-        top.geometry('+%d+%d' % (x + 100, y + 200))
-        text = 'Player 1 and Player 2 cannot be the same person.'
-        text2 = '\nPlease choose another person for Player 2.'
-        error = tk.Label(top, image=self.controller.error_img)
-        error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-        message = tk.Label(top, text=text+text2)
-        message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-        back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+        popup_message(self.controller,
+                      'ERROR',
+                      'Player 1 and Player 2 cannot be the same person.',
+                      text2='\nPlease choose another person for Player 1 or 2.')
     elif (self.parent_page().battle_mode.get() == 'SRL' and list_total < 18 and
           page == 'Draft'):
-        top = tk.Toplevel(self.controller)
-        top.grab_set()
-        x = app.winfo_x()
-        y = app.winfo_y()
-        top.geometry('+%d+%d' % (x + 100, y + 200))
-        text = 'Not enough Pokemon required to Draft (18 needed).'
-        error = tk.Label(top, image=self.controller.error_img)
-        error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-        message = tk.Label(top, text=text)
-        message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-        back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+        popup_message(self.controller,
+                      'ERROR',
+                      'Not enough Pokemon required to Draft (18 needed).')
     elif (self.parent_page().battle_mode.get() == 'SRL' and
           (list1 < 12 or list2 < 12) and
           page == 'Random'):
-        top = tk.Toplevel(self.controller)
-        top.grab_set()
-        x = app.winfo_x()
-        y = app.winfo_y()
-        top.geometry('+%d+%d' % (x + 100, y + 200))
-        text = 'Not enough Pokemon required for Random (12 needed per player).'
-        error = tk.Label(top, image=self.controller.error_img)
-        error.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
-        message = tk.Label(top, text=text)
-        message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
-        back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
-        back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+        popup_message(self.controller,
+                      'ERROR',
+                      'Not enough Pokemon required for Random (12 needed per player).')
     else:
         self.parent_page().replace_images()
         self.controller.show_frame(page)
@@ -2654,6 +2556,32 @@ def init_player_information():
                 PLAYERS.append(Player(player_name, temp_pkmn_list))
                 playerNames.append(player_name)
 
+def popup_message(self, type, text, text2=''):
+    # initialize window and settings
+    top = tk.Toplevel(self)
+    top.grab_set()
+    x = app.winfo_x()
+    y = app.winfo_y()
+    top.geometry('+%d+%d' % (x + 100, y + 200))
+
+    # determine type of popup image
+    if type == 'ERROR':
+        icon = tk.Label(top, image=self.error_img)
+    elif type == 'INFO':
+        icon = tk.Label(top, image=self.info_img)
+    icon.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
+
+    # display message
+    message = tk.Label(top, text=text+text2)
+    message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
+
+    # close button
+    back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
+    back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+
+    # do not let user interact with underlying window
+    self.wait_window(top)
+
 
 if __name__ == '__main__':
     # global variables
@@ -2669,8 +2597,10 @@ if __name__ == '__main__':
     # before starting the GUI, gather any player info
     init_player_information()
     app = MainApp()
+
     # disable resizing of window
     app.resizable(False, False)
+
     # set the title of the window (and top-level windows)
     app.title('Rentals v%s' %VERSION)
     app.mainloop()
