@@ -34,18 +34,23 @@ class MainApp(tk.Tk):
     """
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+
+        # initialize everything
         self.init_vars()
         self.init_side_menu()
         self.init_main_menu()
+
         self.show_frame('Draft')
 
     """function : init_vars
     purpose     : Initializes MainApp's private and pseudo-global variables.
-    @param[in]  : self An instance of MainApp
+    @param[in]  : self An instance of MainApp [Tk].
     @return     : None.
     """
     def init_vars(self):
         # TODO FIXME: Move these image-related variables to a global space
+        #             and potentially refactor by making one large nested
+        #             dictionary.
         self.img_type = ['inactive', 'active', 'unknown', 'banned', 'picked']
         self.img_blank_base = {
             'active': RGBAImage2(os.path.join(COMMON, 'button_active_Blank.png')),
@@ -70,55 +75,53 @@ class MainApp(tk.Tk):
             'inactive': ImageTk.PhotoImage(self.img_blank_base['inactive']),
             'active': ImageTk.PhotoImage(self.img_blank_base['active'])
         }
-
-        self.team_text_img = {
-            'team 1': RGBAImage(os.path.join(COMMON, 'label_team1.png')),
-            'team 2': RGBAImage(os.path.join(COMMON, 'label_team2.png'))
+        self.img_team_text = {
+            'team 1': RGBAImage(os.path.join(COMMON, 'team1.png')),
+            'team 2': RGBAImage(os.path.join(COMMON, 'team2.png'))
         }
-
-        self.help_img = {
+        self.img_help = {
             'active': RGBAImage(os.path.join(COMMON, 'button_active_help.png')),
             'inactive': RGBAImage(os.path.join(COMMON, 'button_inactive_help.png'))
         }
-
-        self.back_button_img = {
+        self.img_back = {
             'active': RGBAImage(os.path.join(COMMON, 'button_active_back.png')),
             'inactive': RGBAImage(os.path.join(COMMON, 'button_inactive_back.png'))
         }
-
-        self.error_img = RGBAImage(os.path.join(COMMON, 'error.png'))
-        self.info_img = RGBAImage(os.path.join(COMMON, 'info.png'))
+        self.img_error = RGBAImage(os.path.join(COMMON, 'error.png'))
+        self.img_info = RGBAImage(os.path.join(COMMON, 'info.png'))
 
     """function : init_side_menu
     purpose     : Initializes the sidebar menu and its components for the GUI.
-    @param[in]  : self An instance of MainApp
+    @param[in]  : self An instance of MainApp [Tk].
     @return     : None.
     """
     def init_side_menu(self):
         self.frame_side_menu = tk.Frame(self)
         self.frame_side_menu.grid(row=0, column=0, sticky='nsew')
+
+        # Allot a 1x1 space for the Sidemenu
         self.frame_side_menu.grid_rowconfigure(0, weight=1)
         self.frame_side_menu.grid_columnconfigure(0, weight=1)
 
         self.sidebar = Sidebar(parent=self.frame_side_menu, controller=self)
         self.sidebar.grid(row=0, column=0, sticky='nsew')
 
-        self.sidebar.start_button.config(command=self.pages['Draft'].new_game)
-
     """function : init_main_menu
     purpose     : Initializes the main frame and its components for the GUI.
-    @param[in]  : self An instance of MainApp
+    @param[in]  : self An instance of MainApp [Tk].
     @return     : None.
     """
     def init_main_menu(self):
         self.main_frame = tk.Frame(self)
         self.main_frame.grid(row=0, column=1, sticky='nsew')
+
+        # Allot a 1x1 space for the contents of the main space
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
         self.pages = {}
 
-        # TODO FIXME: Cleaning this section up (make it less hacky)
+        # TODO FIXME: refactor the page creation process
         for page in (Draft, Random, DraftSettings, DraftGenerateSettings,
                       RandomSettings, RandomGenerateSettings, Store, Players,
                       DraftHelpPage, StoreHelpPage, PullHelpPage, NewPull):
@@ -127,21 +130,28 @@ class MainApp(tk.Tk):
             self.pages[page_name] = frame
             frame.grid(row=0, column=0, sticky='nsew')
 
+        # modify the start button
+        self.sidebar.buttons['Game'].config(command=self.pages['Draft'].new_game)
+
     """function : show_frame
     purpose     : Changes the current page based on the button clicked.  The
                   function will also check the state of each page and modify
                   the sidebar's buttons accordingly.
-    @param[in]  : self An instance of MainApp
-    @param[in]  : page_name The name of the page to switch to (string)
+    @param[in]  : self An instance of MainApp [Tk].
+    @param[in]  : page_name The name of the page to switch to [string].
     @return     : None.
     """
     def show_frame(self, page_name):
-        if (page_name == 'Store' and len(PLAYERS) == 1 and len(PLAYERS[0].pkmn_list) == 0):
+        if (page_name == 'Store' and
+            len(PLAYERS) == 1 and
+            len(PLAYERS[0].pkmn_list) == 0):
             popup_message(self,
                           'ERROR',
                           'You cannot visit the store right now.',
                           text2='\nPlease roll for your first team.')
-        elif (page_name == 'Players' and len(PLAYERS) == 1 and len(PLAYERS[0].pkmn_list) == 0):
+        elif (page_name == 'Players' and
+              len(PLAYERS) == 1 and
+              len(PLAYERS[0].pkmn_list) == 0):
             popup_message(self,
                           'INFO',
                           "Welcome Virgo! Let's get your starter Pokemon!")
@@ -149,6 +159,7 @@ class MainApp(tk.Tk):
             # disable all sidebar buttons
             for button in self.sidebar.buttons:
                 button.config(state='disabled')
+            # TODO FIXME: refactor this
             self.sidebar.settingsV1.config(state='disabled')
             self.sidebar.settingsV2.config(state='disabled')
             self.sidebar.start_button.config(state='disabled')
@@ -157,9 +168,12 @@ class MainApp(tk.Tk):
             frame = self.pages['NewPull']
             frame.tkraise()
         else:
-            if page_name == 'Draft' or page_name == 'Random':
+            if (page_name == 'Draft' or
+                page_name == 'Random'):
                 for button in self.sidebar.buttons:
                     button.config(state='normal')
+
+                # TODO FIXME: refactor this
                 self.sidebar.settingsV1.grid()
                 self.sidebar.settingsV1.config(state='normal',
                     command=lambda:self.show_frame('%sSettings' % page_name))
@@ -169,6 +183,8 @@ class MainApp(tk.Tk):
                 self.sidebar.start_button.config(state='normal',
                     command=self.pages[page_name].new_game)
                 self.sidebar.start_button.grid()
+
+                # check if game is actually finished
                 if self.pages[page_name].game_activated == False:
                     self.sidebar.finish_button.config(state='disabled')
                 else:
@@ -180,14 +196,19 @@ class MainApp(tk.Tk):
                     else:
                         self.sidebar.finish_button.config(state='normal')
                 self.sidebar.finish_button.grid()
-
             else:
-                if 'Settings' in page_name or 'Help' in page_name or 'NewPull' in page_name:
+                if ('Settings' in page_name or
+                    'Help' in page_name or
+                    'NewPull' in page_name):
+                    # disable page-related buttons
                     for button in self.sidebar.buttons:
                         button.config(state='disabled')
                 else:
+                    # enable page-related buttons
                     for button in self.sidebar.buttons:
                         button.config(state='normal')
+                # disable game-related buttons
+                # TODO FIXME: refactor this
                 self.sidebar.settingsV1.config(state='disabled')
                 self.sidebar.settingsV1.grid_remove()
                 self.sidebar.settingsV2.config(state='disabled')
@@ -197,125 +218,178 @@ class MainApp(tk.Tk):
                 self.sidebar.finish_button.config(state='disabled')
                 self.sidebar.finish_button.grid_remove()
             if page_name == 'Players':
+                # get the current player's pokemon information and display it
                 self.pages[page_name].display_pkmn(self.pages[page_name].current_player.get())
 
+            # change the page
             frame = self.pages[page_name]
             frame.tkraise()
 
 
+    def on_enter(self, button, type):
+        if type == 'help':
+            button.config(image=self.img_help['active'])
+        if type == 'back':
+            button.config(image=self.img_back['active'])
+        if type == 'blank':
+            button.config(image=self.img_blank['active'])
+
+    def on_leave(self, button, type):
+        if type == 'help':
+            button.config(image=self.img_help['inactive'])
+        if type == 'back':
+            button.config(image=self.img_back['inactive'])
+        if type == 'blank':
+            button.config(image=self.img_blank['inactive'])
+
+
 class Sidebar(tk.Frame):
+
+    """function : __init__
+    purpose     : Initializes the GUI's sidebar and its components.
+    @param[in]  : self An instance of the Sidebar object [tk.Frame].
+    @param[in]  : parent The object type to instantiate [tk.Frame].
+    @param[in]  : controller The owner of Sidebar [MainApp].
+    @return     : None.
+    """
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        self.controller = controller
+        self.controller = controller # MainApp
 
-        self.grid_rowconfigure(3, weight=1)
+        # Allot a 4x1 space for Sidebar's contents
+        for i in range(4):
+            self.grid_rowconfigure(i, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        self.label_text = ['Battle', 'League']
-        self.labels = []
-        self.img_labels = []
-        for i in range(len(self.label_text)):
-            self.img_labels.append(RGBAImage(
-                os.path.join(COMMON, 'label_%s.png' % self.label_text[i])))
-        self.button_text = [['Draft', 'Random'], ['Players', 'Store'],
-                            ['settingsv1', 'settingsv2', 'Game', 'Sets']]
-        self.img_button = [[[] for i in range(3)] for j in range(2)]
-        self.button_states = ['active', 'inactive']
-        for i in range(len(self.button_states)):
-            for j in range(len(self.button_text)):
-                for k in range(len(self.button_text[j])):
-                    self.img_button[i][j].append(RGBAImage(os.path.join(COMMON,
-                        'button_%s_%s.png' % (self.button_states[i], self.button_text[j][k]))))
-        self.buttons = []
+        # section | buttons
+        self.text = {
+            'battle': ['Draft', 'Random'],
+            'league': ['Players', 'Store'],
+            'settings': ['game_settings', 'pkmn_settings', 'Game', 'Sets']
+        }
 
-        self.section_frames = []
-        self.tmp_counter = 0
-        for i in range(len(self.label_text)):
-            self.section_frames.append(tk.Frame(self))
-            self.section_frames[i].grid(row=i, column=0, sticky='nsew')
-            self.labels.append(tk.Label(self.section_frames[i],
-                                        image=self.img_labels[i]))
-            self.labels[i].grid(row=0, column=0, sticky='nsew')
-            for j in range(len(self.button_text[i])):
-                self.buttons.append(tk.Button(self.section_frames[i],
-                    image=self.img_button[1][i][j], bd=0.1,
-                    command=lambda i=i, j=j: self.controller.show_frame(self.button_text[i][j])))
-                self.buttons[self.tmp_counter].grid(row=j+1, column=0,
-                                                    sticky='nsew')
-                self.buttons[self.tmp_counter].bind('<Enter>',
-                    lambda event, ctr=self.tmp_counter, i=i, j=j: self.on_enter(ctr, i, j))
-                self.buttons[self.tmp_counter].bind('<Leave>',
-                    lambda event, ctr=self.tmp_counter, i=i, j=j: self.on_leave(ctr, i, j))
-                self.tmp_counter += 1
+        self.frame_section = {}
+        self.label_section = {}
+        self.buttons = {}
+        self.img_buttons = {}
+        self.img_labels = {}
 
-        self.empty_space = RGBAImage(os.path.join(COMMON, '3_empty_buttons.png'))
-        self.empty_space_label = tk.Label(self, image=self.empty_space)
-        self.empty_space_label.grid(row=3, column=0, rowspan=3, sticky='nsew')
+        # initialize section label images
+        for section in self.text:
+            self.img_labels[section] = RGBAImage(os.path.join(COMMON, '%s.png' %section))
 
-        self.settingsV1 = tk.Button(self, image=self.img_button[1][2][0], bd=0.1,
-            command=lambda: self.controller.show_frame('DraftSettings'))
-        self.settingsV1.grid(row=4, column=0, sticky='nsew')
-        self.settingsV1.bind('<Enter>', lambda event: self.on_enter_settings(0))
-        self.settingsV1.bind('<Leave>', lambda event: self.on_leave_settings(0))
-        self.settingsV2 = tk.Button(self, image=self.img_button[1][2][1], bd=0.1,
-            command=lambda: self.controller.show_frame('DraftGenerateSettings'))
-        self.settingsV2.grid(row=5, column=0, sticky='nsew')
-        self.settingsV2.bind('<Enter>', lambda event: self.on_enter_settings(1))
-        self.settingsV2.bind('<Leave>', lambda event: self.on_leave_settings(1))
-        self.start_button = tk.Button(self, image=self.img_button[1][2][2], bd=0.1,
-                                      command=lambda: None)
-        self.start_button.grid(row=6, column=0, sticky='nsew')
-        self.start_button.bind('<Enter>', lambda event: self.on_enter_settings(2))
-        self.start_button.bind('<Leave>', lambda event: self.on_leave_settings(2))
-        self.finish_button = tk.Button(self, image=self.img_button[1][2][3], bd=0.1,
-                                       state='disabled', command=lambda: None)
-        self.finish_button.grid(row=7, column=0, sticky='nsew')
-        self.finish_button.bind('<Enter>', lambda event: self.on_enter_settings(3))
-        self.finish_button.bind('<Leave>', lambda event: self.on_leave_settings(3))
+        # initialize button images
+        for section in self.text:
+            for item in self.text[section]:
+                self.img_buttons[item] = {}
+        for key in self.img_buttons:
+            for state in ['active', 'inactive']:
+                self.img_buttons[key][state] = RGBAImage(os.path.join(COMMON, 'button_%s_%s.png' % (state, key)))
 
-    def on_enter(self, ctr, i, j):
-        if self.buttons[ctr].cget('state') != 'disabled':
-            self.buttons[ctr].config(image=self.img_button[0][i][j])
+        self.empty_space = RGBAImage(os.path.join(COMMON, '2_empty_buttons.png'))
 
-    def on_leave(self, ctr, i, j):
-        if self.buttons[ctr].cget('state') != 'disabled':
-            self.buttons[ctr].config(image=self.img_button[1][i][j])
+        tmp_ctr = 0 # keep track of which row to place the current section
+        # construct each section
+        for section in self.text:
+            # special case: 3rd section should be empty for now
+            if tmp_ctr == 2:
+                self.empty_space_label = tk.Label(self, image=self.empty_space)
+                self.empty_space_label.grid(row=tmp_ctr, column=0, sticky='nsew')
+                tmp_ctr += 1 # now onto 4th section
 
-    def on_enter_settings(self, button_num):
-        if button_num == 0:
-            if self.settingsV1.cget('state') != 'disabled':
-                self.settingsV1.config(image=self.img_button[0][2][0])
-        elif button_num == 1:
-            if self.settingsV2.cget('state') != 'disabled':
-                self.settingsV2.config(image=self.img_button[0][2][1])
-        elif button_num == 2:
-            if self.start_button.cget('state') != 'disabled':
-                self.start_button.config(image=self.img_button[0][2][2])
-        elif button_num == 3:
-            if self.finish_button.cget('state') != 'disabled':
-                self.finish_button.config(image=self.img_button[0][2][3])
+            # initialize section frames
+            self.frame_section[section] = tk.Frame(self)
+            self.frame_section[section].grid(row=tmp_ctr, column=0, sticky='nsew')
 
-    def on_leave_settings(self, button_num):
-        if button_num == 0:
-            self.settingsV1.config(image=self.img_button[1][2][0])
-        elif button_num == 1:
-            self.settingsV2.config(image=self.img_button[1][2][1])
-        elif button_num == 2:
-            self.start_button.config(image=self.img_button[1][2][2])
-        elif button_num == 3:
-            self.finish_button.config(image=self.img_button[1][2][3])
+            # initialize section labels
+            self.label_section[section] = tk.Label(self.frame_section[section], image=self.img_labels[section])
+            self.label_section[section].grid(row=0, column=0, sticky='nsew')
+
+            # initialize the current section's buttons
+            for button in self.text[section]: # button = Draft, etc.
+                self.buttons[button] = tk.Button(self.frame_section[section], image=self.img_buttons[button]['inactive'], bd=0.1, command=lambda: None)
+                row = self.text[section].index(button) + 1 # skip over the first row (reserved for section title)
+                self.buttons[button].grid(row=row, column=0, sticky='nsew')
+
+                # bind hover actions
+                self.buttons[button].bind('<Enter>', lambda event, button=button: self.on_enter(button))
+                self.buttons[button].bind('<Leave>', lambda event, button=button: self.on_leave(button))
+
+            tmp_ctr += 1 # move onto next section
+
+        # assign each button's command
+        for section in self.text:
+            if section == 'settings':
+                self.buttons['game_settings'].config(command=lambda: self.controller.show_frame('DraftSettings'))
+                self.buttons['pkmn_settings'].config(command=lambda: self.controller.show_frame('DraftGenerateSettings'))
+                self.buttons['Game'].config(command=lambda: None)
+                self.buttons['Sets'].config(command=lambda: None)
+            else:
+                for button in self.text[section]:
+                    self.buttons[button].config(command=lambda button=button: self.controller.show_frame(button))
+
+    """function : on_enter
+    purpose     : Switches from inactive to active version of the button image.
+    @param[in]  : self An instance of the Sidebar object [tk.Frame].
+    @param[in]  : button The name of the button [string].
+    @return     : None.
+    """
+    def on_enter(self, button):
+        if self.buttons[button].cget('state') != 'disabled':
+            self.buttons[button].config(image=self.img_buttons[button]['active'])
+
+    """function : on_leave
+    purpose     : Switches from active to inactive version of the button image.
+    @param[in]  : self An instance of the Sidebar object [tk.Frame].
+    @param[in]  : button The name of the button [string].
+    @return     : None.
+    """
+    def on_leave(self, button):
+        if self.buttons[button].cget('state') != 'disabled':
+            self.buttons[button].config(image=self.img_buttons[button]['inactive'])
 
 
 class Draft(tk.Frame):
+
+    """function : __init__
+    purpose     : Initializes the Draft page and its components.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @param[in]  : parent The object type to instantiate [tk.Frame].
+    @param[in]  : controller The owner of Draft [MainApp].
+    @return     : None.
+    """
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        self.controller = controller
+        self.controller = controller # MainApp
 
-        ##### Private Variables #####
-        self.alpha = 0
+
+        for i in range(11):
+            self.grid_rowconfigure(i, weight=1)
+        for i in range(6):
+            self.grid_columnconfigure(i, weight=1)
+
+
+        self.init_vars()
+        self.init_pool()
+        self.separators[0].grid(row=4, column=0, columnspan=6, sticky='nsew')
+        self.init_bans()
+        self.separators[1].grid(row=6, column=0, columnspan=6, sticky='nsew')
+        self.init_teams()
+
+    """function : init_vars
+    purpose     : Initializes the Draft page's variables.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @return     : None.
+    """
+    def init_vars(self):
+        self.alpha = 0 # for image transitions [unused]
         self.turn = 0
-        self.game_activated = False
-        self.pkmn_not_picked = [True for i in range(18)]
+        self.game_activated = False # is the game active?
+        self.pkmn_not_picked = [True for i in range(18)] # "this" pokemon in the pool available
+        self.img_pkmn = [[] for i in range(len(self.controller.img_type))]
+        self.separators = [ttk.Separator(self, orient='horizontal') for i in range(2)]
+
+        # game settings variables
         self.battle_mode = tk.StringVar()
         self.battle_mode.set('Singles')
         self.draft_mode = tk.StringVar()
@@ -335,14 +409,8 @@ class Draft(tk.Frame):
                 self.current_player[i].set('')
             else:
                 self.current_player[i].set(playerNames[i])
-        self.img_pkmn = [[] for i in range(len(self.controller.img_type))]
-        self.separators = [ttk.Separator(self, orient='horizontal') for i in range(2)]
 
-        for i in range(11):
-            self.grid_rowconfigure(i, weight=1)
-        for i in range(6):
-            self.grid_columnconfigure(i, weight=1)
-
+        # pokemon settings variables
         self.pkmn_excl_tiers_s = [tk.StringVar() for i in range(len(TIERS_SINGLES))]
         self.pkmn_excl_tiers_d = [tk.StringVar() for i in range(len(TIERS_DOUBLES))]
         self.pkmn_excl_gens = [tk.StringVar() for i in range(len(GENERATIONS))]
@@ -351,83 +419,87 @@ class Draft(tk.Frame):
         self.pkmn_excl_gimmicks = [tk.StringVar() for i in range(len(GIMMICKS))]
         self.pkmn_excl_usage = []
 
-        self.checks = [[] for i in range(18)]
+        self.checks = [[] for i in range(18)] # checks [unusued]
 
-        ##### Pool Pokemon #####
-        self.pool_img = RGBAImage(os.path.join(COMMON, 'label_pool.png'))
-        self.pool_text = tk.Label(self, image=self.pool_img)
-        self.pool_text.grid(row=0, column=0, columnspan=5, sticky='nsw')
-        self.help_button = tk.Button(self, image=self.controller.help_img[0],
+    """function : init_pool
+    purpose     : Initializes the Draft page's Pokemon pool section.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @return     : None.
+    """
+    def init_pool(self):
+        self.img_pool = RGBAImage(os.path.join(COMMON, 'label_pool.png'))
+        self.label_pool = tk.Label(self, image=self.img_pool)
+        self.label_pool.grid(row=0, column=0, columnspan=5, sticky='nsw')
+
+        self.help_button = tk.Button(self, image=self.controller.img_help['inactive'],
             bd=0.1, command=lambda: self.controller.show_frame('DraftHelpPage'))
         self.help_button.grid(row=0, column=5)
-        self.help_button.bind('<Enter>', lambda event: help_on_enter(self))
-        self.help_button.bind('<Leave>', lambda event: help_on_leave(self))
+        self.help_button.bind('<Enter>', lambda event: self.controller.on_enter(self.help_button, 'help'))
+        self.help_button.bind('<Leave>', lambda event: self.controller.on_leave(self.help_button, 'help'))
 
         self.pkmn_pool_list = []
         self.pool_buttons = []
         for i in range(3):
             for j in range(6):
                 x = (i*6) + j
-                self.pool_buttons.append(tk.Button(self,
-                    image=self.controller.img_blank[0],
-                    bd=0.1,
-                    command=lambda: None))
+                self.pool_buttons.append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1, command=lambda: None))
                 self.pool_buttons[x].grid(row=i+1, column=j, pady=5)
-                self.pool_buttons[x].bind('<Enter>', lambda event, x=x: self.pool_on_enter(x))
-                self.pool_buttons[x].bind('<Leave>', lambda event, x=x: self.pool_on_leave(x))
+                self.pool_buttons[x].bind('<Enter>', lambda event, x=x: self.controller.on_enter(self.pool_buttons[x], 'blank'))
+                self.pool_buttons[x].bind('<Leave>', lambda event, x=x: self.controller.on_leave(self.pool_buttons[x], 'blank'))
 
-        self.separators[0].grid(row=4, column=0, columnspan=6, sticky='nsew')
-
-        ##### Ban Boxes #####
+    """function : init_bans
+    purpose     : Initializes the Draft page's banned Pokemon section.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @return     : None.
+    """
+    def init_bans(self):
+        # TODO FIXME: should this go in vars or stay here?
         self.pkmn_ban_list = [[None, None], [None, None]]
-        self.ban_img = RGBAImage(os.path.join(COMMON, 'label_bans.png'))
-        self.ban_text = tk.Button(self, image=self.ban_img,
-                                  bd=0.1, state='disabled')
+
+        self.img_ban = RGBAImage(os.path.join(COMMON, 'bans.png'))
+        self.ban_text = tk.Button(self, image=self.img_ban, bd=0.1, state='disabled')
         self.ban_text.grid(row=5, column=2, columnspan=2, sticky='nsew')
+
         self.ban_buttons = [[], []]
         for i in range(2):
             for j in range(2):
-                self.ban_buttons[i].append(tk.Button(self,
-                    image=self.controller.img_blank[0],
-                    bd=0.1,
-                    state='disabled',
-                    command=lambda: None))
+                self.ban_buttons[i].append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1, state='disabled', command=lambda: None))
+                # order of buttons is 1 2 | 2 1
                 if i == 0:
                     self.ban_buttons[i][j].grid(row=5, column=i*4+j, pady=5)
                 else:
                     self.ban_buttons[i][j].grid(row=5, column=i*5-j, pady=5)
 
-        self.separators[1].grid(row=6, column=0, columnspan=6, sticky='nsew')
-
-        ##### Team Boxes #####
-        self.team_text = []
+    def init_teams(self):
+        # TODO FIXME: should this go in vars or stay here?
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
+
+        self.team_text = []
         self.team_buttons = [[], []]
         for team in range(2):
-            self.team_text.append(tk.Label(self, image=self.controller.team_text_img[team]))
-            self.team_text[team].grid(row=7, column=team*4, columnspan=2,
-                                      sticky='nsew')
+            self.team_text.append(tk.Label(self, image=self.controller.img_team_text['team %d' % int(team+1)]))
+            self.team_text[team].grid(row=7, column=team*4, columnspan=2, sticky='nsew')
             for row in range(3):
                 for column in range(2):
                     x = (row * 2) + column
-                    self.team_buttons[team].append(tk.Button(self,
-                        image=self.controller.img_blank[0],
-                        bd=0.1,
-                        command=lambda: None))
-                    self.team_buttons[team][x].grid(row=row+8,
-                                                    column=(team*4)+column,
-                                                    pady=5)
+                    self.team_buttons[team].append(tk.Button(self, image=self.controller.img_blank[0], bd=0.1, command=lambda: None))
+                    self.team_buttons[team][x].grid(row=row+8, column=(team*4)+column, pady=5)
                     self.team_buttons[team][x].bind('<Enter>', lambda event, team=team, x=x: self.team_on_enter(team, x))
                     self.team_buttons[team][x].bind('<Leave>', lambda event, team=team, x=x: self.team_on_leave(team, x))
-        self.indicator_img = [[], []]
+        self.img_indicator = [[], []]
         for i in range(2):
-            self.indicator_img[0].append(RGBAImage(os.path.join(COMMON, 'p%dp.png' %int(i+1))))
-            self.indicator_img[1].append(RGBAImage(os.path.join(COMMON, 'p%db.png' %int(i+1))))
-        self.indicator = tk.Label(self, image=self.indicator_img[0][0])
+            self.img_indicator[0].append(RGBAImage(os.path.join(COMMON, 'p%dp.png' %int(i+1))))
+            self.img_indicator[1].append(RGBAImage(os.path.join(COMMON, 'p%db.png' %int(i+1))))
+        self.indicator = tk.Label(self, image=self.img_indicator[0][0])
         self.indicator.grid(row=8, column=2, rowspan=3, columnspan=2, sticky='nsew')
         self.indicator.grid_remove()
         self.finished = RGBAImage(os.path.join(COMMON, 'finished.png'))
 
+    """function : new_game
+    purpose     : Starts a brand new Draft game using the current settings.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @return     : None.
+    """
     def new_game(self):
         # reset private variables
         self.game_activated = True
@@ -514,11 +586,18 @@ class Draft(tk.Frame):
         self.controller.sidebar.finish_button.config(state='disabled',
                                                      command=lambda: None)
         if self.ban_number.get() > 0:
-            self.indicator.config(image=self.indicator_img[1][1])
+            self.indicator.config(image=self.img_indicator[1][1])
         else:
-            self.indicator.config(image=self.indicator_img[0][0])
+            self.indicator.config(image=self.img_indicator[0][0])
         self.indicator.grid()
 
+    """function : get_pkmn_imgs
+    purpose     : Determines the correct filename to load and adds the Pokemon
+                  image to add to the list.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @param[in]  : pkmn_name The raw name of the Pokemon [string].
+    @return     : None.
+    """
     def get_pkmn_imgs(self, pkmn_name):
         pkmn_name = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
         ext = ['_inactive.png', '_active.png', '_unknown.png', '_banned.png', '_picked.png']
@@ -530,6 +609,12 @@ class Draft(tk.Frame):
                 self.controller.img_border[self.draft_mode.get()])
             self.img_pkmn[i].append(ImageTk.PhotoImage(self.img_pkmn_base))
 
+    """function : get_checks
+    purpose     : Creates a list of checks and counters to every Pokemon that
+                  was generated this game.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @return     : None.
+    """
     def get_checks(self):
         self.checks = [[] for i in range(18)]
         for i in range(18):
@@ -541,6 +626,12 @@ class Draft(tk.Frame):
                         self.checks[i].append(self.pkmn_pool_list[j].name)
             shuffle(self.checks[i])
 
+    """function : add_to_team
+    purpose     : Appends the Pokemon object to the correct team.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @param[in]  : pool_number The index of the Pokemon object in the pool [int].
+    @return     : None.
+    """
     def add_to_team(self, pool_number):
         if self.game_activated:
             if self.pkmn_not_picked[pool_number]:
@@ -588,15 +679,15 @@ class Draft(tk.Frame):
 
                         if self.ban_number.get() > 0 and not self.ban_phase_finished:
                             if not self.pkmn_ban_list[0][0] and self.pkmn_ban_list[1][0]:
-                                self.indicator.config(image=self.indicator_img[1][0])
+                                self.indicator.config(image=self.img_indicator[1][0])
                             elif self.pkmn_ban_list[0][0] and self.turn == 0:
-                                self.indicator.config(image=self.indicator_img[0][0])
+                                self.indicator.config(image=self.img_indicator[0][0])
                             elif not self.pkmn_ban_list[1][1] and not self.ban_phase_finished and self.ban_number.get() == 2:
-                                self.indicator.config(image=self.indicator_img[1][1])
+                                self.indicator.config(image=self.img_indicator[1][1])
                             elif not self.pkmn_ban_list[0][1] and self.pkmn_ban_list[1][1]:
-                                self.indicator.config(image=self.indicator_img[1][0])
+                                self.indicator.config(image=self.img_indicator[1][0])
                             else:
-                                self.indicator.config(image=self.indicator_img[0][0])
+                                self.indicator.config(image=self.img_indicator[0][0])
                         else:
                             if self.turn >= 12:
                                 self.indicator.config(image=self.finished)
@@ -606,9 +697,18 @@ class Draft(tk.Frame):
                                     turn = fp_team_order[self.turn]
                                 else:
                                     turn = self.turn%2
-                                self.indicator.config(image=self.indicator_img[0][turn])
+                                self.indicator.config(image=self.img_indicator[0][turn])
                         self.indicator.grid()
 
+    """function : remove_from_team
+    purpose     : Removes the Pokemon object from the selected team and slot
+                  and makes it available in the pool again.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @param[in]  : pool_number The index of the Pokemon object in the pool [int].
+    @param[in]  : team_number The index of the selected team [int].
+    @param[in]  : slot_number The index of the Pokemon in the team [int].
+    @return     : None.
+    """
     def remove_from_team(self, pool_number, team_number, slot_number):
         if self.game_activated:
             self.pkmn_not_picked[pool_number] = True
@@ -632,9 +732,15 @@ class Draft(tk.Frame):
                 turn = self.turn%2
             else:
                 turn = self.turn%2
-            self.indicator.config(image=self.indicator_img[0][turn])
+            self.indicator.config(image=self.img_indicator[0][turn])
             self.indicator.grid()
 
+    """function : ban_pkmn
+    purpose     : Appends the Pokemon object to the current player's ban list.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @param[in]  : pool_number The index of the Pokemon object in the pool [int].
+    @return     : None.
+    """
     def ban_pkmn(self, pool_number):
         # add pkmn to proper banlist
         temp_done = False
@@ -663,6 +769,12 @@ class Draft(tk.Frame):
             (self.turn == 6 and self.ban_phase_2_finished and self.draft_mode.get() != 'First Pick'))):
             self.ban_phase_finished = True
 
+
+    """function : update_turns
+    purpose     : Determines the next turn based on the game mode.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @return     : None.
+    """
     def update_turns(self):
         next_turn = 0
         if self.draft_mode.get() == 'First Pick':
@@ -688,6 +800,7 @@ class Draft(tk.Frame):
         if self.turn >= 12:
             self.controller.sidebar.finish_button.config(state='normal',
                 command=lambda: get_sets(self))
+
 
     def pool_on_enter(self, x):
         if self.game_activated:
@@ -936,17 +1049,17 @@ class Random(tk.Frame):
         self.pkmn_excl_usage = []
 
         ##### Team Boxes #####
-        self.random_label_img = RGBAImage(os.path.join(COMMON, 'label_random.png'))
-        self.random_label = tk.Label(self.frames[0], image=self.random_label_img)
+        self.img_random = RGBAImage(os.path.join(COMMON, 'label_random.png'))
+        self.random_label = tk.Label(self.frames[0], image=self.img_random)
         self.random_label.grid(row=0, column=0, pady=2, sticky='nsw')
-        self.team_text_img = []
+        self.img_team_text = []
         for i in range(2):
-            self.team_text_img.append(RGBAImage(os.path.join(COMMON, 'label_team%d.png' %int(i+1))))
+            self.img_team_text.append(RGBAImage(os.path.join(COMMON, 'team%d.png' %int(i+1))))
         self.team_text = []
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
         self.team_buttons = [[], []]
         for team in range(2):
-            self.team_text.append(tk.Label(self.frames[1], image=self.team_text_img[team]))
+            self.team_text.append(tk.Label(self.frames[1], image=self.img_team_text[team]))
             self.team_text[team].grid(row=1, column=(team*3)+1, columnspan=2,
                                       sticky='nsew')
             for row in range(3):
@@ -1223,14 +1336,14 @@ class Store(tk.Frame):
 
         self.img_banners = []
         self.img_banner_buttons = []
-        self.help_img = []
+        self.img_help = []
         for i in range(self.banner_num, self.banner_num+2):
             self.img_banners.append(
                 RGBAImage(os.path.join(COMMON, 'banner%s_fit.png' % i)))
             self.img_banner_buttons.append(
                 RGBAImage(os.path.join(COMMON, 'banner%s_button.png' % i)))
         for i in ['inactive', 'active']:
-            self.help_img.append(
+            self.img_help.append(
                 RGBAImage(os.path.join(COMMON, 'button_%s_help.png' % i)))
         self.banner_image = tk.Label(self, image=self.img_banners[0])
         self.banner_image.grid(row=0, column=0, columnspan=4, sticky='nsew')
@@ -1239,7 +1352,7 @@ class Store(tk.Frame):
         for i in range(4):
             self.page_frame.grid_columnconfigure(i, weight=1)
         self.page_buttons = []
-        self.help_button = tk.Button(self.page_frame, image=self.help_img[0],
+        self.help_button = tk.Button(self.page_frame, image=self.img_help[0],
                                      bd=0.1,
                                      command=lambda i=i: self.view_help(i))
         self.help_button.grid(row=0, column=2, sticky='nsew')
@@ -1284,11 +1397,11 @@ class Store(tk.Frame):
                                          *playerNames, command=self.switch_player)
         self.player_option.grid(row=8, column=1, padx=5, pady=5, sticky='ew')
 
-        self.pull_img = []
+        self.img_pull = []
         for i in ['inactive', 'active']:
-            self.pull_img.append(RGBAImage(os.path.join(COMMON,
+            self.img_pull.append(RGBAImage(os.path.join(COMMON,
                                                         'button_%s_Pull.png' % i)))
-        self.pull_button = tk.Button(self, image=self.pull_img[0], bd=0.1,
+        self.pull_button = tk.Button(self, image=self.img_pull[0], bd=0.1,
                                      command=self.pull)
         self.pull_button.grid(row=8, column=2)
         self.pull_button.bind('<Enter>', lambda event: self.on_enter())
@@ -1460,11 +1573,11 @@ class Store(tk.Frame):
 
     def on_enter(self):
         if self.pull_button.cget('state') != 'disabled':
-            self.pull_button.config(image=self.pull_img[1])
+            self.pull_button.config(image=self.img_pull[1])
 
     def on_leave(self):
         if self.pull_button.cget('state') != 'disabled':
-            self.pull_button.config(image=self.pull_img[0])
+            self.pull_button.config(image=self.img_pull[0])
 
     def update_player_csv(self, slot):
         file = os.path.join(PLAYER_DIR, self.current_player.get() + '.csv')
@@ -1498,8 +1611,8 @@ class Players(tk.Frame):
         self.current_player.set(PLAYERS[0].name)
 
         # add new player
-        self.new_player_img = RGBAImage(os.path.join(COMMON, 'label_new_player.png'))
-        self.new_player_label = tk.Label(self, image=self.new_player_img)
+        self.img_new_player = RGBAImage(os.path.join(COMMON, 'label_new_player.png'))
+        self.new_player_label = tk.Label(self, image=self.img_new_player)
         self.new_player_label.grid(row=0, column=0, columnspan=2, pady=2, sticky='nsw')
         # new player text | entry widget | add button?
         self.name_img = RGBAImage(os.path.join(COMMON, 'label_name.png'))
@@ -1672,12 +1785,12 @@ class DraftHelpPage(tk.Frame):
         self.scrollbar.pack(side='right', fill='y')
         self.container.pack(side='left', expand=True, fill='both')
 
-        self.help_img = RGBAImage(os.path.join(COMMON, 'help_play.png'))
-        self.help = tk.Label(self.container, image=self.help_img)
+        self.img_help = RGBAImage(os.path.join(COMMON, 'help_play.png'))
+        self.help = tk.Label(self.container, image=self.img_help)
         self.container.create_window(255, 1480,
                                      window=self.help)
 
-        self.back_button = tk.Button(self, image=self.controller.back_button_img[0], bd=0.1,
+        self.back_button = tk.Button(self, image=self.controller.img_back[0], bd=0.1,
                                      command=lambda: self.controller.show_frame('Draft'))
         self.back_button.grid(row=1, column=0, padx=5, pady=5)
         self.back_button.bind('<Enter>', lambda event: back_on_enter(self))
@@ -1712,12 +1825,12 @@ class StoreHelpPage(tk.Frame):
         self.scrollbar.pack(side='right', fill='y')
         self.container.pack(side='left', expand=True, fill='both')
 
-        self.help_img = RGBAImage(os.path.join(COMMON, 'help_store.png'))
-        self.help = tk.Label(self.container, image=self.help_img)
+        self.img_help = RGBAImage(os.path.join(COMMON, 'help_store.png'))
+        self.help = tk.Label(self.container, image=self.img_help)
         self.container.create_window(255, 590,
                                      window=self.help)
 
-        self.back_button = tk.Button(self, image=self.controller.back_button_img[0], bd=0.1,
+        self.back_button = tk.Button(self, image=self.controller.img_back[0], bd=0.1,
                                      command=lambda: self.controller.show_frame('Store'))
         self.back_button.grid(row=1, column=0, padx=5, pady=5)
         self.back_button.bind('<Enter>', lambda event: back_on_enter(self))
@@ -1743,11 +1856,11 @@ class PullHelpPage(tk.Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        self.help_img = RGBAImage(os.path.join(COMMON, 'help_starter.png'))
-        self.help_label = tk.Label(self, image=self.help_img)
+        self.img_help = RGBAImage(os.path.join(COMMON, 'help_starter.png'))
+        self.help_label = tk.Label(self, image=self.img_help)
         self.help_label.grid(row=0, column=0, sticky='nsew')
 
-        self.back_button = tk.Button(self, image=self.controller.back_button_img[0], bd=0.1,
+        self.back_button = tk.Button(self, image=self.controller.img_back[0], bd=0.1,
                                      command=lambda: self.controller.show_frame('NewPull'))
         self.back_button.grid(row=1, column=0, padx=5, pady=5)
         self.back_button.bind('<Enter>', lambda event: back_on_enter(self))
@@ -1771,10 +1884,10 @@ class NewPull(tk.Frame):
         for i in range(4):
             self.frames.append(tk.Frame(self))
             self.frames[i].grid(row=i, column=0, sticky='nsew')
-        self.newpull_img = RGBAImage(os.path.join(COMMON, 'label_newpull.png'))
-        self.newpull_label = tk.Label(self.frames[0], image=self.newpull_img)
+        self.newimg_pull = RGBAImage(os.path.join(COMMON, 'label_newpull.png'))
+        self.newpull_label = tk.Label(self.frames[0], image=self.newimg_pull)
         self.newpull_label.grid(row=0, column=0, sticky='nsw')
-        self.help_button = tk.Button(self.frames[0], image=self.controller.help_img[0], bd=0.1,
+        self.help_button = tk.Button(self.frames[0], image=self.controller.img_help[0], bd=0.1,
                                      command=lambda: self.controller.show_frame('PullHelpPage'))
         self.help_button.grid(row=0, column=1)
         self.frames[0].grid_columnconfigure(0, weight=1)
@@ -1789,11 +1902,11 @@ class NewPull(tk.Frame):
                 self.pkmn_buttons[x].bind('<Enter>', lambda event, x=x: self.team_on_enter(x))
                 self.pkmn_buttons[x].bind('<Leave>', lambda event, x=x: self.team_on_leave(x))
 
-        self.back_button_img = []
+        self.img_back = []
         self.button_states = ['inactive', 'active']
         for i in range(2):
-            self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_' + self.button_states[i] + '_finishpull.png')))
-        self.back_button = tk.Button(self.frames[1], image=self.back_button_img[0],
+            self.img_back.append(RGBAImage(os.path.join(COMMON, 'button_' + self.button_states[i] + '_finishpull.png')))
+        self.back_button = tk.Button(self.frames[1], image=self.img_back[0],
                                      bd=0.1, state='disabled', command=self.back)
         self.back_button.grid(row=0, column=5, rowspan=2, sticky="nsew")
         self.box_img = RGBAImage(os.path.join(COMMON, 'label_box.png'))
@@ -1869,7 +1982,7 @@ class NewPull(tk.Frame):
         for i in range(6):
             self.pkmn_buttons[i].config(image=self.img_pkmn[0][i],
                 command=lambda i=i: self.reroll(i))
-        self.back_button.config(image=self.back_button_img[1], state='normal')
+        self.back_button.config(image=self.img_back[1], state='normal')
 
     def reroll(self, slot):
         self.pkmn_list[slot] = None
@@ -1900,7 +2013,7 @@ class NewPull(tk.Frame):
         for i in range(2):
             for j in range(2):
                 self.box_buttons[i][j].config(state='normal')
-        self.back_button.config(image=self.back_button_img[0], state='disabled')
+        self.back_button.config(image=self.img_back[0], state='disabled')
 
     def back(self):
         PLAYERS[-1].pkmn_list = self.pkmn_list
@@ -2333,10 +2446,10 @@ def setup_settings(self, page):
     self.usage_text.grid(row=20, column=0, sticky='w')
 
     self.separators[6].grid(row=21, column=0, columnspan=6, sticky='nsew')
-    self.back_button_img = []
+    self.img_back = []
     for i in ['inactive', 'active']:
-        self.back_button_img.append(RGBAImage(os.path.join(COMMON, 'button_%s_back.png' %i)))
-    self.back_button = tk.Button(self, image=self.back_button_img[0], bd=0.1,
+        self.img_back.append(RGBAImage(os.path.join(COMMON, 'button_%s_back.png' %i)))
+    self.back_button = tk.Button(self, image=self.img_back[0], bd=0.1,
                                  command=lambda: validate(self, page))
     self.back_button.grid(row=22, column=1, columnspan=4, padx=5, pady=5,
                           sticky='nsew')
@@ -2463,7 +2576,7 @@ def setup_game_settings(self, page):
         self.player_option[i].grid(row=6, column=i*2, columnspan=2, padx=5, pady=5, sticky='ew')
         self.player_option[i].grid_remove()
 
-    self.back_button = tk.Button(self, image=self.controller.back_button_img[0], bd=0.1,
+    self.back_button = tk.Button(self, image=self.controller.img_back[0], bd=0.1,
                                  command=lambda page=page: exit(self, page))
     self.back_button.grid(row=9, column=1, columnspan=2,
                           padx=5, pady=5, sticky='nsew')
@@ -2508,21 +2621,6 @@ def exit(self, page):
         self.controller.show_frame(page)
 
 
-def help_on_enter(self):
-    self.help_button.config(image=self.controller.help_img[1])
-
-
-def help_on_leave(self):
-    self.help_button.config(image=self.controller.help_img[0])
-
-
-def back_on_enter(self):
-    self.back_button.config(image=self.controller.back_button_img[1])
-
-
-def back_on_leave(self):
-    self.back_button.config(image=self.controller.back_button_img[0])
-
 
 def RGBAImage(path):
     return ImageTk.PhotoImage(Image.open(path).convert('RGBA'))
@@ -2566,9 +2664,9 @@ def popup_message(self, type, text, text2=''):
 
     # determine type of popup image
     if type == 'ERROR':
-        icon = tk.Label(top, image=self.error_img)
+        icon = tk.Label(top, image=self.img_error)
     elif type == 'INFO':
-        icon = tk.Label(top, image=self.info_img)
+        icon = tk.Label(top, image=self.img_info)
     icon.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
 
     # display message
