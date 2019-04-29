@@ -204,6 +204,14 @@ class MainApp(tk.Tk):
         if type == 'blank':
             button.config(image=self.img_blank['inactive'])
 
+    def HelpButton(self, source, page, row, col, location=''):
+        if not location:
+            location = source
+        source.help_button = tk.Button(location, image=self.img_help['inactive'],
+            bd=0.1, command=lambda: self.show_frame('%sHelpPage' % page))
+        source.help_button.grid(row=row, column=col)
+        source.help_button.bind('<Enter>', lambda event: self.on_enter(source.help_button, 'help'))
+        source.help_button.bind('<Leave>', lambda event: self.on_leave(source.help_button, 'help'))
 
 class Sidebar(tk.Frame):
 
@@ -324,12 +332,10 @@ class Draft(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller # MainApp
 
-
         for i in range(11):
             self.grid_rowconfigure(i, weight=1)
         for i in range(6):
             self.grid_columnconfigure(i, weight=1)
-
 
         self.init_vars()
         self.init_pool()
@@ -393,11 +399,7 @@ class Draft(tk.Frame):
         self.label_pool = tk.Label(self, image=self.img_pool)
         self.label_pool.grid(row=0, column=0, columnspan=5, sticky='nsw')
 
-        self.help_button = tk.Button(self, image=self.controller.img_help['inactive'],
-            bd=0.1, command=lambda: self.controller.show_frame('DraftHelpPage'))
-        self.help_button.grid(row=0, column=5)
-        self.help_button.bind('<Enter>', lambda event: self.controller.on_enter(self.help_button, 'help'))
-        self.help_button.bind('<Leave>', lambda event: self.controller.on_leave(self.help_button, 'help'))
+        self.controller.HelpButton(self, 'Draft', 0, 5, location=self)
 
         self.pkmn_pool_list = []
         self.pool_buttons = []
@@ -576,9 +578,10 @@ class Draft(tk.Frame):
     @return     : None.
     """
     def add_to_team(self, pool_number):
-        if self.game_activated:
-            if self.pkmn_not_picked[pool_number]:
-                if self.turn < 12:
+        if self.game_activated: # there must be an active game
+            if self.pkmn_not_picked[pool_number]: # the pokemon being picked must be available
+                if self.turn < 12: # the drafting phase is not over yet
+                    # determine the team to add the pokemon to and the slot number on the team
                     if self.draft_mode.get() == 'Standard':
                         team_number = int(self.turn % 2)
                         slot_number = int(self.turn/2)
@@ -598,6 +601,8 @@ class Draft(tk.Frame):
                         elif 10 <= self.turn <= 11:
                             team_number = 1
                             slot_number = self.turn - 6
+
+                    # check if the pokemon being added is breaking species clause
                     if self.pkmn_pool_list[pool_number].dex in [i.dex for i in self.pkmn_team_list[team_number] if i is not None]:
                         popup_message(self.controller,
                                       'ERROR',
@@ -605,18 +610,14 @@ class Draft(tk.Frame):
                                       text2="\ndue to the Species Clause.")
                     else:
                         self.pkmn_not_picked[pool_number] = False
+                        # everything is valid, start adding to team or banning
                         if self.ban_number.get() != 0 and not self.ban_phase_finished:
-                            self.pool_buttons[pool_number].config(
-                                image=self.img_pkmn[pool_number]['banned'],
-                                command=lambda: None)
+                            self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['banned'], command=lambda: None)
                             self.ban_pkmn(pool_number)
                         else:
-                            self.pool_buttons[pool_number].config(
-                                image=self.img_pkmn[pool_number]['picked'],
-                                command=lambda: None)
+                            self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['picked'], command=lambda: None)
                             self.pkmn_team_list[team_number][slot_number] = self.pkmn_pool_list[pool_number]
-                            self.team_buttons[team_number][slot_number].config(
-                                image=self.img_pkmn[pool_number]['inactive'],
+                            self.team_buttons[team_number][slot_number].config(image=self.img_pkmn[pool_number]['inactive'],
                                 command=lambda i=pool_number, j=team_number, k=slot_number: self.remove_from_team(i, j, k))
                             self.update_turns()
 
@@ -665,8 +666,6 @@ class Draft(tk.Frame):
             if self.draft_mode.get() == 'First Pick':
                 fp_team_order = [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 2]
                 turn = fp_team_order[self.turn]
-            elif self.draft_mode.get() == 'Nemesis':
-                turn = self.turn % 2
             else:
                 turn = self.turn % 2
             self.indicator.config(image=self.img_indicator[0][turn])
@@ -1267,10 +1266,7 @@ class Store(tk.Frame):
         for i in range(4):
             self.page_frame.grid_columnconfigure(i, weight=1)
         self.page_buttons = []
-        self.help_button = tk.Button(self.page_frame, image=self.controller.img_help['inactive'], bd=0.1, command=lambda i=i: self.view_help(i))
-        self.help_button.grid(row=0, column=2, sticky='nsew')
-        self.help_button.bind('<Enter>', lambda event: self.controller.on_enter(self.help_button, 'help'))
-        self.help_button.bind('<Leave>', lambda event: self.controller.on_leave(self.help_button, 'help'))
+        self.controller.HelpButton(self, 'Store', 0, 2, location=self.page_frame)
         for i in range(2):
             self.page_buttons.append(tk.Button(self.page_frame,
                 image=self.img_banner_buttons[i],
