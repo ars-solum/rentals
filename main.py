@@ -388,6 +388,8 @@ class Draft(tk.Frame):
         self.checks = [[] for i in range(18)] # checks [unusued]
         self.pkmn_ban_list = [[None, None], [None, None]]
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
+        self.fp_team_order = [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 2]
+        self.fp_slot_order = [0, 1, 0, 1, 2, 3, 2, 3, 4, 5, 4, 5]
 
     """function : init_pool
     purpose     : Initializes the Draft page's Pokemon pool section.
@@ -602,6 +604,7 @@ class Draft(tk.Frame):
                             team_number = 1
                             slot_number = self.turn - 6
 
+                    # TODO FIXME: Check order of events
                     # check if the pokemon being added is breaking species clause
                     if self.pkmn_pool_list[pool_number].dex in [i.dex for i in self.pkmn_team_list[team_number] if i is not None]:
                         popup_message(self.controller,
@@ -609,8 +612,8 @@ class Draft(tk.Frame):
                                       "Sorry, you cannot add %s to Player %s's team" % (self.pkmn_pool_list[pool_number].name, str(team_number+1)),
                                       text2="\ndue to the Species Clause.")
                     else:
-                        self.pkmn_not_picked[pool_number] = False
                         # everything is valid, start adding to team or banning
+                        self.pkmn_not_picked[pool_number] = False
                         if self.ban_number.get() != 0 and not self.ban_phase_finished:
                             self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['banned'], command=lambda: None)
                             self.ban_pkmn(pool_number)
@@ -618,31 +621,10 @@ class Draft(tk.Frame):
                             self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['picked'], command=lambda: None)
                             self.pkmn_team_list[team_number][slot_number] = self.pkmn_pool_list[pool_number]
                             self.team_buttons[team_number][slot_number].config(image=self.img_pkmn[pool_number]['inactive'],
-                                command=lambda i=pool_number, j=team_number, k=slot_number: self.remove_from_team(i, j, k))
+                                command=lambda i=pool_number, j=team_number, k=slot_number: self.remove(i, j, k, self.pkmn_team_list, self.team_buttons))
                             self.update_turns()
+                        self.update_turn_indicator()
 
-                        if self.ban_number.get() > 0 and not self.ban_phase_finished:
-                            if not self.pkmn_ban_list[0][0] and self.pkmn_ban_list[1][0]:
-                                self.indicator.config(image=self.img_indicator[1][0])
-                            elif self.pkmn_ban_list[0][0] and self.turn == 0:
-                                self.indicator.config(image=self.img_indicator[0][0])
-                            elif not self.pkmn_ban_list[1][1] and not self.ban_phase_finished and self.ban_number.get() == 2:
-                                self.indicator.config(image=self.img_indicator[1][1])
-                            elif not self.pkmn_ban_list[0][1] and self.pkmn_ban_list[1][1]:
-                                self.indicator.config(image=self.img_indicator[1][0])
-                            else:
-                                self.indicator.config(image=self.img_indicator[0][0])
-                        else:
-                            if self.turn >= 12:
-                                self.indicator.config(image=self.finished)
-                            else:
-                                if self.draft_mode.get() == 'First Pick':
-                                    fp_team_order = [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 2]
-                                    turn = fp_team_order[self.turn]
-                                else:
-                                    turn = self.turn%2
-                                self.indicator.config(image=self.img_indicator[0][turn])
-                        self.indicator.grid()
 
     """function : remove_from_team
     purpose     : Removes the Pokemon object from the selected team and slot
@@ -651,25 +633,25 @@ class Draft(tk.Frame):
     @param[in]  : pool_number The index of the Pokemon object in the pool [int].
     @param[in]  : team_number The index of the selected team [int].
     @param[in]  : slot_number The index of the Pokemon in the team [int].
+    @param[in]  : list The source list of Pokemon to remove from [Pokemon list].
+    @param[in]  : button The source list of buttons to modify [tk.Button list].
     @return     : None.
     """
-    def remove_from_team(self, pool_number, team_number, slot_number):
+    def remove(self, pool_number, team_number, slot_number, list, button):
         if self.game_activated:
+            # reset/clear variables
             self.pkmn_not_picked[pool_number] = True
-            self.pkmn_team_list[team_number][slot_number] = None
+            list[team_number][slot_number] = None
+            if list == self.pkmn_ban_list:
+                print("hi")
+                self.ban_phase_finished = False
             if self.hidden.get() == 'No':
                 self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['inactive'], command=lambda i=pool_number: self.add_to_team(i))
             else:
                 self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['unknown'], command=lambda i=pool_number: self.add_to_team(i))
-            self.team_buttons[team_number][slot_number].config(image=self.controller.img_blank['inactive'], command=lambda: None)
+            button[team_number][slot_number].config(image=self.controller.img_blank['inactive'], command=lambda: None)
             self.update_turns()
-            if self.draft_mode.get() == 'First Pick':
-                fp_team_order = [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 2]
-                turn = fp_team_order[self.turn]
-            else:
-                turn = self.turn % 2
-            self.indicator.config(image=self.img_indicator[0][turn])
-            self.indicator.grid()
+            self.update_turn_indicator()
 
     """function : ban_pkmn
     purpose     : Appends the Pokemon object to the current player's ban list.
@@ -684,23 +666,26 @@ class Draft(tk.Frame):
             for j in range(2):
                 if not self.pkmn_ban_list[1-j][i]:
                     self.pkmn_ban_list[1-j][i] = self.pkmn_pool_list[pool_number]
-                    self.ban_buttons[1-j][i].config(image=self.img_pkmn[pool_number]['inactive'], command=lambda: None)
+                    self.ban_buttons[1-j][i].config(image=self.img_pkmn[pool_number]['inactive'],
+                        command=lambda pool_number=pool_number, i=i, j=j: self.remove(pool_number, 1-j, i, self.pkmn_ban_list, self.ban_buttons))
                     temp_done = True
                     break
             if temp_done:
                 break
+
+        # TODO FIXME: reset each phase to false?
         # end the ban phase
-        if ((self.turn == 0 and self.pkmn_ban_list[0][0]) and
-            (self.turn == 0 and self.pkmn_ban_list[1][0])):
+        if ((self.turn >= 0 and self.pkmn_ban_list[0][0]) and
+            (self.turn >= 0 and self.pkmn_ban_list[1][0])):
             self.ban_phase_1_finished = True
-        if (((self.turn == 8 and self.pkmn_ban_list[0][1] and self.draft_mode.get() == 'First Pick') and
-             (self.turn == 8 and self.pkmn_ban_list[1][1] and self.draft_mode.get() == 'First Pick')) or
-            ((self.turn == 6 and self.pkmn_ban_list[0][1] and self.draft_mode.get() != 'First Pick') and
-             (self.turn == 6 and self.pkmn_ban_list[1][1] and self.draft_mode.get() != 'First Pick'))):
+        if (((self.turn >= 8 and self.pkmn_ban_list[0][1] and self.draft_mode.get() == 'First Pick') and
+             (self.turn >= 8 and self.pkmn_ban_list[1][1] and self.draft_mode.get() == 'First Pick')) or
+            ((self.turn >= 6 and self.pkmn_ban_list[0][1] and self.draft_mode.get() != 'First Pick') and
+             (self.turn >= 6 and self.pkmn_ban_list[1][1] and self.draft_mode.get() != 'First Pick'))):
             self.ban_phase_2_finished = True
-        if ((self.turn == 0 and self.ban_phase_1_finished) or
-            ((self.turn == 8 and self.ban_phase_2_finished and self.draft_mode.get() == 'First Pick') or
-            (self.turn == 6 and self.ban_phase_2_finished and self.draft_mode.get() != 'First Pick'))):
+        if ((self.turn >= 0 and self.ban_phase_1_finished) or
+            ((self.turn >= 8 and self.ban_phase_2_finished and self.draft_mode.get() == 'First Pick') or
+            (self.turn >= 6 and self.ban_phase_2_finished and self.draft_mode.get() != 'First Pick'))):
             self.ban_phase_finished = True
 
 
@@ -710,29 +695,58 @@ class Draft(tk.Frame):
     @return     : None.
     """
     def update_turns(self):
+        # from the start, check if each team slot is empty
         next_turn = 0
-        if self.draft_mode.get() == 'First Pick':
-            fp_team_order = [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1]
-            fp_slot_order = [0, 1, 0, 1, 2, 3, 2, 3, 4, 5, 4, 5]
-            for i in range(12):
-                if not self.pkmn_team_list[fp_team_order[i]][fp_slot_order[i]]:
+        for i in range(12):
+            if self.draft_mode.get() == 'First Pick':
+                if not self.pkmn_team_list[self.fp_team_order[i]][self.fp_slot_order[i]]:
                     break
-                next_turn += 1
-        else:
-            for i in range(12):
-                if self.draft_mode.get() == 'Standard':
-                    if not self.pkmn_team_list[int(i % 2)][int(i/2)]:
-                        break
-                if self.draft_mode.get() == 'Nemesis':
-                    if not self.pkmn_team_list[int((i+1) % 2)][int(i/2)]:
-                        break
-                next_turn += 1
+            elif self.draft_mode.get() == 'Standard':
+                if not self.pkmn_team_list[int(i%2)][int(i/2)]:
+                    break
+            elif self.draft_mode.get() == 'Nemesis':
+                if not self.pkmn_team_list[int((i+1)%2)][int(i/2)]:
+                    break
+            next_turn += 1
         self.turn = next_turn
-        if ((self.turn == 8 and self.ban_number.get() == 2 and self.draft_mode.get() == 'First Pick') or
-            (self.turn == 6 and self.ban_number.get() == 2 and self.draft_mode.get() != 'First Pick')):
-            self.ban_phase_finished = False
+
+        # TODO FIXME: Update ban phase properly
+
+        # change sets button if game is or is not finished
         if self.turn >= 12:
-            self.controller.sidebar.buttons['Sets'].config(state='normal', command=lambda: get_sets(self))
+            state = 'normal'
+        else:
+            state = 'disabled'
+        self.controller.sidebar.buttons['Sets'].config(state=state, command=lambda: get_sets(self))
+
+
+    """function : update_turn_indicator
+    purpose     : Updates the indicator to reflect the current turn.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @return     : None.
+    """
+    def update_turn_indicator(self):
+        if self.ban_number.get() > 0 and not self.ban_phase_finished:
+            if not self.pkmn_ban_list[0][0] and self.pkmn_ban_list[1][0]:
+                self.indicator.config(image=self.img_indicator[1][0])
+            elif self.pkmn_ban_list[0][0] and self.turn == 0:
+                self.indicator.config(image=self.img_indicator[0][0])
+            elif not self.pkmn_ban_list[1][1] and not self.ban_phase_finished and self.ban_number.get() == 2:
+                self.indicator.config(image=self.img_indicator[1][1])
+            elif not self.pkmn_ban_list[0][1] and self.pkmn_ban_list[1][1]:
+                self.indicator.config(image=self.img_indicator[1][0])
+            else:
+                self.indicator.config(image=self.img_indicator[0][0])
+        else:
+            if self.turn >= 12:
+                self.indicator.config(image=self.finished)
+            else:
+                if self.draft_mode.get() == 'First Pick':
+                    turn = self.fp_team_order[self.turn]
+                else:
+                    turn = self.turn % 2
+                self.indicator.config(image=self.img_indicator[0][turn])
+        self.indicator.grid()
 
 
     def on_enter(self, button, index):
