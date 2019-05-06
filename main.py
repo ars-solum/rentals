@@ -422,7 +422,6 @@ class Draft(tk.Frame):
                     self.team_buttons[team][x].grid(row=row+8, column=(team*4)+column, pady=5)
                     self.team_buttons[team][x].bind('<Enter>', lambda event, team=team, x=x: self.team_on_enter(team, x))
                     self.team_buttons[team][x].bind('<Leave>', lambda event, team=team, x=x: self.team_on_leave(team, x))
-        # TODO FIXME: refactor this to be a dictionary
         self.img_indicator = {'player 1': {}, 'player 2': {}}
         for i in range(1, 3):
             self.img_indicator['player %s' %i]['pick'] = RGBAImage(os.path.join(COMMON, 'p%sp.png' %i))
@@ -445,7 +444,7 @@ class Draft(tk.Frame):
             self.draft_num = 6
         self.turn = 0
         self.pkmn_pool_list = []
-        # TODO FIXME: Refactor into a dictionary
+        # TODO FIXME: Refactor into a dictionary?
         self.ban_list = [[None, None], [None, None]]
         self.ban_phase_finished = False
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
@@ -940,6 +939,16 @@ class Random(tk.Frame):
     def init_vars(self):
         self.game_activated = False
         self.img_pkmn = {}
+        self.frames = []
+        for i in range(3):
+            self.frames.append(tk.Frame(self))
+            self.frames[i].grid(row=i, column=0, sticky='nsew')
+        for i in range(3):
+            self.frames[1].grid_columnconfigure(i*3, weight=1)
+
+        self.img_random = RGBAImage(os.path.join(COMMON, 'label_random.png'))
+        self.random_label = tk.Label(self.frames[0], image=self.img_random)
+        self.random_label.grid(row=0, column=0, pady=2, sticky='nsw')
 
         # game setting variables
         self.pkmn_list = []
@@ -969,24 +978,11 @@ class Random(tk.Frame):
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
 
     def init_teams(self):
-        self.frames = []
-        for i in range(3):
-            self.frames.append(tk.Frame(self))
-            self.frames[i].grid(row=i, column=0, sticky='nsew')
-        for i in range(3):
-            self.frames[1].grid_columnconfigure(i*3, weight=1)
-
-        self.img_random = RGBAImage(os.path.join(COMMON, 'label_random.png'))
-        self.random_label = tk.Label(self.frames[0], image=self.img_random)
-        self.random_label.grid(row=0, column=0, pady=2, sticky='nsw')
-
         self.img_team_text = []
         for i in range(2):
             self.img_team_text.append(RGBAImage(os.path.join(COMMON, 'team%d.png' %int(i+1))))
-
         self.team_text = []
         self.team_buttons = [[], []]
-
         for team in range(2):
             self.team_text.append(tk.Label(self.frames[1], image=self.img_team_text[team]))
             self.team_text[team].grid(row=1, column=(team*3)+1, columnspan=2, sticky='nsew')
@@ -1003,20 +999,14 @@ class Random(tk.Frame):
         # reset private variables
         self.game_activated = True
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
-        self.img_pkmn = [[] for i in range(3)]
+        self.img_pkmn = {}
 
         temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
         temp_excl_types = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
         temp_excl_gimmicks = list(filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
         if self.battle_mode.get() == 'SRL':
-            if self.current_player[0].get():
-                list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list
-            else:
-                list1 = []
-            if self.current_player[1].get():
-                list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list
-            else:
-                list2 = []
+            list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list if self.current_player[0].get() else []
+            list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list if self.current_player[1].get() else []
             self.pkmn_list = list1 + list2
         else:
             self.pkmn_list = []
