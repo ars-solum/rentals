@@ -357,7 +357,7 @@ class Draft(tk.Frame):
         self.pkmn_excl_types = [tk.StringVar() for i in range(len(TYPES))]
         self.pkmn_excl_items = [tk.StringVar() for i in range(len(ITEMS))]
         self.pkmn_excl_gimmicks = [tk.StringVar() for i in range(len(GIMMICKS))]
-        self.pkmn_excl_usage = []
+        self.pkmn_excl_usage = [] # unused
 
         self.checks = [[] for i in range(18)] # checks [unusued]
         self.ban_list = [[None, None], [None, None]]
@@ -860,9 +860,9 @@ class DraftSettings(tk.Frame):
         # end the current game, if active
         if self.parent_page().game_activated:
             popup_message(self.controller,
-                          'ERROR',
-                          'Changing this setting has caused the current game to end.',
-                          text2='\nPlease start a new game.')
+                'ERROR',
+                'Changing this setting has caused the current game to end.',
+                text2='\nPlease start a new game.')
             self.parent_page().game_activated = False
 
         # reset the ban list and buttons
@@ -925,10 +925,18 @@ class DraftGenerateSettings(tk.Frame):
 
 
 class Random(tk.Frame):
+
+    """function : __init__
+    purpose     : Initializes the Random page and its components.
+    @param[in]  : self An instance of the Random object [tk.Frame].
+    @param[in]  : parent The object type to instantiate [tk.Frame].
+    @param[in]  : controller The owner of Random [MainApp].
+    """
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        # Allot a 3x1 space for Random's contents
         self.grid_columnconfigure(0, weight=1)
         for i in range(3):
             self.grid_rowconfigure(i, weight=1)
@@ -936,9 +944,14 @@ class Random(tk.Frame):
         self.init_vars()
         self.init_teams()
 
+    """function : init_vars
+    purpose     : Initializes the Random page's variables.
+    @param[in]  : self An instance of the Random object [tk.Frame].
+    """
     def init_vars(self):
         self.game_activated = False
         self.img_pkmn = {}
+        # configure the page layout
         self.frames = []
         for i in range(3):
             self.frames.append(tk.Frame(self))
@@ -946,6 +959,7 @@ class Random(tk.Frame):
         for i in range(3):
             self.frames[1].grid_columnconfigure(i*3, weight=1)
 
+        # section header
         self.img_random = RGBAImage(os.path.join(COMMON, 'label_random.png'))
         self.random_label = tk.Label(self.frames[0], image=self.img_random)
         self.random_label.grid(row=0, column=0, pady=2, sticky='nsw')
@@ -974,7 +988,8 @@ class Random(tk.Frame):
         self.pkmn_excl_types = [tk.StringVar() for i in range(len(TYPES))]
         self.pkmn_excl_items = [tk.StringVar() for i in range(len(ITEMS))]
         self.pkmn_excl_gimmicks = [tk.StringVar() for i in range(len(GIMMICKS))]
-        self.pkmn_excl_usage = []
+        self.pkmn_excl_usage = [] # unused
+
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
 
     def init_teams(self):
