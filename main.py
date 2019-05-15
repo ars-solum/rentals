@@ -436,6 +436,21 @@ class Draft(tk.Frame):
     @param[in]  : self An instance of the Draft object [tk.Frame].
     """
     def new_game(self):
+        """function : filter_pkmn
+        purpose     : Alias function for checking if a Pokemon fits criteria.
+        """
+        def filter_pkmn():
+            if ((pkmn.name in [i.name for i in temp_list]) or
+                (pkmn.tier in temp_excl_tiers) or
+                (pkmn.type[0] in temp_excl_types) or
+                (pkmn.type[1] and pkmn.type[1] in temp_excl_types) or
+                (check_valid_generation(self, pkmn)) or
+                (check_valid_item(self, pkmn)) or
+                (pkmn.tag in temp_excl_gimmicks)):
+                return True
+            else:
+                return False
+
         # reset private variables
         self.game_activated = True
         if (self.draft_mode.get() == 'First Pick'):
@@ -457,7 +472,7 @@ class Draft(tk.Frame):
                 self.ban_buttons[team][slot].config(image=self.controller.img_blank['inactive'], command=lambda: None)
             for slot in range(6):
                 self.team_buttons[team][slot].config(image=self.controller.img_blank['inactive'], command=lambda: None)
-        self.controller.sidebar.buttons['Sets'].config(state='disabled', command=lambda: None)
+        self.controller.sidebar.buttons['Sets'].config(state='disabled')
 
         # get all exclusions
         temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
@@ -478,15 +493,7 @@ class Draft(tk.Frame):
             # generate a random list based on the rules selected
             temp_list = []
             for pkmn in ALL_POKEMON_S:
-                if ((pkmn.name in [i.name for i in temp_list]) or
-                    (pkmn.tier in temp_excl_tiers) or
-                    (pkmn.type[0] in temp_excl_types) or
-                    (pkmn.type[1] and pkmn.type[1] in temp_excl_types) or
-                    (check_valid_generation(self, pkmn)) or
-                    (check_valid_item(self, pkmn)) or
-                    (pkmn.tag in temp_excl_gimmicks)):
-                    continue
-                else:
+                if not filter_pkmn():
                     temp_list.append(pkmn)
 
         # generate random pool of Pokemon
@@ -553,6 +560,34 @@ class Draft(tk.Frame):
                         self.checks[i].append(self.pkmn_pool_list[j].name)
             shuffle(self.checks[i])
 
+    """function : get_team_and_slot
+    purpose     : Determines the current team and slot number based on the turn.
+    @param[in]  : self An instance of the Draft object [tk.Frame].
+    @return     : team_number The current team [int].
+    @return     : slot_number The slot number on the current team [int].
+    """
+    def get_team_and_slot(self):
+        if self.draft_mode.get() == 'Standard':
+            team_number = int(self.turn % 2)
+            slot_number = int(self.turn/2)
+        if self.draft_mode.get() == 'Nemesis':
+            team_number = int((self.turn+1) % 2)
+            slot_number = int(self.turn/2)
+        if self.draft_mode.get() == 'First Pick':
+            if self.turn <= 1:
+                team_number = 0
+                slot_number = self.turn
+            elif 6 <= self.turn <= 9:
+                team_number = 0
+                slot_number = self.turn - 4
+            elif 2 <= self.turn <= 5:
+                team_number = 1
+                slot_number = self.turn - 2
+            elif 10 <= self.turn <= 11:
+                team_number = 1
+                slot_number = self.turn - 6
+        return team_number, slot_number
+
     """function : add
     purpose     : Appends the Pokemon object to the correct team.
     @param[in]  : self An instance of the Draft object [tk.Frame].
@@ -563,25 +598,7 @@ class Draft(tk.Frame):
             if self.pkmn_not_picked[pool_number]: # the pokemon must be available
                 if self.turn < 12: # the drafting phase is not finished
                     # determine the team and slot to add the pokemon
-                    if self.draft_mode.get() == 'Standard':
-                        team_number = int(self.turn % 2)
-                        slot_number = int(self.turn/2)
-                    if self.draft_mode.get() == 'Nemesis':
-                        team_number = int((self.turn+1) % 2)
-                        slot_number = int(self.turn/2)
-                    if self.draft_mode.get() == 'First Pick':
-                        if self.turn <= 1:
-                            team_number = 0
-                            slot_number = self.turn
-                        elif 6 <= self.turn <= 9:
-                            team_number = 0
-                            slot_number = self.turn - 4
-                        elif 2 <= self.turn <= 5:
-                            team_number = 1
-                            slot_number = self.turn - 2
-                        elif 10 <= self.turn <= 11:
-                            team_number = 1
-                            slot_number = self.turn - 6
+                    team_number, slot_number = self.get_team_and_slot()
 
                     # TODO FIXME: Check order of events
                     # check if the pokemon being added is breaking species clause
@@ -893,7 +910,7 @@ class DraftSettings(tk.Frame):
         self.parent_page().indicator.grid_remove()
 
     """function : parent_page
-    purpose     : Shorthand for getting the Draft page.
+    purpose     : Alias for getting the Draft page.
     @param[in]  : self An instance of the DraftSettings object [tk.Frame].
     @param[out] : The Draft page [tk.Frame].
     """
@@ -916,7 +933,7 @@ class DraftGenerateSettings(tk.Frame):
         setup_pkmn_settings(self, 'Draft')
 
     """function : parent_page
-    purpose     : Shorthand for getting the Draft page.
+    purpose     : Alias for getting the Draft page.
     @param[in]  : self An instance of the DraftGenerateSettings object [tk.Frame].
     @param[out] : The Draft page [tk.Frame].
     """
@@ -950,7 +967,7 @@ class Random(tk.Frame):
     """
     def init_vars(self):
         self.game_activated = False
-        self.img_pkmn = {}
+        self.img_pkmn = [[] for i in range(3)]
         # configure the page layout
         self.frames = []
         for i in range(3):
@@ -992,40 +1009,39 @@ class Random(tk.Frame):
 
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
 
+    """function : init_teams
+    purpose     : Initializes the Random page's team section.
+    @param[in]  : self An instance of the Random object [tk.Frame].
+    """
     def init_teams(self):
         self.img_team_text = []
-        for i in range(2):
-            self.img_team_text.append(RGBAImage(os.path.join(COMMON, 'team%d.png' %int(i+1))))
         self.team_text = []
         self.team_buttons = [[], []]
+
         for team in range(2):
+            # create section labels
+            self.img_team_text.append(RGBAImage(os.path.join(COMMON, 'team%d.png' %int(team+1))))
             self.team_text.append(tk.Label(self.frames[1], image=self.img_team_text[team]))
             self.team_text[team].grid(row=1, column=(team*3)+1, columnspan=2, sticky='nsew')
+
+            # place buttons
             for row in range(3):
                 for col in range(2):
                     slot = (row * 2) + col
-                    self.team_buttons[team].append(tk.Button(self.frames[1],
-                        image=self.controller.img_blank['inactive'], bd=0.1, command=lambda: None))
+                    self.team_buttons[team].append(tk.Button(self.frames[1], image=self.controller.img_blank['inactive'], bd=0.1))
                     self.team_buttons[team][slot].grid(row=row+2, column=(team*3)+col+1, padx=10, pady=10)
                     self.team_buttons[team][slot].bind('<Enter>', lambda event, team=team, slot=slot: self.team_on_enter(team, slot))
                     self.team_buttons[team][slot].bind('<Leave>', lambda event, team=team, slot=slot: self.team_on_leave(team, slot))
 
+    """function : new_game
+    purpose     : Starts a brand new Random game using the current settings.
+    @param[in]  : self An instance of the Random object [tk.Frame].
+    """
     def new_game(self):
-        # reset private variables
-        self.game_activated = True
-        self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
-        self.img_pkmn = {}
-
-        temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
-        temp_excl_types = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
-        temp_excl_gimmicks = list(filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
-        if self.battle_mode.get() == 'SRL':
-            list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list if self.current_player[0].get() else []
-            list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list if self.current_player[1].get() else []
-            self.pkmn_list = list1 + list2
-        else:
-            self.pkmn_list = []
-        for pkmn in ALL_POKEMON_S:
+        """function : filter_pkmn
+        purpose     : Alias function for checking if a Pokemon fits criteria.
+        """
+        def filter_pkmn():
             if self.theme.get() == 'Monotype':
                 incl_type = [self.type[0].get(), self.type[1].get()]
                 if ((pkmn.name in [i.name for i in self.pkmn_list]) or
@@ -1035,9 +1051,9 @@ class Random(tk.Frame):
                     (check_valid_generation(self, pkmn)) or
                     (check_valid_item(self, pkmn)) or
                     (pkmn.tag in temp_excl_gimmicks)):
-                    continue
+                    return True
                 else:
-                    self.pkmn_list.append(pkmn)
+                    return False
             else:
                 if ((pkmn.name in [i.name for i in self.pkmn_list]) or
                     (pkmn.tier in temp_excl_tiers) or
@@ -1046,18 +1062,43 @@ class Random(tk.Frame):
                     (check_valid_generation(self, pkmn)) or
                     (check_valid_item(self, pkmn)) or
                     (pkmn.tag in temp_excl_gimmicks)):
-                    continue
+                    return True
                 else:
+                    return False
+
+        # reset private variables
+        self.game_activated = True
+        self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
+        self.img_pkmn = [[] for i in range(3)]
+
+        # get all exclusions
+        temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
+        temp_excl_types = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
+        temp_excl_gimmicks = list(filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
+        if self.battle_mode.get() == 'SRL':
+            # get each player's roster
+            list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list if self.current_player[0].get() else []
+            list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list if self.current_player[1].get() else []
+            self.pkmn_list = list1 + list2
+        else:
+            # generate a random list based on the rules selected
+            self.pkmn_list = []
+            for pkmn in ALL_POKEMON_S:
+                if not filter_pkmn():
                     self.pkmn_list.append(pkmn)
+
+        # generate each player's team
         counter = 0
         for i in range(2):
             while counter < 6:
                 temp_new_pkmn = random.choice(self.pkmn_list)
+                # make team 2 on par with team 1 Pokemon based on tier
                 if i == 1 and self.theme.get() == 'Balanced':
                     if ((check_validity(self, temp_new_pkmn, i)) and
                         (temp_new_pkmn.tier == self.pkmn_team_list[0][counter].tier)):
                         self.pkmn_team_list[i][counter] = temp_new_pkmn
                         counter += 1
+                # check if the selected Pokemon matches the type
                 elif self.theme.get() == 'Monotype':
                     if (check_validity(self, temp_new_pkmn, i) and
                         (self.type[i].get() in temp_new_pkmn.type)):
@@ -1071,29 +1112,17 @@ class Random(tk.Frame):
 
         for i in range(2):
             for j in range(6):
-                if self.show_megas.get() == 'Yes':
-                    if is_mega(self.pkmn_team_list[i][j]):
-                        if self.pkmn_team_list[i][j].item.endswith('ite X'):
-                            pkmn_name = self.pkmn_team_list[i][j].name + '-Mega-X'
-                        elif self.pkmn_team_list[i][j].item.endswith('ite Y'):
-                            pkmn_name = self.pkmn_team_list[i][j].name + '-Mega-X'
-                        elif self.pkmn_team_list[i][j].ability == 'Battle Bond':
-                            pkmn_name = self.pkmn_team_list[i][j].name + '-Ash'
-                        else:
-                            pkmn_name = self.pkmn_team_list[i][j].name + '-Mega'
-                    else:
-                        pkmn_name = self.pkmn_team_list[i][j].name
-                else:
-                    pkmn_name = self.pkmn_team_list[i][j].name
+                # get Pokemon images
+                pkmn_name = get_mega_name(self.pkmn_team_list[i][j]) if (self.show_megas.get() == 'Yes') else self.pkmn_team_list[i][j].name
                 self.get_pkmn_imgs(pkmn_name)
-                x = (i * 6) + j
-                if self.hidden.get() == 'Yes':
-                    self.team_buttons[i][j].config(image=self.img_pkmn[2][x],
-                        command=lambda i=i, j=j: self.reroll(i, j))
-                else:
-                    self.team_buttons[i][j].config(image=self.img_pkmn[0][x],
-                        command=lambda i=i, j=j: self.reroll(i, j))
+
+                # configure the team buttons
+                slot = (i * 6) + j
+                self.team_buttons[i][j].config(image=self.img_pkmn[2 if (self.hidden.get() == 'Yes') else 0][slot], command=lambda i=i, j=j: self.reroll(i, j))
+
+        # configure finish button
         self.controller.sidebar.buttons['Sets'].config(state='normal', command=lambda: get_sets(self))
+
 
     def get_pkmn_imgs(self, pkmn_name):
         pkmn_name = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
@@ -2058,6 +2087,7 @@ def get_rarity(name):
 
 
 def check_validity(self, pkmn, team=0):
+    # TODO FIXME: either remove these lists or remove the ones in each class
     type_list = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
     tier_list = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
     gimmick_list = list(filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
