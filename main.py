@@ -399,10 +399,7 @@ class Draft(tk.Frame):
             for j in range(2):
                 self.ban_buttons[i].append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1, state='disabled', command=lambda: None))
                 # order of buttons is 1 2 | 2 1
-                if i == 0:
-                    self.ban_buttons[i][j].grid(row=5, column=i*4+j, pady=5)
-                else:
-                    self.ban_buttons[i][j].grid(row=5, column=i*5-j, pady=5)
+                self.ban_buttons[i][j].grid(row=5, column=(i*4+j) if (i == 0) else (i*5-j), pady=5)
         self.separators[1].grid(row=6, column=0, columnspan=6, sticky='nsew')
 
     """function : init_teams
@@ -453,10 +450,7 @@ class Draft(tk.Frame):
 
         # reset private variables
         self.game_activated = True
-        if (self.draft_mode.get() == 'First Pick'):
-            self.draft_num = 8
-        else:
-            self.draft_num = 6
+        self.draft_num = 8 if (self.draft_mode.get() == 'First Pick') else 6
         self.turn = 0
         self.pkmn_pool_list = []
         # TODO FIXME: Refactor into a dictionary?
@@ -474,12 +468,9 @@ class Draft(tk.Frame):
                 self.team_buttons[team][slot].config(image=self.controller.img_blank['inactive'], command=lambda: None)
         self.controller.sidebar.buttons['Sets'].config(state='disabled')
 
-        # get all exclusions
-        temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
-        temp_excl_types = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
-        temp_excl_gimmicks = list(filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
         if self.battle_mode.get() == 'SRL':
             # get each player's roster
+            # TODO FIXME: do I need these checks if both players are valid already?
             if self.current_player[0].get():
                 list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list
             else:
@@ -497,16 +488,17 @@ class Draft(tk.Frame):
                     temp_list.append(pkmn)
 
         # generate random pool of Pokemon
-        temp_counter = 0
-        while temp_counter < 18:
+        counter = 0
+        while counter < 18:
             temp_new_pkmn = random.choice(temp_list)
             if (check_validity(self, temp_new_pkmn)):
                 self.pkmn_pool_list.append(temp_new_pkmn)
-                temp_counter += 1
+                counter += 1
 
         # get checks and counters for all current Pokemon
         self.get_checks()
 
+        # TODO FIXME: combine with while loop? [change i to counter then]
         for i in range(18):
             # get Pokemon images
             if self.show_megas.get() == 'Yes':
@@ -524,10 +516,7 @@ class Draft(tk.Frame):
             self.pool_buttons[i].bind('<Leave>', lambda event, button=self.pool_buttons[i], i=i: self.on_leave(button, i))
 
         # reset indicator
-        if self.ban_number.get() > 0:
-            self.indicator.config(image=self.img_indicator['player 2']['ban'])
-        else:
-            self.indicator.config(image=self.img_indicator['player 1']['pick'])
+        self.indicator.config(image=self.img_indicator['player 2']['ban'] if (self.ban_number.get() > 0) else self.img_indicator['player 1']['pick'])
         self.indicator.grid()
 
     """function : get_pkmn_imgs
@@ -621,7 +610,7 @@ class Draft(tk.Frame):
                         self.update_turns()
                         self.update_turn_indicator()
 
-    """function : remove_from_team
+    """function : remove
     purpose     : Removes the Pokemon object from the selected team and slot
                   and makes it available in the pool again.
     @param[in]  : self An instance of the Draft object [tk.Frame].
@@ -638,10 +627,7 @@ class Draft(tk.Frame):
             list[team_number][slot_number] = None
             if list == self.ban_list:
                 self.ban_phase_finished = False
-            if self.hidden.get() == 'No':
-                self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['inactive'], command=lambda i=pool_number: self.add(i))
-            else:
-                self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['unknown'], command=lambda i=pool_number: self.add(i))
+            self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['inactive' if (self.hidden.get() == 'No') else 'unknown'], command=lambda i=pool_number: self.add(i))
             button[team_number][slot_number].config(image=self.controller.img_blank['inactive'], command=lambda: None)
             self.update_turns()
             self.update_turn_indicator()
@@ -652,7 +638,7 @@ class Draft(tk.Frame):
     @param[in]  : pool_number The index of the Pokemon object in the pool [int].
     """
     def ban(self, pool_number):
-        # add pkmn to proper banlist
+        # add Pokemon to proper banlist
         temp_done = False
         for i in range(self.ban_number.get()):
             for j in range(2):
@@ -792,10 +778,7 @@ class Draft(tk.Frame):
                 self.img_pkmn[i] = {}
                 for j in ['inactive', 'active', 'unknown', 'banned', 'picked']:
                     # get filename
-                    if self.show_megas.get() == 'Yes':
-                        pkmn_name = get_mega_name(self.pkmn_pool_list[i])
-                    else:
-                        pkmn_name = self.pkmn_pool_list[i].name
+                    pkmn_name = get_mega_name(self.pkmn_pool_list[i]) if (self.show_megas.get() == 'Yes') else self.pkmn_pool_list[i].name
                     pkmn_name = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
 
                     # create images
@@ -809,10 +792,7 @@ class Draft(tk.Frame):
             # replace the pool images
             for i in range(len(self.pkmn_pool_list)):
                 if self.pkmn_not_picked[i]:
-                    if self.hidden.get() == 'No':
-                        self.pool_buttons[i].config(image=self.img_pkmn[i]['inactive'])
-                    else:
-                        self.pool_buttons[i].config(image=self.img_pkmn[i]['unknown'])
+                    self.pool_buttons[i].config(image=self.img_pkmn[i]['inactive' if (self.hidden.get() == 'No') else 'unknown'])
                 else:
                     self.pool_buttons[i].config(image=self.img_pkmn[i]['picked'])
 
@@ -968,6 +948,7 @@ class Random(tk.Frame):
     def init_vars(self):
         self.game_activated = False
         self.img_pkmn = [[] for i in range(3)]
+
         # configure the page layout
         self.frames = []
         for i in range(3):
@@ -976,7 +957,7 @@ class Random(tk.Frame):
         for i in range(3):
             self.frames[1].grid_columnconfigure(i*3, weight=1)
 
-        # section header
+        # page header
         self.img_random = RGBAImage(os.path.join(COMMON, 'label_random.png'))
         self.random_label = tk.Label(self.frames[0], image=self.img_random)
         self.random_label.grid(row=0, column=0, pady=2, sticky='nsw')
@@ -1123,7 +1104,10 @@ class Random(tk.Frame):
         # configure finish button
         self.controller.sidebar.buttons['Sets'].config(state='normal', command=lambda: get_sets(self))
 
-
+    """function : get_pkmn_imgs
+    purpose     : Starts a brand new Random game using the current settings.
+    @param[in]  : self An instance of the Random object [tk.Frame].
+    """
     def get_pkmn_imgs(self, pkmn_name):
         pkmn_name = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
         self.img_pkmn_base = [RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_inactive.png')),
@@ -1135,6 +1119,7 @@ class Random(tk.Frame):
                                         self.controller.img_border['Random'])
             self.img_pkmn[i].append(ImageTk.PhotoImage(self.img_pkmn_base[i]))
 
+    # TODO FIXME: start here
     def reroll(self, team, slot):
         x = (team * 6) + slot
         while True:
@@ -1155,19 +1140,13 @@ class Random(tk.Frame):
 
     def team_on_enter(self, team, x):
         if self.hidden.get() == 'No':
-            if self.pkmn_team_list[team][x]:
-                pool_num = (team * 6) + x
-                self.team_buttons[team][x].config(image=self.img_pkmn[1][pool_num])
-            else:
-                self.team_buttons[team][x].config(image=self.controller.img_blank['active'])
+            pool_num = (team * 6) + x
+            self.team_buttons[team][x].config(image=self.img_pkmn[1][pool_num] if (self.pkmn_team_list[team][x]) else self.controller.img_blank['active'])
 
     def team_on_leave(self, team, x):
         if self.hidden.get() == 'No':
-            if self.pkmn_team_list[team][x]:
-                pool_num = (team * 6) + x
-                self.team_buttons[team][x].config(image=self.img_pkmn[0][pool_num])
-            else:
-                self.team_buttons[team][x].config(image=self.controller.img_blank['inactive'])
+            pool_num = (team * 6) + x
+            self.team_buttons[team][x].config(image=self.img_pkmn[0][pool_num] if (self.pkmn_team_list[team][x]) else self.controller.img_blank['inactive'])
 
     def replace_images(self):
         if self.game_activated:
