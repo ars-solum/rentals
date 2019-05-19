@@ -434,21 +434,20 @@ class Pokemon:
         self.type = [row[2], row[3]]
         self.tier = row[4]
         self.rarity = row[5]
-        self.srl_group = int(row[6])
-        self.tag = row[7]
-        self.item = row[8]
-        self.ability = row[9]
-        self.evSpread = row[10]
-        self.nature = row[11]
-        self.ivSpread = row[12]
-        self.moves = [row[13], row[14], row[15], row[16]]
+        self.tag = row[6]
+        self.item = row[7]
+        self.ability = row[8]
+        self.evSpread = row[9]
+        self.nature = row[10]
+        self.ivSpread = row[11]
+        self.moves = [row[12], row[13], row[14], row[15]]
         # statistics
-        self.generated_draft = int(row[17])
-        self.generated_nemesis = int(row[18])
-        self.generated_random = int(row[19])
-        self.picked_draft = int(row[20])
-        self.picked_nemesis = int(row[21])
-        self.banned = int(row[22])
+        self.generated_draft = int(row[16])
+        self.generated_nemesis = int(row[17])
+        self.generated_random = int(row[18])
+        self.picked_draft = int(row[19])
+        self.picked_nemesis = int(row[20])
+        self.banned = int(row[21])
 
 with open(os.path.join(DATA, 'Singles.csv'), 'r', encoding='utf-8') as fileName:
     reader = csv.reader(fileName)

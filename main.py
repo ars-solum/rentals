@@ -468,17 +468,14 @@ class Draft(tk.Frame):
                 self.team_buttons[team][slot].config(image=self.controller.img_blank['inactive'], command=lambda: None)
         self.controller.sidebar.buttons['Sets'].config(state='disabled')
 
+        temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
+        temp_excl_types = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
+        temp_excl_gimmicks = list(filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
         if self.battle_mode.get() == 'SRL':
             # get each player's roster
             # TODO FIXME: do I need these checks if both players are valid already?
-            if self.current_player[0].get():
-                list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list
-            else:
-                list1 = []
-            if self.current_player[1].get():
-                list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list
-            else:
-                list2 = []
+            list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list if self.current_player[0].get() else []
+            list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list if self.current_player[1].get() else []
             temp_list = list1 + list2
         else:
             # generate a random list based on the rules selected
@@ -488,32 +485,24 @@ class Draft(tk.Frame):
                     temp_list.append(pkmn)
 
         # generate random pool of Pokemon
-        counter = 0
-        while counter < 18:
+        index = 0
+        while index < 18:
             temp_new_pkmn = random.choice(temp_list)
             if (check_validity(self, temp_new_pkmn)):
                 self.pkmn_pool_list.append(temp_new_pkmn)
-                counter += 1
+                # get Pokemon images
+                pkmn_name = get_mega_name(self.pkmn_pool_list[index]) if (self.show_megas.get() == 'Yes') else self.pkmn_pool_list[index].name
+                self.get_pkmn_imgs(index, pkmn_name)
+
+                # configure the pool buttons
+                self.pool_buttons[index].config(image=self.img_pkmn[index]['inactive' if (self.hidden.get() == 'No') else 'unknown'],
+                    bd=0.1, command=lambda index=index: self.add(index))
+                self.pool_buttons[index].bind('<Enter>', lambda event, button=self.pool_buttons[index], index=index: self.on_enter(button, index))
+                self.pool_buttons[index].bind('<Leave>', lambda event, button=self.pool_buttons[index], index=index: self.on_leave(button, index))
+                index += 1
 
         # get checks and counters for all current Pokemon
         self.get_checks()
-
-        # TODO FIXME: combine with while loop? [change i to counter then]
-        for i in range(18):
-            # get Pokemon images
-            if self.show_megas.get() == 'Yes':
-                pkmn_name = get_mega_name(self.pkmn_pool_list[i])
-            else:
-                pkmn_name = self.pkmn_pool_list[i].name
-            self.get_pkmn_imgs(i, pkmn_name)
-
-            # configure the pool buttons
-            if self.hidden.get() == 'No':
-                self.pool_buttons[i].config(image=self.img_pkmn[i]['inactive'], bd=0.1, command=lambda i=i: self.add(i))
-            else:
-                self.pool_buttons[i].config(image=self.img_pkmn[i]['unknown'], bd=0.1, command=lambda i=i: self.add(i))
-            self.pool_buttons[i].bind('<Enter>', lambda event, button=self.pool_buttons[i], i=i: self.on_enter(button, i))
-            self.pool_buttons[i].bind('<Leave>', lambda event, button=self.pool_buttons[i], i=i: self.on_leave(button, i))
 
         # reset indicator
         self.indicator.config(image=self.img_indicator['player 2']['ban'] if (self.ban_number.get() > 0) else self.img_indicator['player 1']['pick'])
@@ -526,12 +515,14 @@ class Draft(tk.Frame):
     @param[in]  : pkmn_name The raw name of the Pokemon [string].
     """
     def get_pkmn_imgs(self, pool_num, pkmn_name):
+        # get filename
         pkmn_filename = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
         self.img_pkmn[pool_num] = {}
         for i in ['inactive', 'active', 'unknown', 'banned', 'picked']:
-            self.img_pkmn_base = RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_filename + '_' + i + '.png'))
-            self.img_pkmn_base.paste(self.controller.img_border[self.draft_mode.get()], (0, 0), self.controller.img_border[self.draft_mode.get()])
-            self.img_pkmn[pool_num][i] = ImageTk.PhotoImage(self.img_pkmn_base)
+            # create images
+            img_pkmn_base = RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_filename + '_' + i + '.png'))
+            img_pkmn_base.paste(self.controller.img_border[self.draft_mode.get()], (0, 0), self.controller.img_border[self.draft_mode.get()])
+            self.img_pkmn[pool_num][i] = ImageTk.PhotoImage(img_pkmn_base)
 
     """function : get_checks
     purpose     : Creates a list of checks and counters to every Pokemon that
@@ -721,50 +712,31 @@ class Draft(tk.Frame):
     # TODO FIXME: Replace with top level on_enter
     def on_enter(self, button, index):
         if self.game_activated:
-            if self.pkmn_not_picked[index]:
-                if self.hidden.get() == 'No':
-                    button.config(image=self.img_pkmn[index]['active'])
-                else:
-                    pass
-            else:
-                pass
+            if self.pkmn_not_picked[index] and self.hidden.get() == 'No':
+                button.config(image=self.img_pkmn[index]['active'])
         else:
-            if self.pkmn_not_picked[index]:
-                if self.hidden.get() == 'No':
-                    self.pool_buttons[index].config(image=self.controller.img_blank['active'])
-                else:
-                    pass
-            else:
-                pass
+            if self.pkmn_not_picked[index] and self.hidden.get() == 'No':
+                self.pool_buttons[index].config(image=self.controller.img_blank['active'])
 
     # TODO FIXME: Replace with top level on_leave
     def on_leave(self, button, index):
         if self.game_activated:
-            if self.pkmn_not_picked[index]:
-                if self.hidden.get() == 'No':
+            if self.pkmn_not_picked[index] and self.hidden.get() == 'No':
                     button.config(image=self.img_pkmn[index]['inactive'])
-                else:
-                    pass
-            else:
-                pass
         else:
             self.pool_buttons[index].config(image=self.controller.img_blank['inactive'])
 
     # TODO FIXME: Replace with top level on_enter
     def team_on_enter(self, team, slot):
-        if self.pkmn_team_list[team][slot]:
+        if (self.pkmn_team_list[team][slot]):
             pool_num = self.pkmn_pool_list.index(self.pkmn_team_list[team][slot])
-            self.team_buttons[team][slot].config(image=self.img_pkmn[pool_num]['active'])
-        else:
-            self.team_buttons[team][slot].config(image=self.controller.img_blank['active'])
+            self.team_buttons[team][slot].config(image=self.img_pkmn[pool_num]['active'] if (self.pkmn_team_list[team][slot]) else self.controller.img_blank['active'])
 
     # TODO FIXME: Replace with top level on_leave
     def team_on_leave(self, team, slot):
-        if self.pkmn_team_list[team][slot]:
+        if (self.pkmn_team_list[team][slot]):
             pool_num = self.pkmn_pool_list.index(self.pkmn_team_list[team][slot])
-            self.team_buttons[team][slot].config(image=self.img_pkmn[pool_num]['inactive'])
-        else:
-            self.team_buttons[team][slot].config(image=self.controller.img_blank['inactive'])
+            self.team_buttons[team][slot].config(image=self.img_pkmn[pool_num]['inactive'] if (self.pkmn_team_list[team][slot]) else self.controller.img_blank['inactive'])
 
     """function : replace_images
     purpose     : Updates the images to use if Pokemon list changes.
@@ -772,37 +744,28 @@ class Draft(tk.Frame):
     """
     def replace_images(self):
         if self.game_activated:
-            # clear images
+            # clear all images
             self.img_pkmn = {}
-            for i in range(len(self.pkmn_pool_list)):
-                self.img_pkmn[i] = {}
-                for j in ['inactive', 'active', 'unknown', 'banned', 'picked']:
-                    # get filename
-                    pkmn_name = get_mega_name(self.pkmn_pool_list[i]) if (self.show_megas.get() == 'Yes') else self.pkmn_pool_list[i].name
-                    pkmn_name = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
+            for pool_num in range(len(self.pkmn_pool_list)):
+                # replace all images
+                pkmn_name = get_mega_name(self.pkmn_pool_list[pool_num]) if (self.show_megas.get() == 'Yes') else self.pkmn_pool_list[pool_num].name
+                self.get_pkmn_imgs(pool_num, pkmn_name)
 
-                    # create images
-                    mode = self.draft_mode.get()
-                    self.img_pkmn_base = RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_' + j + '.png'))
-                    self.img_pkmn_base.paste(self.controller.img_border[mode],
-                                             (0, 0),
-                                             self.controller.img_border[mode])
-                    self.img_pkmn[i][j] = ImageTk.PhotoImage(self.img_pkmn_base)
-
-            # replace the pool images
-            for i in range(len(self.pkmn_pool_list)):
-                if self.pkmn_not_picked[i]:
-                    self.pool_buttons[i].config(image=self.img_pkmn[i]['inactive' if (self.hidden.get() == 'No') else 'unknown'])
+            # replace the pool button images
+            for index in range(len(self.pkmn_pool_list)):
+                if self.pkmn_not_picked[index]:
+                    self.pool_buttons[index].config(image=self.img_pkmn[index]['inactive' if (self.hidden.get() == 'No') else 'unknown'])
                 else:
-                    self.pool_buttons[i].config(image=self.img_pkmn[i]['picked'])
+                    self.pool_buttons[index].config(image=self.img_pkmn[index]['picked'])
 
-            # replace the ban images
+            # replace the ban button images
             for team in range(len(self.ban_list)):
                 for slot in range(len(self.ban_list[team])):
                     if self.ban_list[team][slot]:
                         pool_num = self.get_pool_num(self.ban_list[team][slot].name)
+                        self.ban_buttons[team][slot].config(image=self.img_pkmn[pool_num]['inactive'])
 
-            # replace the team images
+            # replace the team button images
             for team in range(len(self.pkmn_team_list)):
                 for slot in range(len(self.pkmn_team_list[team])):
                     if self.pkmn_team_list[team][slot]:
@@ -810,7 +773,7 @@ class Draft(tk.Frame):
                         self.team_buttons[team][slot].config(image=self.img_pkmn[pool_num]['inactive'])
 
     """function : get_pool_num
-    purpose     : Updates the images to use if Pokemon list changes.
+    purpose     : Retrieve the index of the Pokemon in the pool by name.
     @param[in]  : self An instance of the Draft object [tk.Frame].
     @param[in]  : pkmn_name The name of the Pokemon to look for [string].
     @param[out] : slot The slot number of the Pokemon [int].
@@ -947,6 +910,7 @@ class Random(tk.Frame):
     """
     def init_vars(self):
         self.game_activated = False
+        # TODO FIXME: replace into a dictionary like in Draft
         self.img_pkmn = [[] for i in range(3)]
 
         # configure the page layout
@@ -1017,10 +981,14 @@ class Random(tk.Frame):
     """function : new_game
     purpose     : Starts a brand new Random game using the current settings.
     @param[in]  : self An instance of the Random object [tk.Frame].
+    @param[out] : self.pkmn_team_list Both teams are populated [Pokemon].
+    @param[out] : self.team_buttons The buttons are updated [tk.Button].
     """
     def new_game(self):
         """function : filter_pkmn
         purpose     : Alias function for checking if a Pokemon fits criteria.
+        return      : True if Pokemon should be excluded from current game;
+                      False otherwise.
         """
         def filter_pkmn():
             if self.theme.get() == 'Monotype':
@@ -1050,7 +1018,7 @@ class Random(tk.Frame):
         # reset private variables
         self.game_activated = True
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
-        self.img_pkmn = [[] for i in range(3)]
+        self.img_pkmn = [[None for i in range(12)] for j in range(3)]
 
         # get all exclusions
         temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
@@ -1091,108 +1059,98 @@ class Random(tk.Frame):
                         counter += 1
             counter = 0
 
-        for i in range(2):
-            for j in range(6):
+        # configure the team buttons
+        for team in range(2):
+            for slot in range(6):
                 # get Pokemon images
-                pkmn_name = get_mega_name(self.pkmn_team_list[i][j]) if (self.show_megas.get() == 'Yes') else self.pkmn_team_list[i][j].name
-                self.get_pkmn_imgs(pkmn_name)
+                pkmn_name = get_mega_name(self.pkmn_team_list[team][slot]) if (self.show_megas.get() == 'Yes') else self.pkmn_team_list[team][slot].name
+                index = (team * 6) + slot
+                self.get_pkmn_imgs(pkmn_name, team, slot)
+                self.team_buttons[team][slot].config(
+                    image=self.img_pkmn[2 if (self.hidden.get() == 'Yes') else 0][index],
+                    command=lambda team=team, slot=slot: self.reroll(team, slot))
 
-                # configure the team buttons
-                slot = (i * 6) + j
-                self.team_buttons[i][j].config(image=self.img_pkmn[2 if (self.hidden.get() == 'Yes') else 0][slot], command=lambda i=i, j=j: self.reroll(i, j))
-
-        # configure finish button
+        # configure Sets button
         self.controller.sidebar.buttons['Sets'].config(state='normal', command=lambda: get_sets(self))
 
     """function : get_pkmn_imgs
-    purpose     : Starts a brand new Random game using the current settings.
+    purpose     : Retrieves all the associated Pokemon's images and stores them
+                  in self.img_pkmn.
     @param[in]  : self An instance of the Random object [tk.Frame].
+    @param[in]  : pkmn_name The name of the Pokemon [string].
+    @param[out] : self.img_pkmn The images are added to the list.
     """
-    def get_pkmn_imgs(self, pkmn_name):
+    def get_pkmn_imgs(self, pkmn_name, team, slot):
+        index = (team * 6) + slot
         pkmn_name = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
-        self.img_pkmn_base = [RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_inactive.png')),
-                              RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_active.png')),
-                              RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_unknown.png'))]
+        img_pkmn_base = [RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_inactive.png')),
+                         RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_active.png')),
+                         RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_unknown.png'))]
         for i in range(3):
-            self.img_pkmn_base[i].paste(self.controller.img_border['Random'],
-                                        (0, 0),
-                                        self.controller.img_border['Random'])
-            self.img_pkmn[i].append(ImageTk.PhotoImage(self.img_pkmn_base[i]))
+            img_pkmn_base[i].paste(self.controller.img_border['Random'],
+                                   (0, 0),
+                                   self.controller.img_border['Random'])
+            self.img_pkmn[i][index] = ImageTk.PhotoImage(img_pkmn_base[i])
 
-    # TODO FIXME: start here
+    """function : reroll
+    purpose     : Replaces the current Pokemon selected with a new Pokemon and
+                  updates the images.
+    @param[in]  : self An instance of the Random object [tk.Frame].
+    @param[in]  : team The current team of the selected Pokemon [int].
+    @param[in]  : slot The current slot of the selected Pokemon [int].
+    @param[out] : self.pkmn_team_list The team list is updated with the new
+                  Pokemon [Pokemon].
+    @param[out] : self.img_pkmn The list is updated.
+    @param[out] : self.team_buttons The button image is updated.
+    """
     def reroll(self, team, slot):
-        x = (team * 6) + slot
+        index = (team * 6) + slot
         while True:
+            # pick a new random Pokemon
             temp_new_pkmn = random.choice(self.pkmn_list)
             if (check_validity(self, temp_new_pkmn, team)):
                 self.pkmn_team_list[team][slot] = temp_new_pkmn
-                name = self.pkmn_team_list[team][slot].name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
-                self.img_pkmn_base = [RGBAImage2(os.path.join(IMG_PKMN_DIR, name + '_inactive.png')),
-                                      RGBAImage2(os.path.join(IMG_PKMN_DIR, name + '_active.png'))]
-                for i in range(2):
-                    self.img_pkmn_base[i].paste(self.controller.img_border['Random'],
-                                                (0, 0),
-                                                self.controller.img_border['Random'])
-                for i in range(2):
-                    self.img_pkmn[i][x] = ImageTk.PhotoImage(self.img_pkmn_base[i])
-                self.team_buttons[team][slot].config(image=self.img_pkmn[0][x])
+                # replace the images
+                self.get_pkmn_imgs(self.pkmn_team_list[team][slot].name, team, slot)
+                self.team_buttons[team][slot].config(image=self.img_pkmn[0 if self.hidden.get() == 'No' else 2][index])
                 break
 
+    """function : team_on_enter
+    purpose     : Changes the button image to its active version upon the mouse
+                  hovering over it.
+    @param[in]  : self An instance of the Random object [tk.Frame].
+    @param[in]  : team The current team of the selected Pokemon [int].
+    @param[in]  : x The current slot of the selected Pokemon [int].
+    """
     def team_on_enter(self, team, x):
         if self.hidden.get() == 'No':
             pool_num = (team * 6) + x
             self.team_buttons[team][x].config(image=self.img_pkmn[1][pool_num] if (self.pkmn_team_list[team][x]) else self.controller.img_blank['active'])
 
+    """function : team_on_leave
+    purpose     : Changes the button image to its inactive version upon the mouse
+                  hovering over it.
+    @param[in]  : self An instance of the Random object [tk.Frame].
+    @param[in]  : team The current team of the selected Pokemon [int].
+    @param[in]  : x The current slot of the selected Pokemon [int].
+    """
     def team_on_leave(self, team, x):
         if self.hidden.get() == 'No':
             pool_num = (team * 6) + x
             self.team_buttons[team][x].config(image=self.img_pkmn[0][pool_num] if (self.pkmn_team_list[team][x]) else self.controller.img_blank['inactive'])
 
+    """function : replace_images
+    purpose     : Updates the images to use if Pokemon list changes.
+    @param[in]  : self An instance of the Random object [tk.Frame].
+    """
     def replace_images(self):
         if self.game_activated:
-            for i in range(len(self.pkmn_team_list)):
-                for j in range(len(self.pkmn_team_list[i])):
-                    x = (i * 6) + j
-                    if self.show_megas.get() == 'Yes':
-                        if is_mega(self.pkmn_team_list[i][j]):
-                            if self.pkmn_team_list[i][j].item.endswith('ite X'):
-                                pkmn_name = self.pkmn_team_list[i][j].name + '-Mega-X'
-                            elif self.pkmn_team_list[i][j].item.endswith('ite Y'):
-                                pkmn_name = self.pkmn_team_list[i][j].name + '-Mega-X'
-                            elif self.pkmn_team_list[i][j].ability == 'Battle Bond':
-                                pkmn_name = self.pkmn_team_list[i][j].name + '-Ash'
-                            else:
-                                pkmn_name = self.pkmn_team_list[i][j].name + '-Mega'
-                            self.img_pkmn_base = [
-                                RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_inactive.png')),
-                                RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_active.png')),
-                                RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_unknown.png'))]
-                            for k in range(3):
-                                self.img_pkmn_base[k].paste(
-                                    self.controller.img_border['Random'],
-                                    (0, 0),
-                                    self.controller.img_border['Random'])
-                                self.img_pkmn[k][x] = ImageTk.PhotoImage(self.img_pkmn_base[k])
-                    else:
-                        pkmn_name = self.pkmn_team_list[i][j].name
-                        pkmn_name = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
-                        self.img_pkmn_base = [
-                            RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_inactive.png')),
-                            RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_active.png')),
-                            RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_unknown.png'))]
-                        for k in range(3):
-                            self.img_pkmn_base[k].paste(
-                                self.controller.img_border['Random'],
-                                (0, 0),
-                                self.controller.img_border['Random'])
-                            self.img_pkmn[k][x] = ImageTk.PhotoImage(self.img_pkmn_base[k])
-            for i in range(2):
-                for j in range(6):
-                    x = (i * 6) + j
-                    if self.hidden.get() == 'No':
-                        self.team_buttons[i][j].config(image=self.img_pkmn[0][x])
-                    else:
-                        self.team_buttons[i][j].config(image=self.img_pkmn[2][x])
+            for team in range(2):
+                for slot in range(6):
+                    pkmn_name = get_mega_name(self.pkmn_team_list[team][slot]) if (self.show_megas.get() == 'Yes') else self.pkmn_team_list[team][slot].name
+                    self.get_pkmn_imgs(pkmn_name, team, slot)
+                    index = (team * 6) + slot
+                    self.team_buttons[team][slot].config(image=self.img_pkmn[0 if (self.hidden.get() == 'No') else 2][index])
 
 
 class RandomSettings(tk.Frame):
@@ -1238,51 +1196,67 @@ class RandomSettings(tk.Frame):
 
 
 class RandomGenerateSettings(tk.Frame):
+
+    """function : __init__
+    purpose     : Initializes the RandomGenerateSettings page and its components.
+    @param[in]  : self An instance of the RandomGenerateSettings object [tk.Frame].
+    @param[in]  : parent The object type to instantiate [tk.Frame].
+    @param[in]  : controller The owner of RandomGenerateSettings [MainApp].
+    """
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
         setup_pkmn_settings(self, 'Random')
 
+    """function : parent_page
+    purpose     : Alias for getting the Random page.
+    @param[in]  : self An instance of the RandomGenerateSettings object [tk.Frame].
+    @param[out] : The Random page [tk.Frame].
+    """
     def parent_page(self):
         return self.controller.pages['Random']
 
 
 class Store(tk.Frame):
+
+    """function : __init__
+    purpose     : Initializes the Store page and its components.
+    @param[in]  : self An instance of the Store object [tk.Frame].
+    @param[in]  : parent The object type to instantiate [tk.Frame].
+    @param[in]  : controller The owner of Store [MainApp].
+    """
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        if month <= 6 or (month == 6 and 1 <= day <= 8):
-            self.banner_num = 0
-        if month == 6 and 9 <= day <= 15:
-            self.banner_num = 2
-        if month == 6 and 16 <= day <= 22:
-            self.banner_num = 4
-        if month == 6 and 23 <= day <= 29:
-            self.banner_num = 6
-        if (month == 6 and 30 == day) or (month == 7 and 1 <= day <= 6):
-            self.banner_num = 8
-        if month == 7 and 7 <= day <= 13:
-            self.banner_num = 10
-        if month == 7 and 14 <= day <= 20:
-            self.banner_num = 12
-        if month == 7 and 21 <= day <= 27:
-            self.banner_num = 14
-        # self.banner_num = 0
+        for i in range(9):
+            self.grid_rowconfigure(i, weight=1)
+        for i in range(4):
+            self.grid_columnconfigure(i, weight=1)
+
+        self.init_vars()
+        self.init_canvas()
+        self.init_buttons()
+        self.switch_player(self.current_player.get())
+
+    def init_vars(self):
+        # page variables
+        self.banner_num = get_banner_num()
         self.current_page = 0
         self.remaining = 44
         self.current_player = tk.StringVar()
         self.current_player.set(PLAYERS[0].name)
 
+        # banner section
         self.img_banners = []
         self.img_banner_buttons = []
         for i in range(self.banner_num, self.banner_num+2):
-            self.img_banners.append(
-                RGBAImage(os.path.join(COMMON, 'banner%s_fit.png' % i)))
-            self.img_banner_buttons.append(
-                RGBAImage(os.path.join(COMMON, 'banner%s_button.png' % i)))
+            self.img_banners.append(RGBAImage(os.path.join(COMMON, 'banner%s_fit.png' % i)))
+            self.img_banner_buttons.append(RGBAImage(os.path.join(COMMON, 'banner%s_button.png' % i)))
         self.banner_image = tk.Label(self, image=self.img_banners[0])
         self.banner_image.grid(row=0, column=0, columnspan=4, sticky='nsew')
+        # page button section
         self.page_frame = tk.Frame(self)
         self.page_frame.grid(row=2, column=0, columnspan=4, sticky='nsew')
         for i in range(4):
@@ -1296,6 +1270,7 @@ class Store(tk.Frame):
                 command=lambda i=i: self.change_page(i)))
             self.page_buttons[i].grid(row=0, column=i, padx=5, sticky='nsew')
 
+    def init_canvas(self):
         self.scrollframe = tk.LabelFrame(self, text='Available Pokemon')
         self.scrollframe.grid(row=3, column=0, rowspan=5, columnspan=4, padx=5,
                               pady=5, sticky='nsew')
@@ -1324,6 +1299,7 @@ class Store(tk.Frame):
                 self.container.create_window((j*100)+50, (i*70)+30,
                                              window=self.pkmn_buttons[i][j])
 
+    def init_buttons(self):
         self.pull_result = tk.Label(self, image=self.controller.img_blank['inactive'])
         self.pull_result.grid(row=8, column=0, padx=5, pady=5, sticky='nsew')
         self.player_option = tk.OptionMenu(self, self.current_player,
@@ -1344,17 +1320,12 @@ class Store(tk.Frame):
 
         self.pkmn_lists = [[], []]
         for pkmn in ALL_POKEMON_S:
-            if pkmn.srl_group == self.banner_num:
+            pkmn_name = get_mega_name(pkmn)
+            if pkmn_name in ALL_BANNERS[self.banner_num]:
                 self.pkmn_lists[0].append(pkmn)
-            if pkmn.srl_group == self.banner_num+1:
+            if pkmn_name in ALL_BANNERS[self.banner_num+1]:
                 self.pkmn_lists[1].append(pkmn)
 
-        self.switch_player(self.current_player.get())
-
-        for i in range(9):
-            self.grid_rowconfigure(i, weight=1)
-        for i in range(4):
-            self.grid_columnconfigure(i, weight=1)
 
     def get_pkmn_imgs(self):
         for i in range(2):
@@ -1365,20 +1336,16 @@ class Store(tk.Frame):
                     for k in range(3):
                         self.img_pkmn[i][k].append(self.controller.img_blank['inactive'])
                 else:
-                    self.img_pkmn_base = [
-                        RGBAImage2(os.path.join(IMG_PKMN_DIR,
-                                                pkmn_name + '_inactive.png')),
-                        RGBAImage2(os.path.join(IMG_PKMN_DIR,
-                                                pkmn_name + '_active.png')),
-                        RGBAImage2(os.path.join(IMG_PKMN_DIR,
-                                                pkmn_name + '_picked.png'))]
+                    img_pkmn_base = [RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_inactive.png')),
+                                     RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_active.png')),
+                                     RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_picked.png'))]
                     for k in range(3):
-                        self.img_pkmn_base[k].paste(
+                        img_pkmn_base[k].paste(
                             self.controller.img_border[get_rarity(pkmn_name)],
                             (0, 0),
                             self.controller.img_border[get_rarity(pkmn_name)])
                         self.img_pkmn[i][k].append(
-                            ImageTk.PhotoImage(self.img_pkmn_base[k]))
+                            ImageTk.PhotoImage(img_pkmn_base[k]))
 
     def _on_mousewheel(self, event):
         self.container.bind_all('<MouseWheel>', self._scroll)
@@ -1399,6 +1366,7 @@ class Store(tk.Frame):
             for j in range(len(self.pkmn_buttons[i])):
                 x = (i * 5) + j
                 if ALL_BANNERS[self.banner_num+self.current_page][x] == 'Blank':
+                    print('what')
                     self.pkmn_buttons[i][j].config(
                         image=self.img_pkmn[self.current_page][2][x],
                         command=lambda: None)
@@ -1419,7 +1387,7 @@ class Store(tk.Frame):
             self.pull_button.config(state='normal')
 
     def pull(self):
-        if self.remaining <= 0:
+        if self.remaining < 1:
             popup_message(self.controller,
                           'ERROR',
                           'No Pokemon remaining!')
@@ -1476,6 +1444,7 @@ class Store(tk.Frame):
         slot = playerNames.index(self.current_player.get())
         player_pkmn_list = PLAYERS[slot].pkmn_list
         player_pkmn_name_list = [i.name for i in player_pkmn_list]
+
         target_name = get_true_name(ALL_BANNERS[current_banner][x])
         for pkmn in PLAYERS[slot].pkmn_list:
             if pkmn.name == target_name:
@@ -1499,10 +1468,7 @@ class Store(tk.Frame):
             self.current_page = page_num
             self.banner_image.config(image=self.img_banners[self.current_page])
             self.switch_player(self.current_player.get())
-            if self.current_page + self.banner_num == 7 or self.current_page + self.banner_num == 15:
-                self.pull_button.config(state='disabled')
-            else:
-                self.pull_button.config(state='normal')
+            self.pull_button.config(state='disabled' if (self.current_page + self.banner_num == 7 or self.current_page + self.banner_num == 15) else 'normal')
 
     def on_enter(self):
         if self.pull_button.cget('state') != 'disabled':
@@ -1519,7 +1485,7 @@ class Store(tk.Frame):
             for pkmn in PLAYERS[slot].pkmn_list:
                 writer.writerow(
                     [pkmn.name, pkmn.dex, pkmn.type[0], pkmn.type[1],
-                     pkmn.tier, pkmn.rarity, str(pkmn.srl_group),
+                     pkmn.tier, pkmn.rarity,
                      pkmn.tag, pkmn.item, pkmn.ability,
                      pkmn.evSpread, pkmn.nature, pkmn.ivSpread,
                      pkmn.moves[0], pkmn.moves[1], pkmn.moves[2],
@@ -1530,9 +1496,6 @@ class Store(tk.Frame):
                      str(pkmn.picked_draft),
                      str(pkmn.picked_nemesis),
                      str(pkmn.banned)])
-
-    def view_help(self, banner_num):
-        self.controller.show_frame('StoreHelpPage')
 
 
 class Players(tk.Frame):
@@ -1955,7 +1918,7 @@ class NewPull(tk.Frame):
             for pkmn in PLAYERS[-1].pkmn_list:
                 writer.writerow(
                     [pkmn.name, pkmn.dex, pkmn.type[0], pkmn.type[1],
-                     pkmn.tier, pkmn.rarity, str(pkmn.srl_group),
+                     pkmn.tier, pkmn.rarity,
                      pkmn.tag, pkmn.item, pkmn.ability,
                      pkmn.evSpread, pkmn.nature, pkmn.ivSpread,
                      pkmn.moves[0], pkmn.moves[1], pkmn.moves[2],
@@ -2237,7 +2200,7 @@ def update_statistics(self):
         for pkmn in ALL_POKEMON_S:
             writer.writerow(
                 [pkmn.name, pkmn.dex, pkmn.type[0], pkmn.type[1],
-                 pkmn.tier, pkmn.rarity, str(pkmn.srl_group),
+                 pkmn.tier, pkmn.rarity,
                  pkmn.tag, pkmn.item, pkmn.ability,
                  pkmn.evSpread, pkmn.nature, pkmn.ivSpread,
                  pkmn.moves[0], pkmn.moves[1], pkmn.moves[2],
@@ -2614,10 +2577,27 @@ def popup_message(self, type, text, text2=''):
     # do not let user interact with underlying window
     self.wait_window(top)
 
+def get_banner_num():
+    if month <= 6 or (month == 6 and 1 <= day <= 8):
+        return 0
+    if month == 6 and 9 <= day <= 15:
+        return 2
+    if month == 6 and 16 <= day <= 22:
+        return 4
+    if month == 6 and 23 <= day <= 29:
+        return 6
+    if (month == 6 and 30 == day) or (month == 7 and 1 <= day <= 6):
+        return 8
+    if month == 7 and 7 <= day <= 13:
+        return 10
+    if month == 7 and 14 <= day <= 20:
+        return 12
+    if month == 7 and 21 <= day <= 27:
+        return 14
 
 if __name__ == '__main__':
     # global variables
-    VERSION = '2.2.0'
+    VERSION = '2.3.0'
     ROOT = os.path.dirname(os.path.realpath(__file__))
     COMMON = os.path.join(ROOT, 'media', 'Common')
     IMG_PKMN_DIR = os.path.join(ROOT, 'media', 'pokemon')
