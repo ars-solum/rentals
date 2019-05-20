@@ -1235,12 +1235,12 @@ class Store(tk.Frame):
         for i in range(4):
             self.grid_columnconfigure(i, weight=1)
 
-        self.init_vars()
+        self.init_banners()
         self.init_canvas()
         self.init_buttons()
         self.switch_player(self.current_player.get())
 
-    def init_vars(self):
+    def init_banners(self):
         # page variables
         self.banner_num = get_banner_num()
         self.current_page = 0
@@ -1274,8 +1274,7 @@ class Store(tk.Frame):
         self.scrollframe = tk.LabelFrame(self, text='Available Pokemon')
         self.scrollframe.grid(row=3, column=0, rowspan=5, columnspan=4, padx=5,
                               pady=5, sticky='nsew')
-        self.container = tk.Canvas(self.scrollframe,
-                                   scrollregion=(0, 0, 400, 640))
+        self.container = tk.Canvas(self.scrollframe, scrollregion=(0, 0, 400, 640))
         self.scrollbar = ttk.Scrollbar(self.scrollframe, orient='vertical',
                                        command=self.container.yview)
         self.container.config(yscrollcommand=self.scrollbar.set)
@@ -2518,19 +2517,12 @@ def exit(self, page):
         self.controller.show_frame(page)
 
 
-
 def RGBAImage(path):
     return ImageTk.PhotoImage(Image.open(path).convert('RGBA'))
 
 
 def RGBAImage2(path):
     return Image.open(path).convert('RGBA')
-
-
-class Player:
-    def __init__(self, name, pkmn_list):
-        self.name = name
-        self.pkmn_list = pkmn_list
 
 
 def init_player_information():
@@ -2550,6 +2542,7 @@ def init_player_information():
                         temp_pkmn_list.append(Pokemon(row))
                 PLAYERS.append(Player(player_name, temp_pkmn_list))
                 playerNames.append(player_name)
+
 
 def popup_message(self, type, text, text2=''):
     # initialize window and settings
@@ -2577,6 +2570,7 @@ def popup_message(self, type, text, text2=''):
     # do not let user interact with underlying window
     self.wait_window(top)
 
+
 def get_banner_num():
     if month <= 6 or (month == 6 and 1 <= day <= 8):
         return 0
@@ -2594,6 +2588,13 @@ def get_banner_num():
         return 12
     if month == 7 and 21 <= day <= 27:
         return 14
+
+
+class Player:
+    def __init__(self, name, pkmn_list):
+        self.name = name
+        self.pkmn_list = pkmn_list
+
 
 if __name__ == '__main__':
     # global variables
