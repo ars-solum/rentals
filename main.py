@@ -1647,7 +1647,7 @@ class Details(tk.Frame):
         finish = False
         for banner in range(len(ALL_BANNERS)):
             if pkmn_name in ALL_BANNERS[banner]:
-                banner_num = banner
+                banner_num = banner if (banner <= get_banner_num() + 1) else -1
                 break
         self.banner_img = RGBAImage(os.path.join(COMMON, 'banner%s_fit.png' % banner_num))
         self.banner.config(image=self.banner_img)
@@ -1842,6 +1842,7 @@ class Portrait(tk.Frame):
         # update and show the Players page
         self.controller.pages['Players'].display_pkmn(PLAYERS[playerNames.index(self.controller.pages['Players'].current_player.get())].name)
         self.controller.show_frame('Players')
+
 
 ################################################################################
 # global helper functions
