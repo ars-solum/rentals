@@ -7,9 +7,6 @@ Author  : Ars Solum
 Version : 2.2.0
 """
 
-################################################################################
-# system includes                                                              #
-################################################################################
 import csv
 from datetime import date
 import os
@@ -17,15 +14,12 @@ from PIL import Image, ImageTk
 import random
 from random import shuffle
 import tkinter as tk
+from tkinter.font import Font
 from tkinter import ttk
 
-################################################################################
-# local includes                                                               #
-################################################################################
 from Pokemon import *
 
 class MainApp(tk.Tk):
-
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
@@ -94,10 +88,10 @@ class MainApp(tk.Tk):
 
         self.pages = {}
 
-        # TODO FIXME: refactor the page creation process
+        # create each page
         for page in (Draft, Random, DraftSettings, DraftGenerateSettings,
-                      RandomSettings, RandomGenerateSettings, Store, Players,
-                      DraftHelpPage, StoreHelpPage, PullHelpPage, NewPull):
+                     RandomSettings, RandomGenerateSettings, Store, Players,
+                     StoreHelpPage, PullHelpPage, NewPull, Portrait, Details):
             page_name = page.__name__
             frame = page(parent=self.main_frame, controller=self)
             self.pages[page_name] = frame
@@ -108,8 +102,7 @@ class MainApp(tk.Tk):
 
     def show_frame(self, page_name):
         if (page_name == 'Store' and len(PLAYERS) == 1 and len(PLAYERS[0].pkmn_list) == 0):
-            popup_message(self, 'ERROR', 'You cannot visit the store right now.',
-                          text2='\nPlease roll for your first team.')
+            popup_message(self, 'ERROR', 'You cannot visit the store right now.', text2='\nPlease roll for your first team.')
         elif (page_name == 'Players' and len(PLAYERS) == 1 and len(PLAYERS[0].pkmn_list) == 0):
             popup_message(self, 'INFO', "Welcome Virgo! Let's get your starter Pokemon!")
 
@@ -117,6 +110,7 @@ class MainApp(tk.Tk):
             for key, button in self.sidebar.buttons.items():
                 button.config(state='disabled')
 
+            # redirect to Pull page
             frame = self.pages['NewPull']
             frame.tkraise()
         else:
@@ -124,18 +118,19 @@ class MainApp(tk.Tk):
                 for key, button in self.sidebar.buttons.items():
                     button.config(state='normal')
                     button.grid()
-                # check if game is finished
+                # disable Sets button if game not finished
                 if (self.pages[page_name].game_activated == False or
-                    (hasattr(self.pages[page_name], 'turn') and
-                     self.pages[page_name].turn < 12)):
+                    (hasattr(self.pages[page_name], 'turn') and self.pages[page_name].turn < 12)):
                     self.sidebar.buttons['Sets'].config(state='disabled')
+
+                # reconfigure settings buttons
                 self.sidebar.buttons['game_settings'].config(command=lambda:self.show_frame('%sSettings' % page_name))
                 self.sidebar.buttons['pkmn_settings'].config(command=lambda:self.show_frame('%sGenerateSettings' % page_name))
                 self.sidebar.buttons['Game'].config(command=self.pages[page_name].new_game)
             else:
                 # modify page-related buttons
                 for key, button in self.sidebar.buttons.items():
-                    if ('Settings' in page_name or 'Help' in page_name or'NewPull' in page_name):
+                    if ('Settings' in page_name or 'Help' in page_name or 'NewPull' in page_name or 'Portrait' in page_name or 'Details' in page_name):
                         button.config(state='disabled')
                     else:
                         button.config(state='normal')
@@ -146,6 +141,10 @@ class MainApp(tk.Tk):
             if page_name == 'Players':
                 # display current player's pokemon information
                 self.pages[page_name].display_pkmn(self.pages[page_name].current_player.get())
+
+            if page_name == 'Portrait':
+                # update portrait info
+                self.pages[page_name].cur_portrait.set(PLAYERS[playerNames.index(self.pages['Players'].current_player.get())].portrait)
 
             # change the page
             frame = self.pages[page_name]
@@ -169,7 +168,6 @@ class MainApp(tk.Tk):
 
 
 class Sidebar(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -244,7 +242,6 @@ class Sidebar(tk.Frame):
 
 
 class Draft(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -305,7 +302,7 @@ class Draft(tk.Frame):
         self.label_pool = tk.Label(self, image=self.img_pool)
         self.label_pool.grid(row=0, column=0, columnspan=5, sticky='nsw')
 
-        self.controller.HelpButton(self, 'Draft', 0, 5, location=self)
+        # self.controller.HelpButton(self, 'Draft', 0, 5, location=self)
 
         self.pkmn_pool_list = []
         self.pool_buttons = []
@@ -339,11 +336,11 @@ class Draft(tk.Frame):
             self.team_text[team].grid(row=7, column=team*4, columnspan=2, sticky='nsew')
             for row in range(3):
                 for column in range(2):
-                    x = (row * 2) + column
+                    slot = (row * 2) + column
                     self.team_buttons[team].append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1, command=lambda: None))
-                    self.team_buttons[team][x].grid(row=row+8, column=(team*4)+column, pady=5)
-                    self.team_buttons[team][x].bind('<Enter>', lambda event, team=team, x=x: self.team_on_enter(team, x))
-                    self.team_buttons[team][x].bind('<Leave>', lambda event, team=team, x=x: self.team_on_leave(team, x))
+                    self.team_buttons[team][slot].grid(row=row+8, column=(team*4)+column, pady=5)
+                    self.team_buttons[team][slot].bind('<Enter>', lambda event, team=team, slot=slot: self.team_on_enter(team, slot))
+                    self.team_buttons[team][slot].bind('<Leave>', lambda event, team=team, slot=slot: self.team_on_leave(team, slot))
         self.img_indicator = {'player 1': {}, 'player 2': {}}
         for i in range(1, 3):
             self.img_indicator['player %s' %i]['pick'] = RGBAImage(os.path.join(COMMON, 'p%sp.png' %i))
@@ -371,7 +368,6 @@ class Draft(tk.Frame):
         self.draft_num = 8 if (self.draft_mode.get() == 'First Pick') else 6
         self.turn = 0
         self.pkmn_pool_list = []
-        # TODO FIXME: Refactor into a dictionary?
         self.ban_list = [[None, None], [None, None]]
         self.ban_phase_finished = False
         self.pkmn_team_list = [[None for i in range(6)] for j in range(2)]
@@ -388,11 +384,14 @@ class Draft(tk.Frame):
 
         if self.battle_mode.get() == 'SRL':
             # get each player's roster
-            # TODO FIXME: do I need these checks if both players are valid already?
-            list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list if self.current_player[0].get() else []
-            list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list if self.current_player[1].get() else []
+            list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list
+            list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list
             temp_list = list1 + list2
         else:
+            # get all exclusions
+            temp_excl_tiers = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
+            temp_excl_types = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
+            temp_excl_gimmicks = list(filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
             # generate a random list based on the rules selected
             temp_list = []
             for pkmn in ALL_POKEMON_S:
@@ -416,10 +415,9 @@ class Draft(tk.Frame):
                 self.pool_buttons[index].bind('<Leave>', lambda event, button=self.pool_buttons[index], index=index: self.on_leave(button, index))
                 index += 1
 
-        # get checks and counters for all current Pokemon
         self.get_checks()
 
-        # reset indicator
+        # reset turn indicator
         self.indicator.config(image=self.img_indicator['player 2']['ban'] if (self.ban_number.get() > 0) else self.img_indicator['player 1']['pick'])
         self.indicator.grid()
 
@@ -467,12 +465,10 @@ class Draft(tk.Frame):
         return team_number, slot_number
 
     def add(self, pool_number):
-        if self.game_activated: # there must be an active game
+        if self.game_activated:
             if self.pkmn_not_picked[pool_number]: # the pokemon must be available
-                if self.turn < 12: # the drafting phase is not finished
+                if self.turn < 12:
                     team_number, slot_number = self.get_team_and_slot()
-
-                    # TODO FIXME: Check order of events
                     # check if the pokemon being added is breaking species clause
                     if self.pkmn_pool_list[pool_number].dex in [i.dex for i in self.pkmn_team_list[team_number] if i is not None]:
                         popup_message(self.controller,
@@ -495,12 +491,13 @@ class Draft(tk.Frame):
 
     def remove(self, pool_number, team_number, slot_number, list, button):
         if self.game_activated:
-            # reset/clear variables
+            # reset variables
             self.pkmn_not_picked[pool_number] = True
             list[team_number][slot_number] = None
             if list == self.ban_list:
                 self.ban_phase_finished = False
-            self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['inactive' if (self.hidden.get() == 'No') else 'unknown'], command=lambda i=pool_number: self.add(i))
+            self.pool_buttons[pool_number].config(image=self.img_pkmn[pool_number]['inactive' if (self.hidden.get() == 'No') else 'unknown'],
+                                                  command=lambda pool_number=pool_number: self.add(pool_number))
             button[team_number][slot_number].config(image=self.controller.img_blank['inactive'], command=lambda: None)
             self.update_turns()
             self.update_turn_indicator()
@@ -553,9 +550,7 @@ class Draft(tk.Frame):
         self.controller.sidebar.buttons['Sets'].config(state='normal' if (self.turn >= 12) else 'disabled', command=lambda: get_sets(self))
 
     def update_turn_indicator(self):
-        # get current turn
         turn = self.fp_team_order[self.turn] if (self.draft_mode.get() == 'First Pick') else self.turn % 2 + 1
-
         # configure indicator based on open ban slots
         if self.ban_number.get() > 0 and not self.ban_phase_finished: # there must be a ban phase
             if self.ban_list[1][0]: # team 2 slot 1 is filled
@@ -597,11 +592,15 @@ class Draft(tk.Frame):
         if (self.pkmn_team_list[team][slot]):
             pool_num = self.pkmn_pool_list.index(self.pkmn_team_list[team][slot])
             self.team_buttons[team][slot].config(image=self.img_pkmn[pool_num]['active'] if (self.pkmn_team_list[team][slot]) else self.controller.img_blank['active'])
+        else:
+            self.team_buttons[team][slot].config(image=self.controller.img_blank['active'])
 
     def team_on_leave(self, team, slot):
         if (self.pkmn_team_list[team][slot]):
             pool_num = self.pkmn_pool_list.index(self.pkmn_team_list[team][slot])
             self.team_buttons[team][slot].config(image=self.img_pkmn[pool_num]['inactive'] if (self.pkmn_team_list[team][slot]) else self.controller.img_blank['inactive'])
+        else:
+            self.team_buttons[team][slot].config(image=self.controller.img_blank['inactive'])
 
     def replace_images(self):
         if self.game_activated:
@@ -640,7 +639,6 @@ class Draft(tk.Frame):
 
 
 class DraftSettings(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -695,7 +693,6 @@ class DraftSettings(tk.Frame):
 
 
 class DraftGenerateSettings(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -707,7 +704,6 @@ class DraftGenerateSettings(tk.Frame):
 
 
 class Random(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -819,8 +815,8 @@ class Random(tk.Frame):
 
         if self.battle_mode.get() == 'SRL':
             # get each player's roster
-            list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list if self.current_player[0].get() else []
-            list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list if self.current_player[1].get() else []
+            list1 = PLAYERS[playerNames.index(self.current_player[0].get())].pkmn_list
+            list2 = PLAYERS[playerNames.index(self.current_player[1].get())].pkmn_list # if self.current_player[1].get() else []
             self.pkmn_list = list1 + list2
         else:
             # get all exclusions
@@ -1094,10 +1090,14 @@ class Store(tk.Frame):
             for column in range(len(self.pkmn_buttons[row])):
                 index = (row * 5) + column
                 if ALL_BANNERS[cur_banner][index] in player_pkmn_name_list:
-                    self.pkmn_buttons[row][column].config(image=self.img_pkmn[self.current_page][2][index], command=lambda index=index: self.remove(index))
+                    self.pkmn_buttons[row][column].config(
+                        image=self.img_pkmn[self.current_page][2][index],
+                        command=lambda index=index, row=row, column=column: self.remove(index, self.pkmn_buttons[row][column]))
                     self.remaining -= 1
                 else:
-                    self.pkmn_buttons[row][column].config(image=self.img_pkmn[self.current_page][0][index], command=lambda index=index, row=row, column=column: self.add(index, self.pkmn_buttons[row][column]))
+                    self.pkmn_buttons[row][column].config(
+                        image=self.img_pkmn[self.current_page][0][index],
+                        command=lambda index=index, row=row, column=column: self.add(index, self.pkmn_buttons[row][column]))
 
         # update display status
         self.remaining_label.config(text='Available:\n%d/44' % self.remaining)
@@ -1124,12 +1124,14 @@ class Store(tk.Frame):
                     for column in range(len(self.pkmn_buttons[row])):
                         index = (row * 5) + column
                         if index == pkmn_index:
-                            self.pkmn_buttons[row][column].config(image=self.img_pkmn[self.current_page][2][index], command=lambda index=index: self.remove(index))
+                            self.pkmn_buttons[row][column].config(
+                                image=self.img_pkmn[self.current_page][2][index],
+                                command=lambda index=index: self.remove(index, self.pkmn_buttons[row][column]))
                             self.pull_result.config(image=self.img_pkmn[self.current_page][0][index])
                             self.remaining -= 1
                             self.remaining_label.config(text='Available:\n%d/44' % self.remaining)
                             break
-                self.update_player_csv(slot)
+                self.update_player_csv()
                 break
 
     def add(self, index, button):
@@ -1191,6 +1193,7 @@ class Store(tk.Frame):
         file = os.path.join(PLAYER_DIR, self.current_player.get() + '.csv')
         with open(file, 'w', encoding='utf-8', newline='') as fileName:
             writer = csv.writer(fileName, delimiter=',')
+            writer.writerow([PLAYERS[playerNames.index(self.current_player.get())].portrait])
             for pkmn in PLAYERS[playerNames.index(self.current_player.get())].pkmn_list:
                 writer.writerow(
                     [pkmn.name, pkmn.dex, pkmn.type[0], pkmn.type[1],
@@ -1207,6 +1210,15 @@ class Players(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        for i in range(1, 3):
+            self.grid_columnconfigure(i, weight=1)
+        self.grid_rowconfigure(4, weight=1)
+
+        self.init_vars()
+        self.init_canvas()
+        self.display_pkmn(self.current_player.get())
+
+    def init_vars(self):
         self.current_player = tk.StringVar()
         self.current_player.set(PLAYERS[0].name)
 
@@ -1226,114 +1238,138 @@ class Players(tk.Frame):
         self.collect_img = RGBAImage(os.path.join(COMMON, 'label_collections.png'))
         self.collect_text = tk.Label(self, image=self.collect_img)
         self.collect_text.grid(row=2, column=0, columnspan=2, pady=(20,10), sticky='nsw')
-        # text instructions | drop down | get all set details
-        self.player_instruct_img = RGBAImage(os.path.join(COMMON, 'label_instruct.png'))
-        self.player_instruct_text = tk.Label(self, image=self.player_instruct_img)
-        self.player_instruct_text.grid(row=3, column=0, sticky='nse')
-        self.player_option = tk.OptionMenu(self, self.current_player,
-                                         *playerNames, command=self.display_pkmn)
+        # portrait | drop down | get all set details
+        self.portrait_img = RGBAImage(os.path.join(TRAINERS, 'trainer_portrait%d.png' %PLAYERS[playerNames.index(self.current_player.get())].portrait))
+        self.portrait_button = tk.Button(self, bd=0.1, image=self.portrait_img, command=lambda: self.controller.show_frame('Portrait'))
+        self.portrait_button.grid(row=3, column=0, sticky='nse')
+        self.player_option = tk.OptionMenu(self, self.current_player, *playerNames, command=self.display_pkmn)
         self.player_option.grid(row=3, column=1, sticky='ew')
-        self.get_sets_button = tk.Button(self, text='Copy All Sets', command=self.get_sets)
+        self.get_sets_button = tk.Button(self, text='Copy All Sets', command=self.get_all_sets)
         self.get_sets_button.grid(row=3, column=2, padx=10, sticky='ew')
+
+    def init_canvas(self):
         # [grid with pokemon icons]
-        self.scrollframe = tk.LabelFrame(self,
-            text='Pokemon Collection (%d Total)' %len(PLAYERS[0].pkmn_list))
-        self.scrollframe.grid(row=4, column=0, rowspan=3, columnspan=3, padx=5,
-                              pady=5, sticky='nsew')
-        self.container = tk.Canvas(self.scrollframe,
-                                   scrollregion=(0, 0, 400, 1640))
-        self.scrollbar = ttk.Scrollbar(self.scrollframe, orient='vertical',
-                                       command=self.container.yview)
+        self.scrollframe = tk.LabelFrame(self, text='Pokemon Collection (%d Total)' %len(PLAYERS[0].pkmn_list))
+        self.scrollframe.grid(row=4, column=0, rowspan=3, columnspan=3, padx=5, pady=5, sticky='nsew')
+        self.container = tk.Canvas(self.scrollframe, scrollregion=(0, 0, 400, 1640))
+        self.scrollbar = ttk.Scrollbar(self.scrollframe, orient='vertical', command=self.container.yview)
         self.container.config(yscrollcommand=self.scrollbar.set)
         self.container.bind('<Enter>', self._on_mousewheel)
         self.container.bind('<Leave>', self._off_mousewheel)
         self.scrollbar.pack(side='right', fill='y')
         self.container.pack(side='left', expand=True, fill='both')
+
+        # related canvas variables
         self.pkmn_img = [[], []]
         self.pkmn_buttons = []
         self.button_id = []
-        self.display_pkmn(self.current_player.get())
-
-        for i in range(1, 3):
-            self.grid_columnconfigure(i, weight=1)
-        self.grid_rowconfigure(4, weight=1)
 
     def add_player(self):
         player_name = self.enter_name.get().strip()
+        # clear entry widget
         self.enter_name.delete(0, 'end')
-        if player_name and player_name.lower() not in [i.lower() for i in playerNames]:
-            PLAYERS.append(Player(player_name, []))
+
+        # check name validity
+        if player_name.lower() in [i.lower() for i in playerNames]:
+            popup_message(self.controller,
+                          'ERROR',
+                          player_name + ' is already in use. Please choose another name.')
+        elif player_name and player_name.lower() not in [i.lower() for i in playerNames]:
+            # add the player to the player list and dropdown menus
+            PLAYERS.append(Player(player_name, random.randint(0, 91), []))
             playerNames.append(player_name)
             update_all_optionmenus(self.controller)
+
+            # change to starter page
             for key, button in self.controller.sidebar.buttons.items():
                 button.config(state='disabled')
             self.controller.pages['NewPull'].clear()
             self.controller.show_frame('NewPull')
-
-        elif player_name.lower() in [i.lower() for i in playerNames]:
-            popup_message(self.controller,
-                          'ERROR',
-                          player_name + ' is already in use. Please choose another name.')
         else:
             pass
 
     def display_pkmn(self, player_name):
+        # set the current player
         self.current_player.set(player_name)
         cur_player = PLAYERS[playerNames.index(self.current_player.get())]
+        # update the displayed information
         self.scrollframe.config(text='Pokemon Collection (%d Total)' %len(cur_player.pkmn_list))
+        self.portrait_img = RGBAImage(os.path.join(TRAINERS, 'trainer_portrait%d.png' %cur_player.portrait))
+        self.portrait_button.config(image=self.portrait_img)
+
+        # clear all buttons and images
         self.pkmn_buttons = []
         if self.button_id:
             for id in self.button_id:
                 self.container.delete(id)
         self.button_id = []
         self.pkmn_img = [[], []]
+
+        # reconstruct canvas with new current player's Pokemon
         for i in range(len(cur_player.pkmn_list)):
+            # create new buttons with new Pokemon info
             self.get_pkmn_imgs(get_mega_name(cur_player.pkmn_list[i]))
-            self.pkmn_buttons.append(tk.Button(self.container,
-                image=self.pkmn_img[0][i],
-                bd=0.1,
+            self.pkmn_buttons.append(tk.Button(self.container, image=self.pkmn_img[0][i], bd=0.1,
                 command=lambda i=i: self.get_specific_set(cur_player.pkmn_list[i])))
             self.pkmn_buttons[i].bind('<Enter>', lambda event, i=i: self.on_enter(i))
             self.pkmn_buttons[i].bind('<Leave>', lambda event, i=i: self.on_leave(i))
-            self.button_id.append(self.container.create_window(
-                ((i%6)*80)+50, (int(i/6)*70)+30, window=self.pkmn_buttons[i]))
+            self.pkmn_buttons[i].bind('<Button-3>', lambda event, i=i: self.popup(event, i))
+
+            # place new buttons on canvas
+            self.button_id.append(self.container.create_window(((i%6)*80)+50, (int(i/6)*70)+30, window=self.pkmn_buttons[i]))
+
+    def popup(self, event, index):
+        # popup menu
+        pkmn = PLAYERS[playerNames.index(self.current_player.get())].pkmn_list[index]
+        self.rclick_menu = tk.Menu(self, tearoff=0)
+        self.rclick_menu.add_command(label="View Details", command=lambda pkmn=pkmn: self.view_more_details(pkmn))
+        self.rclick_menu.add_command(label='Copy Set', command=lambda pkmn=pkmn: self.get_specific_set(pkmn))
+        self.rclick_menu.add_command(label="Remove %s" %pkmn.name, command=lambda index=index: self.remove(index))
+        try:
+            self.rclick_menu.tk_popup(event.x_root+70, event.y_root+10, 0)
+        finally:
+            self.rclick_menu.grab_release()
+
+    def view_more_details(self, pkmn):
+        # get Pokemon information
+        self.controller.pages['Details'].display_pkmn(pkmn)
+        self.controller.show_frame('Details')
+
+    def remove(self, index):
+        if index < 6:
+            popup_message(self.controller, 'ERROR', 'You are not allowed to delete your starter Pokemon.')
+            return
+        # remove pokemon from list
+        del PLAYERS[playerNames.index(self.current_player.get())].pkmn_list[index]
+        file = os.path.join(PLAYER_DIR, self.current_player.get() + '.csv')
+        with open(file, 'w', encoding='utf-8', newline='') as fileName:
+            writer = csv.writer(fileName, delimiter=',')
+            writer.writerow([PLAYERS[playerNames.index(self.current_player.get())].portrait])
+            for pkmn in PLAYERS[playerNames.index(self.current_player.get())].pkmn_list:
+                writer.writerow(
+                    [pkmn.name, pkmn.dex, pkmn.type[0], pkmn.type[1],
+                     pkmn.tier, pkmn.rarity, pkmn.tag, pkmn.item, pkmn.ability,
+                     pkmn.evSpread, pkmn.nature, pkmn.ivSpread,
+                     pkmn.moves[0], pkmn.moves[1], pkmn.moves[2], pkmn.moves[3],
+                     str(pkmn.generated_draft), str(pkmn.generated_nemesis),
+                     str(pkmn.generated_random), str(pkmn.picked_draft),
+                     str(pkmn.picked_nemesis), str(pkmn.banned)])
+        # redraw canvas
+        self.display_pkmn(self.current_player.get())
+        # update Store (if needed)
+        self.controller.pages['Store'].switch_player(self.current_player.get())
 
     def get_pkmn_imgs(self, pkmn_name):
         pkmn_name = pkmn_name.replace('-Small', '').replace('-Large', '').replace('-Super', '').replace(':', '')
-        self.img_pkmn_base = [RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_inactive.png')),
-                              RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_active.png'))]
+        img_pkmn_base = [RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_inactive.png')),
+                         RGBAImage2(os.path.join(IMG_PKMN_DIR, pkmn_name + '_active.png'))]
         for i in range(2):
-            self.img_pkmn_base[i].paste(self.controller.img_border[get_rarity(pkmn_name)],
-                                        (0, 0),
-                                        self.controller.img_border[get_rarity(pkmn_name)])
-        for i in range(2):
-            self.pkmn_img[i].append(ImageTk.PhotoImage(self.img_pkmn_base[i]))
+            img_pkmn_base[i].paste(self.controller.img_border[get_rarity(pkmn_name)],
+                                   (0, 0),
+                                   self.controller.img_border[get_rarity(pkmn_name)])
+            self.pkmn_img[i].append(ImageTk.PhotoImage(img_pkmn_base[i]))
 
-    def get_sets(self):
-        cur_player = PLAYERS[playerNames.index(self.current_player.get())]
-        self.controller.clipboard_clear()
-        sets = ''
-        for pkmn in cur_player.pkmn_list:
-            if pkmn.item:
-                sets += pkmn.name + ' @ ' + pkmn.item + '\n'
-            else:
-                sets += pkmn.name + '\n'
-            sets += 'Ability: ' + pkmn.ability + '\n'
-            sets += 'EVs: ' + pkmn.evSpread + '\n'
-            sets += pkmn.nature + ' Nature\n'
-            if pkmn.ivSpread:
-                sets += 'IVs: ' + pkmn.ivSpread + '\n'
-            for move in pkmn.moves:
-                if move:
-                    sets += '- ' + move + '\n'
-            sets += '\n'
-        self.controller.clipboard_append(sets)
-        popup_message(self.controller,
-                      'INFO',
-                      "Copied all of %s's Pokemon to clipboard." % cur_player.name)
-
-    def get_specific_set(self, pkmn):
-        self.controller.clipboard_clear()
+    def format_sets(self, pkmn):
         sets = ''
         if pkmn.item:
             sets += pkmn.name + ' @ ' + pkmn.item + '\n'
@@ -1347,10 +1383,22 @@ class Players(tk.Frame):
         for move in pkmn.moves:
             if move:
                 sets += '- ' + move + '\n'
+        return sets
+
+    def get_all_sets(self):
+        cur_player = PLAYERS[playerNames.index(self.current_player.get())]
+        self.controller.clipboard_clear()
+        sets = ''
+        for pkmn in cur_player.pkmn_list:
+            sets += self.format_sets(pkmn) + '\n'
         self.controller.clipboard_append(sets)
-        popup_message(self.controller,
-                      'INFO',
-                      "Copied %s's set to clipboard." % pkmn.name)
+        popup_message(self.controller, 'INFO', "Copied all of %s's Pokemon to clipboard." % cur_player.name)
+
+    def get_specific_set(self, pkmn):
+        self.controller.clipboard_clear()
+        sets = self.format_sets(pkmn)
+        self.controller.clipboard_append(sets)
+        popup_message(self.controller, 'INFO', "Copied %s's set to clipboard." % pkmn.name)
 
     def _on_mousewheel(self, event):
         self.container.bind_all('<MouseWheel>', self._scroll)
@@ -1520,6 +1568,7 @@ class NewPull(tk.Frame):
         filename = PLAYERS[-1].name + '.csv'
         with open(os.path.join(PLAYER_DIR, filename), 'w', encoding='utf-8', newline='') as file:
             writer = csv.writer(file, delimiter=',')
+            writer.writerow([PLAYERS[-1].portrait])
             for pkmn in PLAYERS[-1].pkmn_list:
                 writer.writerow(
                     [pkmn.name, pkmn.dex, pkmn.type[0], pkmn.type[1],
@@ -1533,6 +1582,7 @@ class NewPull(tk.Frame):
         update_all_optionmenus(self.controller)
         for key, button in self.controller.sidebar.buttons.items():
             button.config(state='normal')
+        self.controller.pages['Players'].display_pkmn(PLAYERS[-1].name)
         self.controller.show_frame('Players')
 
     def team_on_enter(self, slot):
@@ -1555,40 +1605,108 @@ class NewPull(tk.Frame):
         self.box_buttons[int(boxnum/2)][boxnum%2].config(image=self.box_images[0][boxnum])
 
 
-class DraftHelpPage(tk.Frame):
+class Details(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-
-        self.scrollframe = tk.Frame(self)
-        self.scrollframe.grid(row=0, column=0, sticky='nsew')
-        self.container = tk.Canvas(self.scrollframe, scrollregion=(0, 0, 400, 3000))
-        self.scrollbar = ttk.Scrollbar(self.scrollframe, orient='vertical', command=self.container.yview)
-        self.container.config(yscrollcommand=self.scrollbar.set)
-        self.container.bind('<Enter>', self._on_mousewheel)
-        self.container.bind('<Leave>', self._off_mousewheel)
-        self.scrollbar.pack(side='right', fill='y')
-        self.container.pack(side='left', expand=True, fill='both')
-
-        self.img_help = RGBAImage(os.path.join(COMMON, 'help_play.png'))
-        self.help = tk.Label(self.container, image=self.img_help)
-        self.container.create_window(255, 1480, window=self.help)
-
-        self.back_button = tk.Button(self, image=self.controller.img_back['inactive'], bd=0.1, command=lambda: self.controller.show_frame('Draft'))
-        self.back_button.grid(row=1, column=0, padx=5, pady=5)
-        self.back_button.bind('<Enter>', lambda event: self.controller.on_enter(self.back_button, self.controller.img_back['active']))
-        self.back_button.bind('<Leave>', lambda event: self.controller.on_leave(self.back_button, self.controller.img_back['inactive']))
-        self.grid_rowconfigure(0, weight=1)
+        # fix the rows with the sets
+        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(4, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-    def _on_mousewheel(self, event):
-        self.container.bind_all('<MouseWheel>', self._scroll)
+        # create each frame/row
+        self.frames = []
+        for i in range(5):
+            self.frames.append(tk.Frame(self))
+            self.frames[i].grid(row=i, column=0, sticky='nsew')
 
-    def _off_mousewheel(self, event):
-        self.container.unbind_all('<MouseWheel>')
+        # general information stuff and banner image
+        self.font = Font(size=18, weight='bold')
+        self.banner_txt = tk.Label(self.frames[0], text='Appears in:', font=self.font)
+        self.banner_txt.grid(row=0, column=0, sticky='nsew')
+        self.banner = tk.Label(self.frames[1])
+        self.banner.grid(row=0, column=0, sticky='nsew')
+        self.detail_header = tk.Label(self.frames[2], text='All Possible Sets (Singles):', font=self.font)
+        self.detail_header.grid(row=0, column=0, sticky='nsew')
+        self.set_details = []
 
-    def _scroll(self, event):
-        self.container.yview_scroll(int(-1*(event.delta/120)), 'units')
+        # back button
+        self.back_button = tk.Button(self, image=self.controller.img_back['inactive'], bd=0.1, command=lambda: self.controller.show_frame('Players'))
+        self.back_button.grid(row=5, column=0, padx=5, pady=5)
+        self.back_button.bind('<Enter>', lambda event: self.controller.on_enter(self.back_button, self.controller.img_back['active']))
+        self.back_button.bind('<Leave>', lambda event: self.controller.on_leave(self.back_button, self.controller.img_back['inactive']))
+
+    def display_pkmn(self, pkmn):
+        # get all similar Pokemon
+        temp_list = [i for i in ALL_POKEMON_S if i.name == pkmn.name]
+        pkmn_list = [i for i in temp_list if i.item == pkmn.item] if (is_mega(pkmn)) else temp_list
+        pkmn_name = get_mega_name(pkmn)
+
+        # determine banner number
+        banner_num = -1
+        finish = False
+        for banner in range(len(ALL_BANNERS)):
+            if pkmn_name in ALL_BANNERS[banner]:
+                banner_num = banner
+                break
+        self.banner_img = RGBAImage(os.path.join(COMMON, 'banner%s_fit.png' % banner_num))
+        self.banner.config(image=self.banner_img)
+
+        # get details of all sets
+        for widget in self.set_details:
+            widget.grid_forget()
+        self.set_details = []
+        for i in range(len(pkmn_list)):
+            sets = ''
+            if pkmn_list[i].item:
+                sets += pkmn_list[i].name + ' @ ' + pkmn_list[i].item + '\n'
+            else:
+                sets += pkmn_list[i].name + '\n'
+            sets += 'Ability: ' + pkmn_list[i].ability + '\n'
+            sets += 'EVs: ' + pkmn_list[i].evSpread + '\n'
+            sets += pkmn_list[i].nature + ' Nature\n'
+            if pkmn_list[i].ivSpread:
+                sets += 'IVs: ' + pkmn_list[i].ivSpread + '\n'
+            for move in pkmn_list[i].moves:
+                if move:
+                    sets += '- ' + move + '\n'
+            if not pkmn_list[i].ivSpread:
+                sets += '\n'
+            # place formatted set information
+            self.set_details.append(tk.Label(self.frames[3 if (int(i/3) == 0) else 4], text=sets, justify='left', fg='red' if self.is_current_set(pkmn, pkmn_list[i]) else 'black'))
+            self.set_details[i].grid(row=0, column=i, padx=5, pady=5, sticky='nsew')
+            self.set_details[i].bind('<Button-3>', lambda event, sets=sets: self.popup(event, sets))
+
+    def popup(self, event, sets):
+        # popup menu
+        self.rclick_menu = tk.Menu(self, tearoff=0)
+        self.rclick_menu.add_command(label='Copy Set', command=lambda sets=sets: self.copy(sets))
+        try:
+            self.rclick_menu.tk_popup(event.x_root+30, event.y_root+10, 0)
+        finally:
+            self.rclick_menu.grab_release()
+
+    def copy(self, sets):
+        self.controller.clipboard_clear()
+        self.controller.clipboard_append(sets)
+        popup_message(self.controller, 'INFO', "Copied to clipboard.")
+
+    def is_current_set(self, pkmn1, pkmn2):
+        if ((pkmn1.name != pkmn2.name) or
+            ((pkmn1.item and pkmn2.item) and (pkmn1.item != pkmn2.item)) or
+            (pkmn1.ability != pkmn2.ability) or
+            (pkmn1.evSpread != pkmn2.evSpread) or
+            (pkmn1.nature != pkmn2.nature)):
+            return False
+        if pkmn1.ivSpread and pkmn2.ivSpread:
+            if pkmn1.ivSpread != pkmn2.ivSpread:
+                return False
+        if (((pkmn1.moves[0] and pkmn2.moves[0]) and (pkmn1.moves[0] != pkmn2.moves[0])) or
+            ((pkmn1.moves[1] and pkmn2.moves[1]) and (pkmn1.moves[1] != pkmn2.moves[1])) or
+            ((pkmn1.moves[2] and pkmn2.moves[2]) and (pkmn1.moves[2] != pkmn2.moves[2])) or
+            ((pkmn1.moves[3] and pkmn2.moves[3]) and (pkmn1.moves[3] != pkmn2.moves[3]))):
+            return False
+        return True
 
 
 class StoreHelpPage(tk.Frame):
@@ -1596,30 +1714,30 @@ class StoreHelpPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # create canvas
         self.scrollframe = tk.Frame(self)
         self.scrollframe.grid(row=0, column=0, sticky='nsew')
-        self.container = tk.Canvas(self.scrollframe,
-                                   scrollregion=(0, 0, 400, 1200))
-        self.scrollbar = ttk.Scrollbar(self.scrollframe, orient='vertical',
-                                       command=self.container.yview)
+        self.container = tk.Canvas(self.scrollframe, scrollregion=(0, 0, 400, 1200))
+        self.scrollbar = ttk.Scrollbar(self.scrollframe, orient='vertical', command=self.container.yview)
         self.container.config(yscrollcommand=self.scrollbar.set)
         self.container.bind('<Enter>', self._on_mousewheel)
         self.container.bind('<Leave>', self._off_mousewheel)
         self.scrollbar.pack(side='right', fill='y')
         self.container.pack(side='left', expand=True, fill='both')
 
+        # create help image
         self.img_help = RGBAImage(os.path.join(COMMON, 'help_store.png'))
         self.help = tk.Label(self.container, image=self.img_help)
-        self.container.create_window(255, 590,
-                                     window=self.help)
+        self.container.create_window(255, 590, window=self.help)
 
-        self.back_button = tk.Button(self, image=self.controller.img_back['inactive'], bd=0.1,
-                                     command=lambda: self.controller.show_frame('Store'))
+        # back button
+        self.back_button = tk.Button(self, image=self.controller.img_back['inactive'], bd=0.1, command=lambda: self.controller.show_frame('Store'))
         self.back_button.grid(row=1, column=0, padx=5, pady=5)
         self.back_button.bind('<Enter>', lambda event: self.controller.on_enter(self.back_button, self.controller.img_back['active']))
         self.back_button.bind('<Leave>', lambda event: self.controller.on_leave(self.back_button, self.controller.img_back['inactive']))
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
 
     def _on_mousewheel(self, event):
         self.container.bind_all('<MouseWheel>', self._scroll)
@@ -1639,42 +1757,120 @@ class PullHelpPage(tk.Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
+        # create help image
         self.img_help = RGBAImage(os.path.join(COMMON, 'help_starter.png'))
         self.help_label = tk.Label(self, image=self.img_help)
         self.help_label.grid(row=0, column=0, sticky='nsew')
 
+        # back button
         self.back_button = tk.Button(self, image=self.controller.img_back['inactive'], bd=0.1, command=lambda: self.controller.show_frame('NewPull'))
         self.back_button.grid(row=1, column=0, padx=5, pady=5)
         self.back_button.bind('<Enter>', lambda event: self.controller.on_enter(self.back_button, 'back'))
         self.back_button.bind('<Leave>', lambda event: self.controller.on_leave(self.back_button, 'back'))
 
 
+class Portrait(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        self.init_canvas()
+
+    def init_canvas(self):
+        # create canvas
+        self.scrollframe = tk.Frame(self)
+        self.scrollframe.grid(row=0, column=0, sticky='nsew')
+        self.container = tk.Canvas(self.scrollframe, scrollregion=(0, 0, 400, 5430))
+        self.scrollbar = ttk.Scrollbar(self.scrollframe, orient='vertical', command=self.container.yview)
+        self.container.config(yscrollcommand=self.scrollbar.set)
+        self.container.bind('<Enter>', self._on_mousewheel)
+        self.container.bind('<Leave>', self._off_mousewheel)
+        self.scrollbar.pack(side='right', fill='y')
+        self.container.pack(side='left', expand=True, fill='both')
+
+        # get the current player
+        cur_player = PLAYERS[playerNames.index(self.controller.pages['Players'].current_player.get())]
+        self.cur_portrait = tk.IntVar()
+        self.cur_portrait.set(cur_player.portrait)
+
+        self.portrait_buttons = []
+        self.button_id = []
+        self.portrait_img = []
+
+        # construct canvas
+        for i in range(92):
+            # create buttons
+            self.portrait_img.append(RGBAImage(os.path.join(TRAINERS, 'trainer_portrait%d.png' %i)))
+            self.portrait_buttons.append(tk.Radiobutton(
+                self.container,
+                image=self.portrait_img[i], bd=0.1,
+                variable=self.cur_portrait,
+                value=i,
+                indicatoron=0,
+                command=self.change_portrait))
+            # place buttons on canvas
+            self.button_id.append(self.container.create_window(((i%3)*175)+90, (int(i/3)*175)+90, window=self.portrait_buttons[i]))
+
+    def _on_mousewheel(self, event):
+        self.container.bind_all('<MouseWheel>', self._scroll)
+
+    def _off_mousewheel(self, event):
+        self.container.unbind_all('<MouseWheel>')
+
+    def _scroll(self, event):
+        self.container.yview_scroll(int(-1*(event.delta/120)), 'units')
+
+    def change_portrait(self):
+        # overwrite and save player's portrait value
+        PLAYERS[playerNames.index(self.controller.pages['Players'].current_player.get())].portrait = self.cur_portrait.get()
+        file = os.path.join(PLAYER_DIR, PLAYERS[playerNames.index(self.controller.pages['Players'].current_player.get())].name + '.csv')
+        with open(file, 'w', encoding='utf-8', newline='') as fileName:
+            writer = csv.writer(fileName, delimiter=',')
+            writer.writerow([PLAYERS[playerNames.index(self.controller.pages['Players'].current_player.get())].portrait])
+            for pkmn in PLAYERS[playerNames.index(self.controller.pages['Players'].current_player.get())].pkmn_list:
+                writer.writerow(
+                    [pkmn.name, pkmn.dex, pkmn.type[0], pkmn.type[1],
+                     pkmn.tier, pkmn.rarity, pkmn.tag, pkmn.item, pkmn.ability,
+                     pkmn.evSpread, pkmn.nature, pkmn.ivSpread,
+                     pkmn.moves[0], pkmn.moves[1], pkmn.moves[2], pkmn.moves[3],
+                     str(pkmn.generated_draft), str(pkmn.generated_nemesis),
+                     str(pkmn.generated_random), str(pkmn.picked_draft),
+                     str(pkmn.picked_nemesis), str(pkmn.banned)])
+        # update and show the Players page
+        self.controller.pages['Players'].display_pkmn(PLAYERS[playerNames.index(self.controller.pages['Players'].current_player.get())].name)
+        self.controller.show_frame('Players')
+
+################################################################################
+# global helper functions
+################################################################################
 def update_all_optionmenus(self):
+    # get each optionmenu to update
     menu1 = self.pages['Store'].player_option['menu']
     menu2 = self.pages['Players'].player_option['menu']
     menu3 = self.pages['DraftSettings'].player_option[0]['menu']
     menu4 = self.pages['DraftSettings'].player_option[1]['menu']
     menu5 = self.pages['RandomSettings'].player_option[0]['menu']
     menu6 = self.pages['RandomSettings'].player_option[1]['menu']
+
+    # delete the optionmenu's items
     menu1.delete(0, 'end')
     menu2.delete(0, 'end')
     menu3.delete(0, 'end')
     menu4.delete(0, 'end')
     menu5.delete(0, 'end')
     menu6.delete(0, 'end')
+
+    # re-populate the menu lists
     for player in playerNames:
-        menu1.add_command(label=player,
-            command=lambda player=player: self.pages['Store'].switch_player(player))
-        menu2.add_command(label=player,
-            command=lambda player=player: self.pages['Players'].display_pkmn(player))
-        menu3.add_command(label=player,
-            command=lambda player=player: self.pages['Draft'].current_player[0].set(player))
-        menu4.add_command(label=player,
-            command=lambda player=player: self.pages['Draft'].current_player[1].set(player))
-        menu5.add_command(label=player,
-            command=lambda player=player: self.pages['Random'].current_player[0].set(player))
-        menu6.add_command(label=player,
-            command=lambda player=player: self.pages['Random'].current_player[1].set(player))
+        menu1.add_command(label=player, command=lambda player=player: self.pages['Store'].switch_player(player))
+        menu2.add_command(label=player, command=lambda player=player: self.pages['Players'].display_pkmn(player))
+        menu3.add_command(label=player, command=lambda player=player: self.pages['Draft'].current_player[0].set(player))
+        menu4.add_command(label=player, command=lambda player=player: self.pages['Draft'].current_player[1].set(player))
+        menu5.add_command(label=player, command=lambda player=player: self.pages['Random'].current_player[0].set(player))
+        menu6.add_command(label=player, command=lambda player=player: self.pages['Random'].current_player[1].set(player))
 
 
 def get_true_name(name):
@@ -1699,8 +1895,7 @@ def get_rarity(name):
         if name.endswith('-Mega') or name.endswith('Mega-Y') or name.endswith('Mega-X'):
             temp_name = get_true_name(name)
             if pkmn.name == temp_name:
-                if (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or
-                    pkmn.item.endswith('ite Y') or pkmn.ability == 'Battle Bond'):
+                if (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or pkmn.item.endswith('ite Y') or pkmn.ability == 'Battle Bond'):
                     rarity = pkmn.rarity
                     break
         else:
@@ -1709,8 +1904,7 @@ def get_rarity(name):
                 if pkmn.item == 'Eviolite':
                     rarity = pkmn.rarity
                     break
-                if not (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or
-                    pkmn.item.endswith('ite Y')):
+                if not (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or pkmn.item.endswith('ite Y')):
                     rarity = pkmn.rarity
                     break
     return rarity
@@ -1800,11 +1994,14 @@ def check_valid_item(self, pkmn):
 
 
 def validate(self, page):
+    # get exclusion lists
     temp_excl_tiers = list(filter(None, [i.get() for i in self.parent_page().pkmn_excl_tiers_s]))
     temp_excl_types = list(filter(None, [i.get() for i in self.parent_page().pkmn_excl_types]))
     temp_excl_gimmicks = list(filter(None, [i.get() for i in self.parent_page().pkmn_excl_gimmicks]))
     temp_counter = 0
     temp_list = []
+
+    # check if Pokemon fit criteria and count number of occurrences
     for pkmn in ALL_POKEMON_S:
         if ((pkmn.name in [i.name for i in temp_list]) or
             (pkmn.dex in [j.dex for j in temp_list]) or
@@ -1818,7 +2015,9 @@ def validate(self, page):
         else:
             temp_list.append(pkmn)
             temp_counter += 1
+
     if temp_counter >= 18:
+        # valid number of Pokemon
         self.controller.show_frame(page)
     else:
         popup_message(self.controller,
@@ -1877,7 +2076,7 @@ def update_statistics(self):
                     pkmn.picked_draft += 1
             else:
                 pkmn.generated_random += 1
-    file = os.path.join(DATA, 'Singles_copy.csv')
+    file = os.path.join(DATA, 'Singles.csv')
     with open(file, 'w', encoding='utf-8', newline='') as fileName:
         writer = csv.writer(fileName, delimiter=',')
         writer.writerow(['POKEMON', 'DEX', 'TYPE 1', 'TYPE 2', 'TIER',
@@ -1938,111 +2137,120 @@ def clean_up(self):
 
 
 def setup_pkmn_settings(self, page):
+    for i in range(22):
+        self.grid_rowconfigure(i, weight=1)
+
+    # exclusions header
     self.exclusions_img = RGBAImage(os.path.join(COMMON, 'label_exclusions.png'))
     self.exclusions_text = tk.Label(self, image=self.exclusions_img)
     self.exclusions_text.grid(row=0, column=0, columnspan=6, pady=2, sticky='nsw')
+
+    # singles tiers section
     self.tier_text = tk.Label(self, text='Tiers (Singles)')
     self.tier_text.grid(row=1, column=0, rowspan=2, sticky='w')
     self.tier_buttons = []
     for i in range(len(TIERS_SINGLES)):
-        self.tier_buttons.append(tk.Checkbutton(self, text=TIERS_SINGLES[i],
+        self.tier_buttons.append(tk.Checkbutton(self,
+            text=TIERS_SINGLES[i],
             variable=self.parent_page().pkmn_excl_tiers_s[i],
             onvalue=TIERS_SINGLES[i],
             offvalue=''))
-        self.tier_buttons[i].grid(row=1 + int(i / 5), column=(i % 5) + 1,
-                                  sticky='w')
+        self.tier_buttons[i].grid(row=1 + int(i/5), column=(i%5) + 1, sticky='w')
 
+    # create horizontal separators for clarity
     self.separators = [ttk.Separator(self, orient='horizontal') for i in range(7)]
     self.separators[0].grid(row=3, column=0, columnspan=6, sticky='nsew')
 
-
+    # doubles tiers section
     self.tier2_text = tk.Label(self, text='Tiers (Doubles)')
     self.tier2_text.grid(row=4, column=0, sticky='w')
     self.tier2_buttons = []
     for i in range(len(TIERS_DOUBLES)):
-        self.tier2_buttons.append(tk.Checkbutton(self, text=TIERS_DOUBLES[i],
+        self.tier2_buttons.append(tk.Checkbutton(self,
+            text=TIERS_DOUBLES[i],
             variable=self.parent_page().pkmn_excl_tiers_d[i],
             onvalue=TIERS_DOUBLES[i],
             state='disabled',
             offvalue=''))
-        self.tier2_buttons[i].grid(row=4 + int(i / 5), column=(i % 5) + 1,
-                                   sticky='w')
-
+        self.tier2_buttons[i].grid(row=4 + int(i/5), column=(i%5) + 1, sticky='w')
     self.separators[1].grid(row=5, column=0, columnspan=6, sticky='nsew')
 
+    # generations section
     self.gen_text = tk.Label(self, text='Generations')
     self.gen_text.grid(row=6, column=0, rowspan=2, sticky='w')
     self.gen_buttons = []
     for i in range(len(GENERATIONS)):
-        self.gen_buttons.append(tk.Checkbutton(self, text=GENERATIONS[i],
+        self.gen_buttons.append(tk.Checkbutton(self,
+            text=GENERATIONS[i],
             variable=self.parent_page().pkmn_excl_gens[i],
             onvalue=GENERATIONS[i],
             offvalue=''))
-        self.gen_buttons[i].grid(row=6 + int(i / 5), column=(i % 5) + 1,
-                                 sticky='w')
-
+        self.gen_buttons[i].grid(row=6 + int(i/5), column=(i%5) + 1, sticky='w')
     self.separators[2].grid(row=8, column=0, columnspan=6, sticky='nsew')
 
+    # types section
     self.type_text = tk.Label(self, text='Types')
     self.type_text.grid(row=9, column=0, rowspan=4, sticky='w')
     self.type_buttons = []
     for i in range(len(TYPES)):
-        self.type_buttons.append(tk.Checkbutton(self, text=TYPES[i],
+        self.type_buttons.append(tk.Checkbutton(self,
+            text=TYPES[i],
             variable=self.parent_page().pkmn_excl_types[i],
             onvalue=TYPES[i],
             offvalue=''))
-        self.type_buttons[i].grid(row=9 + int(i / 5), column=(i % 5) + 1,
-                                  sticky='w')
-
+        self.type_buttons[i].grid(row=9 + int(i/5), column=(i%5) + 1, sticky='w')
     self.separators[3].grid(row=13, column=0, columnspan=6, sticky='nsew')
 
+    # held items section
     self.item_text = tk.Label(self, text='Items')
     self.item_text.grid(row=14, column=0, rowspan=2, sticky='w')
     self.item_buttons = []
     for i in range(len(ITEMS)):
-        self.item_buttons.append(tk.Checkbutton(self, text=ITEMS[i],
+        self.item_buttons.append(tk.Checkbutton(self,
+            text=ITEMS[i],
             variable=self.parent_page().pkmn_excl_items[i],
             onvalue=ITEMS[i],
             offvalue=''))
-        self.item_buttons[i].grid(row=14 + int(i / 5), column=(i % 5) + 1,
-                                  sticky='w')
-
+        self.item_buttons[i].grid(row=14 + int(i/5), column=(i%5) + 1, sticky='w')
     self.separators[4].grid(row=16, column=0, columnspan=6, sticky='nsew')
 
+    # gimmick section
     self.gimmick_text = tk.Label(self, text='Gimmicks')
     self.gimmick_text.grid(row=17, column=0, rowspan=3, sticky='w')
     self.gimmick_buttons = []
     for i in range(len(GIMMICKS)):
-        self.gimmick_buttons.append(tk.Checkbutton(self, text=GIMMICKS[i],
+        self.gimmick_buttons.append(tk.Checkbutton(self,
+            text=GIMMICKS[i],
             variable=self.parent_page().pkmn_excl_gimmicks[i],
             onvalue=GIMMICKS[i],
             offvalue=''))
-        self.gimmick_buttons[i].grid(row=17 + int(i / 5), column=(i % 5) + 1,
-                                     sticky='w')
-
+        self.gimmick_buttons[i].grid(row=17 + int(i/5), column=(i%5) + 1, sticky='w')
     self.separators[5].grid(row=19, column=0, columnspan=6, sticky='nsew')
 
+    # rentals usage section (empty)
     self.usage_text = tk.Label(self, text='Usage')
     self.usage_text.grid(row=20, column=0, sticky='w')
-
     self.separators[6].grid(row=21, column=0, columnspan=6, sticky='nsew')
-    self.img_back = []
-    for i in ['inactive', 'active']:
-        self.img_back.append(RGBAImage(os.path.join(COMMON, 'button_%s_back.png' %i)))
-    self.back_button = tk.Button(self, image=self.img_back[0], bd=0.1,
-                                 command=lambda: validate(self, page))
-    self.back_button.grid(row=22, column=1, columnspan=4, padx=5, pady=5,
-                          sticky='nsew')
+
+    # back button
+    self.back_button = tk.Button(self, image=self.controller.img_back['inactive'], bd=0.1, command=lambda page=page: validate(self, page))
+    self.back_button.grid(row=22, column=1, columnspan=4, padx=5, pady=5, sticky='nsew')
     self.back_button.bind('<Enter>', lambda event: self.controller.on_enter(self.back_button, self.controller.img_back['active']))
     self.back_button.bind('<Leave>', lambda event: self.controller.on_leave(self.back_button, self.controller.img_back['inactive']))
-    for i in range(22):
-        self.grid_rowconfigure(i, weight=1)
 
 
 def setup_game_settings(self, page):
+    for i in range(6):
+        self.grid_rowconfigure(i, weight=1)
+    for i in range(4):
+        self.grid_columnconfigure(i, weight=1)
+
+    # rules header
     self.rules_img = RGBAImage(os.path.join(COMMON, 'label_rules.png'))
     self.rules_label = tk.Label(self, image=self.rules_img)
     self.rules_label.grid(row=0, column=0, columnspan=4, sticky='nsw')
+
+    # battle mode | singles | doubles | srl
     self.battle_mode_text = tk.Label(self, text='Battle Mode')
     self.battle_mode_text.grid(row=1, column=0, padx=5, pady=5, sticky='w')
     self.battle_mode_buttons = []
@@ -2055,9 +2263,10 @@ def setup_game_settings(self, page):
             width=10,
             value=battle_modes[i],
             command=self.update_gen_settings))
-        self.battle_mode_buttons[i].grid(row=1+int(i/5), column=(i % 5)+1,
-                                         padx=5, pady=5, sticky='nsew')
+        self.battle_mode_buttons[i].grid(row=1+int(i/5), column=(i % 5)+1, padx=5, pady=5, sticky='nsew')
+
     if page == 'Draft':
+        # draft mode | standard | nemesis | first pick
         self.draft_mode_text = tk.Label(self, text='Draft Mode')
         self.draft_mode_text.grid(row=2, column=0, padx=5, pady=5, sticky='w')
         self.draft_mode_buttons = []
@@ -2069,10 +2278,9 @@ def setup_game_settings(self, page):
                 indicatoron=0,
                 value=draft_modes[i],
                 command=self.reset_game))
-            self.draft_mode_buttons[i].grid(row=2 + int(i / 5),
-                                            column=(i % 5) + 1,
-                                            padx=5, pady=5, sticky='nsew')
+            self.draft_mode_buttons[i].grid(row=2 + int(i/5), column=(i % 5) + 1, padx=5, pady=5, sticky='nsew')
 
+        # bans | 0 | 1 | 2
         self.ban_number_text = tk.Label(self, text='Bans')
         self.ban_number_text.grid(row=3, column=0, padx=5, pady=5, sticky='w')
         self.ban_number_buttons = []
@@ -2084,10 +2292,9 @@ def setup_game_settings(self, page):
                 indicatoron=0,
                 value=ban_number[i],
                 command=self.reset_game))
-            self.ban_number_buttons[i].grid(row=3 + int(i / 5),
-                                            column=(i % 5) + 1,
-                                            padx=5, pady=5, sticky='nsew')
+            self.ban_number_buttons[i].grid(row=3 + int(i/5), column=(i % 5) + 1, padx=5, pady=5, sticky='nsew')
     else:
+        # theme | random | balanced | monotype
         self.theme_text = tk.Label(self, text='Theme')
         self.theme_text.grid(row=2, column=0, padx=5, pady=5, sticky='w')
         self.theme_buttons = []
@@ -2099,20 +2306,19 @@ def setup_game_settings(self, page):
                 width=10,
                 value=themes[i],
                 command=self.update_gen_settings))
-            self.theme_buttons[i].grid(row=2+int(i/5), column=(i % 5)+1, padx=5,
-                                       pady=5, sticky='nsew')
+            self.theme_buttons[i].grid(row=2+int(i/5), column=(i%5)+1, padx=5, pady=5, sticky='nsew')
+
+        # create dropdown menus for two types
         self.type_option = []
         for i in range(2):
-            self.type_option.append(tk.OptionMenu(self, self.parent_page().type[i],
-                                                  *TYPES))
+            self.type_option.append(tk.OptionMenu(self, self.parent_page().type[i], *TYPES))
             self.type_option[i].grid(row=7, column=i*2, columnspan=2, padx=5, pady=5, sticky='ew')
+            # remove since the mode is not monotype
             self.type_option[i].grid_remove()
 
+    # megas | no | yes
     self.mega_text = tk.Label(self, text='Show Megas')
-    if page == 'Draft':
-        self.mega_text.grid(row=4, column=0, padx=5, pady=5, sticky='w')
-    else:
-        self.mega_text.grid(row=3, column=0, padx=5, pady=5, sticky='w')
+    self.mega_text.grid(row=4 if (page == 'Draft') else 3, column=0, padx=5, pady=5, sticky='w')
     self.mega_buttons = []
     megas = ['No', 'Yes']
     for i in range(len(megas)):
@@ -2122,18 +2328,11 @@ def setup_game_settings(self, page):
             indicatoron=0,
             value=megas[i],
             command=self.parent_page().replace_images))
-        if page == 'Draft':
-            self.mega_buttons[i].grid(row=4 + int(i/5), column=(i % 5) + 1,
-                                      padx=5, pady=5, sticky='nsew')
-        else:
-            self.mega_buttons[i].grid(row=3 + int(i/5), column=(i % 5) + 1,
-                                      padx=5, pady=5, sticky='nsew')
+        self.mega_buttons[i].grid(row=4 + int(i/5) if (page == 'Draft') else 3 + int(i/5), column=(i%5) + 1, padx=5, pady=5, sticky='nsew')
 
+    # hidden | no | yes
     self.hidden_text = tk.Label(self, text='Hide Pokemon')
-    if page == 'Draft':
-        self.hidden_text.grid(row=5, column=0, padx=5, pady=5, sticky='w')
-    else:
-        self.hidden_text.grid(row=4, column=0, padx=5, pady=5, sticky='w')
+    self.hidden_text.grid(row=5 if (page == 'Draft') else 4, column=0, padx=5, pady=5, sticky='w')
     self.hidden_buttons = []
     hidden = ['No', 'Yes']
     for i in range(len(hidden)):
@@ -2142,61 +2341,37 @@ def setup_game_settings(self, page):
             variable=self.parent_page().hidden,
             indicatoron=0,
             value=hidden[i]))
-        if page == 'Draft':
-            self.hidden_buttons[i].grid(row=5 + int(i/5), column=(i % 5) + 1,
-                                        padx=5, pady=5, sticky='nsew')
-        else:
-            self.hidden_buttons[i].grid(row=4 + int(i/5), column=(i % 5) + 1,
-                                        padx=5, pady=5, sticky='nsew')
+        self.hidden_buttons[i].grid(row=5 + int(i/5) if (page == 'Draft') else 4 + int(i/5), column=(i % 5) + 1, padx=5, pady=5, sticky='nsew')
 
+    # create dropdown menus for two players
     self.player_option = []
     for i in range(2):
-        self.player_option.append(tk.OptionMenu(self, self.parent_page().current_player[i],
-                                                *playerNames))
+        self.player_option.append(tk.OptionMenu(self, self.parent_page().current_player[i], *playerNames))
         self.player_option[i].grid(row=6, column=i*2, columnspan=2, padx=5, pady=5, sticky='ew')
         self.player_option[i].grid_remove()
 
-    self.back_button = tk.Button(self, image=self.controller.img_back['inactive'], bd=0.1,
-                                 command=lambda page=page: exit(self, page))
-    self.back_button.grid(row=9, column=1, columnspan=2,
-                          padx=5, pady=5, sticky='nsew')
+    # back button
+    self.back_button = tk.Button(self, image=self.controller.img_back['inactive'], bd=0.1, command=lambda page=page: exit(self, page))
+    self.back_button.grid(row=9, column=1, columnspan=2, padx=5, pady=5, sticky='nsew')
     self.back_button.bind('<Enter>', lambda event: self.controller.on_enter(self.back_button, self.controller.img_back['active']))
     self.back_button.bind('<Leave>', lambda event: self.controller.on_leave(self.back_button, self.controller.img_back['inactive']))
 
-    for i in range(6):
-        self.grid_rowconfigure(i, weight=1)
-    for i in range(4):
-        self.grid_columnconfigure(i, weight=1)
-
 
 def exit(self, page):
-    if self.parent_page().current_player[0].get():
-        list1 = len(PLAYERS[playerNames.index(self.parent_page().current_player[0].get())].pkmn_list)
-    else:
-        list1 = 0
-    if self.parent_page().current_player[1].get():
-        list2 = len(PLAYERS[playerNames.index(self.parent_page().current_player[1].get())].pkmn_list)
-    else:
-        list2 = 0
-    list_total = list1+list2
-    if (self.parent_page().battle_mode.get() == 'SRL' and
-        self.parent_page().current_player[0].get() == self.parent_page().current_player[1].get()):
-        popup_message(self.controller,
-                      'ERROR',
-                      'Player 1 and Player 2 cannot be the same person.',
+    # get number of Pokemon on each roster
+    list1 = len(PLAYERS[playerNames.index(self.parent_page().current_player[0].get())].pkmn_list) if (self.parent_page().current_player[0].get()) else 0
+    list2 = len(PLAYERS[playerNames.index(self.parent_page().current_player[1].get())].pkmn_list) if (self.parent_page().current_player[1].get()) else 0
+
+    # check if amount of Pokemon is invalid
+    if (self.parent_page().battle_mode.get() == 'SRL' and self.parent_page().current_player[0].get() == self.parent_page().current_player[1].get()):
+        popup_message(self.controller, 'ERROR', 'Player 1 and Player 2 cannot be the same person.',
                       text2='\nPlease choose another person for Player 1 or 2.')
-    elif (self.parent_page().battle_mode.get() == 'SRL' and list_total < 18 and
-          page == 'Draft'):
-        popup_message(self.controller,
-                      'ERROR',
-                      'Not enough Pokemon required to Draft (18 needed).')
-    elif (self.parent_page().battle_mode.get() == 'SRL' and
-          (list1 < 12 or list2 < 12) and
-          page == 'Random'):
-        popup_message(self.controller,
-                      'ERROR',
-                      'Not enough Pokemon required for Random (12 needed per player).')
+    elif (self.parent_page().battle_mode.get() == 'SRL' and list + list2 < 18 and page == 'Draft'):
+        popup_message(self.controller, 'ERROR', 'Not enough Pokemon required to Draft (18 needed).')
+    elif (self.parent_page().battle_mode.get() == 'SRL' and (list1 < 12 or list2 < 12) and page == 'Random'):
+        popup_message(self.controller, 'ERROR', 'Not enough Pokemon required for Random (12 needed per player).')
     else:
+        # valid amount, update page info and change page
         self.parent_page().replace_images()
         self.controller.show_frame(page)
 
@@ -2210,21 +2385,25 @@ def RGBAImage2(path):
 
 
 def init_player_information():
+    # create player directory
     if not os.path.isdir(PLAYER_DIR):
         os.mkdir(PLAYER_DIR)
     if not os.listdir(PLAYER_DIR):
         with open(os.path.join(PLAYER_DIR, 'Virgo.csv'), 'w') as file:
             pass
+    # get Pokemon information
     for filename in os.listdir(PLAYER_DIR):
         if filename.endswith('.csv'):
             with open(os.path.join(PLAYER_DIR, filename), 'r', encoding='utf-8') as file:
                 player_name = os.path.splitext(os.path.basename(file.name))[0]
                 reader = csv.reader(file)
+                # get trainer portrait info
+                portrait = int(next(reader)[0]) if os.stat(os.path.join(PLAYER_DIR, filename)).st_size != 0 else random.randint(0, 91)
                 temp_pkmn_list = []
                 for row in reader:
                     if row:
                         temp_pkmn_list.append(Pokemon(row))
-                PLAYERS.append(Player(player_name, temp_pkmn_list))
+                PLAYERS.append(Player(player_name, portrait, temp_pkmn_list))
                 playerNames.append(player_name)
 
 
@@ -2275,8 +2454,9 @@ def get_banner_num():
 
 
 class Player:
-    def __init__(self, name, pkmn_list):
+    def __init__(self, name, portrait, pkmn_list):
         self.name = name
+        self.portrait = portrait
         self.pkmn_list = pkmn_list
 
 
@@ -2285,6 +2465,7 @@ if __name__ == '__main__':
     VERSION = '2.3.0'
     ROOT = os.path.dirname(os.path.realpath(__file__))
     COMMON = os.path.join(ROOT, 'media', 'Common')
+    TRAINERS = os.path.join(ROOT, 'media', 'trainers')
     IMG_PKMN_DIR = os.path.join(ROOT, 'media', 'pokemon')
     PLAYER_DIR = os.path.join(ROOT, 'players')
     DATA = os.path.join(ROOT, 'data')
