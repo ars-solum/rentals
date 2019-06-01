@@ -323,7 +323,7 @@ class Draft(tk.Frame):
         self.ban_buttons = [[], []]
         for i in range(2):
             for j in range(2):
-                self.ban_buttons[i].append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1, state='disabled', command=lambda: None))
+                self.ban_buttons[i].append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1, state='disabled'))
                 # order of buttons is 1 2 | 2 1
                 self.ban_buttons[i][j].grid(row=5, column=(i*4+j) if (i == 0) else (i*5-j), pady=5)
         self.separators[1].grid(row=6, column=0, columnspan=6, sticky='nsew')
@@ -911,7 +911,6 @@ class Random(tk.Frame):
 
 
 class RandomSettings(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -938,7 +937,6 @@ class RandomSettings(tk.Frame):
 
 
 class RandomGenerateSettings(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -950,7 +948,6 @@ class RandomGenerateSettings(tk.Frame):
 
 
 class Store(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -1180,6 +1177,19 @@ class Store(tk.Frame):
             self.switch_player(self.current_player.get())
             # if it is an auction, turn off pull button
             self.pull_button.config(state='disabled' if (self.current_page + self.banner_num == 7 or self.current_page + self.banner_num == 15) else 'normal')
+
+    def popup(self, event, index):
+        # popup menu
+        pkmn_name = ALL_BANNERS[self.banner_num+self.current_page][index]
+        self.rclick_menu = tk.Menu(self, tearoff=0)
+        self.rclick_menu.add_command(label="View Sets", command=lambda pkmn=pkmn: self.view_more_details(pkmn_name))
+        try:
+            self.rclick_menu.tk_popup(event.x_root+70, event.y_root+10, 0)
+        finally:
+            self.rclick_menu.grab_release()
+
+    def view_more_details(self, pkmn_name):
+        self.controller.pages['Details'].display_sets(pkmn_name)
 
     def on_enter(self):
         if self.pull_button.cget('state') != 'disabled':
@@ -1479,13 +1489,13 @@ class NewPull(tk.Frame):
                     'Flying' in pkmn.type or 'Ice' in pkmn.type):
                     self.box_list[0].append(pkmn)
                 if ('Fire' in pkmn.type or 'Poison' in pkmn.type or
-                      'Water' in pkmn.type or 'Ground' in pkmn.type):
+                    'Water' in pkmn.type or 'Ground' in pkmn.type):
                     self.box_list[1].append(pkmn)
                 if ('Grass' in pkmn.type or 'Rock' in pkmn.type or
-                      'Psychic' in pkmn.type or 'Dark' in pkmn.type):
+                    'Psychic' in pkmn.type or 'Dark' in pkmn.type):
                     self.box_list[2].append(pkmn)
                 if ('Steel' in pkmn.type or 'Ghost' in pkmn.type or
-                      'Fighting' in pkmn.type or 'Normal' in pkmn.type):
+                    'Fighting' in pkmn.type or 'Normal' in pkmn.type):
                     self.box_list[3].append(pkmn)
 
         self.frames[1].grid_columnconfigure(0, weight=1)
@@ -1644,7 +1654,6 @@ class Details(tk.Frame):
 
         # determine banner number
         banner_num = -1
-        finish = False
         for banner in range(len(ALL_BANNERS)):
             if pkmn_name in ALL_BANNERS[banner]:
                 banner_num = banner if (banner <= get_banner_num() + 1) else -1
@@ -1676,6 +1685,9 @@ class Details(tk.Frame):
             self.set_details.append(tk.Label(self.frames[3 if (int(i/3) == 0) else 4], text=sets, justify='left', fg='red' if self.is_current_set(pkmn, pkmn_list[i]) else 'black'))
             self.set_details[i].grid(row=0, column=i, padx=5, pady=5, sticky='nsew')
             self.set_details[i].bind('<Button-3>', lambda event, sets=sets: self.popup(event, sets))
+
+    def display_sets(self, pkmn_name):
+
 
     def popup(self, event, sets):
         # popup menu
