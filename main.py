@@ -69,6 +69,7 @@ class MainApp(tk.Tk):
 
     def init_side_menu(self):
         self.frame_side_menu = tk.Frame(self)
+        self.frame_side_menu.config(bg='red')
         self.frame_side_menu.grid(row=0, column=0, sticky='nsew')
 
         # Allot a 1x1 space for the Sidemenu
@@ -80,6 +81,7 @@ class MainApp(tk.Tk):
 
     def init_main_menu(self):
         self.main_frame = tk.Frame(self)
+        self.main_frame.config(bg='blue')
         self.main_frame.grid(row=0, column=1, sticky='nsew')
 
         # Allot a 1x1 space for the contents of the main space
@@ -171,9 +173,10 @@ class Sidebar(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='blue')
 
-        # Allot a 4x1 space for Sidebar's contents
-        for i in range(4):
+        # Allot a 3x1 space for Sidebar's contents
+        for i in range(3):
             self.grid_rowconfigure(i, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
@@ -205,11 +208,11 @@ class Sidebar(tk.Frame):
 
         # construct each section
         for section in self.text:
-            # special case: 3rd section should be empty for now
+            # special case: 3rd section should fill up space
             if tmp_ctr == 2:
                 self.empty_space_label = tk.Label(self, image=self.empty_space)
                 self.empty_space_label.grid(row=tmp_ctr, column=0, sticky='nsew')
-                tmp_ctr += 1 # now onto 4th section
+                tmp_ctr += 1
 
             # initialize section frames
             self.frame_section[section] = tk.Frame(self)
@@ -221,7 +224,7 @@ class Sidebar(tk.Frame):
 
             # initialize the current section's buttons
             for button in self.text[section]: # button = Draft, etc.
-                self.buttons[button] = tk.Button(self.frame_section[section], image=self.img_buttons[button]['inactive'], bd=0.1, command=lambda: None)
+                self.buttons[button] = tk.Button(self.frame_section[section], image=self.img_buttons[button]['inactive'], bd=0.1)
                 row = self.text[section].index(button) + 1 # skip over the first row for section title
                 self.buttons[button].grid(row=row, column=0, sticky='nsew')
                 self.buttons[button].bind('<Enter>', lambda event, button=button: self.controller.on_enter(self.buttons[button], self.img_buttons[button]['active']))
@@ -234,8 +237,6 @@ class Sidebar(tk.Frame):
             if section == 'settings':
                 self.buttons['game_settings'].config(command=lambda: self.controller.show_frame('DraftSettings'))
                 self.buttons['pkmn_settings'].config(command=lambda: self.controller.show_frame('DraftGenerateSettings'))
-                self.buttons['Game'].config(command=lambda: None)
-                self.buttons['Sets'].config(command=lambda: None)
             else:
                 for button in self.text[section]:
                     self.buttons[button].config(command=lambda button=button: self.controller.show_frame(button))
@@ -245,6 +246,7 @@ class Draft(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         # Allot a 11x6 space for Draft's contents
         for i in range(11):
@@ -309,7 +311,7 @@ class Draft(tk.Frame):
         for i in range(3):
             for j in range(6):
                 x = (i*6) + j
-                self.pool_buttons.append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1, command=lambda: None))
+                self.pool_buttons.append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1))
                 self.pool_buttons[x].grid(row=i+1, column=j, pady=5)
                 self.pool_buttons[x].bind('<Enter>', lambda event, x=x: self.controller.on_enter(self.pool_buttons[x], self.controller.img_blank['active']))
                 self.pool_buttons[x].bind('<Leave>', lambda event, x=x: self.controller.on_leave(self.pool_buttons[x], self.controller.img_blank['inactive']))
@@ -337,7 +339,7 @@ class Draft(tk.Frame):
             for row in range(3):
                 for column in range(2):
                     slot = (row * 2) + column
-                    self.team_buttons[team].append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1, command=lambda: None))
+                    self.team_buttons[team].append(tk.Button(self, image=self.controller.img_blank['inactive'], bd=0.1))
                     self.team_buttons[team][slot].grid(row=row+8, column=(team*4)+column, pady=5)
                     self.team_buttons[team][slot].bind('<Enter>', lambda event, team=team, slot=slot: self.team_on_enter(team, slot))
                     self.team_buttons[team][slot].bind('<Leave>', lambda event, team=team, slot=slot: self.team_on_leave(team, slot))
@@ -377,7 +379,7 @@ class Draft(tk.Frame):
         # reset buttons
         for team in range(2):
             for slot in range(2):
-                self.ban_buttons[team][slot].config(image=self.controller.img_blank['inactive'], command=lambda: None)
+                self.ban_buttons[team][slot].config(image=self.controller.img_blank['inactive'])
             for slot in range(6):
                 self.team_buttons[team][slot].config(image=self.controller.img_blank['inactive'], command=lambda: None)
         self.controller.sidebar.buttons['Sets'].config(state='disabled')
@@ -642,6 +644,7 @@ class DraftSettings(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         setup_game_settings(self, 'Draft')
 
@@ -696,6 +699,7 @@ class DraftGenerateSettings(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         setup_pkmn_settings(self, 'Draft')
 
@@ -707,6 +711,7 @@ class Random(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         # Allot a 3x1 space for Random's contents
         self.grid_columnconfigure(0, weight=1)
@@ -914,6 +919,7 @@ class RandomSettings(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         setup_game_settings(self, 'Random')
 
@@ -940,6 +946,7 @@ class RandomGenerateSettings(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         setup_pkmn_settings(self, 'Random')
 
@@ -951,6 +958,7 @@ class Store(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         for i in range(9):
             self.grid_rowconfigure(i, weight=1)
@@ -966,6 +974,7 @@ class Store(tk.Frame):
     def init_banners(self):
         # page variables
         self.banner_num = get_banner_num()
+        print(self.banner_num)
         self.current_page = 0
         self.remaining = 44
         self.current_player = tk.StringVar()
@@ -1219,6 +1228,7 @@ class Players(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         for i in range(1, 3):
             self.grid_columnconfigure(i, weight=1)
@@ -1430,6 +1440,7 @@ class NewPull(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         self.pkmn_list = []
         self.img_pkmn = [[], []]
@@ -1619,6 +1630,8 @@ class Details(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
+
         # fix the rows with the sets
         self.grid_rowconfigure(3, weight=1)
         self.grid_rowconfigure(4, weight=1)
@@ -1631,7 +1644,7 @@ class Details(tk.Frame):
             self.frames[i].grid(row=i, column=0, sticky='nsew')
 
         # general information stuff and banner image
-        self.font = Font(size=18, weight='bold')
+        self.font = Font(size=16, weight='bold')
         self.banner_txt = tk.Label(self.frames[0], text='Appears in:', font=self.font)
         self.banner_txt.grid(row=0, column=0, sticky='nsew')
         self.banner = tk.Label(self.frames[1])
@@ -1687,7 +1700,7 @@ class Details(tk.Frame):
             self.set_details[i].bind('<Button-3>', lambda event, sets=sets: self.popup(event, sets))
 
     def display_sets(self, pkmn_name):
-
+        pass
 
     def popup(self, event, sets):
         # popup menu
@@ -1725,6 +1738,7 @@ class StoreHelpPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -1765,6 +1779,7 @@ class PullHelpPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -1785,6 +1800,7 @@ class Portrait(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.config(bg='red')
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
