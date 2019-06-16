@@ -1362,6 +1362,7 @@ class StoreSettings(tk.Frame):
         self.banner.grid(row=0, column=0, columnspan=2, pady=5, sticky='nsew')
 
         # change weeks
+        self.week_frame = tk.Frame(self)
         self.week_frame.grid(row=1, column=0, sticky='nsew')
         self.week_frame.grid_columnconfigure(0, weight=1)
         self.week_label = tk.Label(self.week_frame, text='Change the Current Week')
@@ -1375,7 +1376,9 @@ class StoreSettings(tk.Frame):
                 value=i,
                 command=self.change_banner_img))
             self.week_buttons[i].grid(row=i+1, column=0, pady=5)
+
         # change dates of weeks
+        self.date_frame = tk.Frame(self)
         self.date_frame.grid(row=1, column=1, sticky='nsew')
         for i in range(4):
             self.date_frame.grid_columnconfigure(i, weight=1)
