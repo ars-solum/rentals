@@ -1,5 +1,12 @@
 import csv
+from datetime import date
 import os
+from PIL import Image, ImageTk
+import random
+from random import shuffle
+import tkinter as tk
+from tkinter.font import Font
+from tkinter import ttk
 
 ROOT = os.path.dirname(os.path.realpath(__file__))
 COMMON = os.path.join(ROOT, 'media', 'Common')
@@ -426,6 +433,8 @@ TYPES = ['Bug', 'Dark', 'Dragon', 'Electric', 'Fairy', 'Fighting', 'Fire', 'Flyi
 ITEMS = ['Mega Stones', 'Z-Crystals', 'Berries', 'Choice Band', 'Choice Scarf', 'Choice Specs', 'Leftovers', 'Life Orb']
 GIMMICKS = ['Sun', 'Rain', 'Sand', 'Hail', 'Trick Room', 'Baton Pass', 'E-Terrain', 'G-Terrain', 'M-Terrain', 'P-Terrain']
 ALL_BANNERS = []
+month = int(date.today().strftime('%m'))
+day = int(date.today().strftime('%d'))
 
 class Pokemon:
     def __init__(self, row):
@@ -474,3 +483,595 @@ with open(os.path.join(DATA, 'Banners.csv'), 'r', encoding='utf-8') as file:
     reader = csv.reader(file)
     for row in reader:
         ALL_BANNERS.append(row)
+
+
+################################################################################
+# global helper functions
+################################################################################
+def RGBAImage(path):
+    return ImageTk.PhotoImage(Image.open(path).convert('RGBA'))
+
+
+def RGBAImage2(path):
+    return Image.open(path).convert('RGBA')
+
+
+def create_image(base_image, image):
+    base_image.paste(image, (0, 0), image)
+
+
+def popup_message(self, type, text, text2=''):
+    # initialize window and settings
+    top = tk.Toplevel(self)
+    top.grab_set()
+    x = app.winfo_x()
+    y = app.winfo_y()
+    top.geometry('+%d+%d' % (x + 100, y + 200))
+
+    # determine type of popup image
+    if type == 'ERROR':
+        icon = tk.Label(top, image=self.img_error)
+    elif type == 'INFO':
+        icon = tk.Label(top, image=self.img_info)
+    icon.grid(row=0, column=0, padx=20, pady=20, sticky='nsew')
+
+    # display message
+    message = tk.Label(top, text=text+text2)
+    message.grid(row=0, column=1, padx=20, pady=20, sticky='nsew')
+
+    # close button
+    back_button = tk.Button(top, text='Ok', width=10, command=top.destroy)
+    back_button.grid(row=1, column=0, columnspan=2, padx=100, pady=5, sticky='nsew')
+
+    # do not let user interact with underlying window
+    self.wait_window(top)
+
+
+def get_banner_num():
+    if month < 6 or (month == 6 and 1 <= day <= 8):
+        return 0
+    if month == 6 and 9 <= day <= 15:
+        return 2
+    if month == 6 and 16 <= day <= 22:
+        return 4
+    if month == 6 and 23 <= day <= 29:
+        return 6
+    if (month == 6 and 30 == day) or (month == 7 and 1 <= day <= 6):
+        return 8
+    if month == 7 and 7 <= day <= 13:
+        return 10
+    if month == 7 and 14 <= day <= 20:
+        return 12
+    if month == 7 and 21 <= day <= 27:
+        return 14
+    return 0
+
+
+def update_all_optionmenus(self):
+    # get each optionmenu to update
+    menu1 = self.pages['Store'].player_option['menu']
+    menu2 = self.pages['Players'].player_option['menu']
+    menu3 = self.pages['DraftSettings'].player_option[0]['menu']
+    menu4 = self.pages['DraftSettings'].player_option[1]['menu']
+    menu5 = self.pages['RandomSettings'].player_option[0]['menu']
+    menu6 = self.pages['RandomSettings'].player_option[1]['menu']
+
+    # delete the optionmenu's items
+    menu1.delete(0, 'end')
+    menu2.delete(0, 'end')
+    menu3.delete(0, 'end')
+    menu4.delete(0, 'end')
+    menu5.delete(0, 'end')
+    menu6.delete(0, 'end')
+
+    # re-populate the menu lists
+    for player in playerNames:
+        menu1.add_command(label=player, command=lambda player=player: self.pages['Store'].switch_player(player))
+        menu2.add_command(label=player, command=lambda player=player: self.pages['Players'].display_pkmn(player))
+        menu3.add_command(label=player, command=lambda player=player: self.pages['Draft'].current_player[0].set(player))
+        menu4.add_command(label=player, command=lambda player=player: self.pages['Draft'].current_player[1].set(player))
+        menu5.add_command(label=player, command=lambda player=player: self.pages['Random'].current_player[0].set(player))
+        menu6.add_command(label=player, command=lambda player=player: self.pages['Random'].current_player[1].set(player))
+
+
+def strip_mega_name(name):
+    return name.replace('-Mega-X', '').replace('-Mega-Y', '').replace('-Ash', '').replace('-Mega', '')
+
+
+def get_mega_name(pkmn):
+    if ((pkmn.item != 'Eviolite' and (pkmn.item.endswith('ite')) or 'Dragon Ascent' in pkmn.moves)):
+        return pkmn.name + '-Mega'
+    elif pkmn.item.endswith('ite X'):
+        return pkmn.name + '-Mega-X'
+    elif pkmn.item.endswith('ite Y'):
+        return pkmn.name + '-Mega-Y'
+    elif pkmn.ability == 'Battle Bond':
+        return pkmn.name + '-Ash'
+    else:
+        return pkmn.name
+
+
+def get_rarity(name):
+    for pkmn in ALL_POKEMON_S:
+        if name.endswith('-Mega') or name.endswith('Mega-Y') or name.endswith('Mega-X') or name.endswith('-Ash'):
+            temp_name = strip_mega_name(name)
+            if pkmn.item == 'Eviolite':
+                continue
+            if pkmn.name == temp_name:
+                if (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or pkmn.item.endswith('ite Y') or pkmn.ability == 'Battle Bond'):
+                    rarity = pkmn.rarity
+                    break
+        else:
+            temp_name = name
+            if pkmn.name == temp_name:
+                rarity = pkmn.rarity
+                break
+    return rarity
+
+
+def check_validity(self, pkmn, team=0):
+    # get all exclusions
+    type_list = list(filter(None, [i.get() for i in self.pkmn_excl_types]))
+    tier_list = list(filter(None, [i.get() for i in self.pkmn_excl_tiers_s]))
+    gimmick_list = list(filter(None, [i.get() for i in self.pkmn_excl_gimmicks]))
+    if hasattr(self, 'pkmn_pool_list'):
+        if ((pkmn in self.pkmn_pool_list) or
+            (pkmn.name in [pool.name for pool in self.pkmn_pool_list]) or
+            (pkmn.tier in tier_list) or
+            (pkmn.type[0] in type_list) or
+            (pkmn.type[1] and pkmn.type[1] in type_list) or
+            (check_valid_generation(self, pkmn)) or
+            (check_valid_item(self, pkmn)) or
+            (pkmn.tag in gimmick_list)):
+            return False
+    else:
+        names = [slot.name for slot in self.pkmn_team_list[team] if slot != None]
+        if ((pkmn in self.pkmn_team_list[team]) or
+            (pkmn.name in names) or
+            (pkmn.tier in tier_list) or
+            (pkmn.type[0] in type_list) or
+            (pkmn.type[1] and pkmn.type[1] in type_list) or
+            (check_valid_generation(self, pkmn)) or
+            (check_valid_item(self, pkmn)) or
+            (pkmn.tag in gimmick_list)):
+            return False
+    return True
+
+
+def is_mega(pkmn):
+    if pkmn.item != 'Eviolite':
+        if (pkmn.item.endswith('ite') or pkmn.item.endswith('ite X') or
+            pkmn.item.endswith('ite Y') or ('Dragon Ascent' in pkmn.moves) or
+            pkmn.ability == 'Battle Bond'):
+            return True
+    return False
+
+
+def check_valid_generation(self, pkmn):
+    dex_list = []
+    for generation in [j.get() for j in self.pkmn_excl_gens]:
+        if generation == 'Kanto':
+            for i in range(1, 152):
+                dex_list.append(str(i))
+        if generation == 'Johto':
+            for i in range(152, 252):
+                dex_list.append(str(i))
+        if generation == 'Hoenn':
+            for i in range(252, 387):
+                dex_list.append(str(i))
+        if generation == 'Sinnoh':
+            for i in range(387, 494):
+                dex_list.append(str(i))
+        if generation == 'Unova':
+            for i in range(494, 650):
+                dex_list.append(str(i))
+        if generation == 'Kalos':
+            for i in range(650, 722):
+                dex_list.append(str(i))
+        if generation == 'Alola':
+            for i in range(722, 807):
+                dex_list.append(str(i))
+    if str(pkmn.dex) in dex_list:
+        return True
+    return False
+
+
+def check_valid_item(self, pkmn):
+    item_list = []
+    for item in list(filter(None, [i.get() for i in self.pkmn_excl_items])):
+        if item == 'Mega Stones':
+            item_list.extend(MEGA_STONES)
+        elif item == 'Z-Crystals':
+            item_list.extend(Z_CRYSTALS)
+        elif item == 'Berries':
+            item_list.extend(BERRIES)
+        else:
+            item_list.append(item)
+    if pkmn.item in item_list:
+        return True
+    return False
+
+
+def validate(self, page):
+    # get exclusion lists
+    temp_excl_tiers = list(filter(None, [i.get() for i in self.parent_page().pkmn_excl_tiers_s]))
+    temp_excl_types = list(filter(None, [i.get() for i in self.parent_page().pkmn_excl_types]))
+    temp_excl_gimmicks = list(filter(None, [i.get() for i in self.parent_page().pkmn_excl_gimmicks]))
+    temp_counter = 0
+    temp_list = []
+
+    # check if Pokemon fit criteria and count number of occurrences
+    for pkmn in ALL_POKEMON_S:
+        if ((pkmn.name in [i.name for i in temp_list]) or
+            (pkmn.dex in [j.dex for j in temp_list]) or
+            (pkmn.tier in temp_excl_tiers) or
+            (pkmn.type[0] in temp_excl_types) or
+            (pkmn.type[1] and pkmn.type[1] in temp_excl_types) or
+            (check_valid_generation(self.parent_page(), pkmn)) or
+            (check_valid_item(self.parent_page(), pkmn)) or
+                (pkmn.tag in temp_excl_gimmicks)):
+            continue
+        else:
+            temp_list.append(pkmn)
+            temp_counter += 1
+
+    if temp_counter >= 18:
+        # valid number of Pokemon
+        self.controller.change_page(page)
+    else:
+        popup_message(self.controller,
+                      'ERROR',
+                      'Not enough Pokemon fit the criteria you have selected.',
+                      text2='\nPlease remove some restrictions.')
+
+
+def get_sets(self):
+    self.controller.clipboard_clear()
+    sets = ''
+    for team in self.pkmn_team_list:
+        sets += '====================\n'
+        for pkmn in team:
+            if pkmn.item:
+                sets += pkmn.name + ' @ ' + pkmn.item + '\n'
+            else:
+                sets += 'pkmn.name\n'
+            if 'LC' in pkmn.tier:
+                sets += 'Level: 5\n'
+            sets += 'Ability: ' + pkmn.ability + '\n'
+            sets += 'EVs: ' + pkmn.evSpread + '\n'
+            sets += pkmn.nature + ' Nature\n'
+            if pkmn.ivSpread:
+                sets += 'IVs: ' + pkmn.ivSpread + '\n'
+            for move in pkmn.moves:
+                if move:
+                    sets += '- ' + move + '\n'
+            sets += '\n'
+        sets += '\n'
+    self.controller.clipboard_append(sets)
+    update_statistics(self)
+    popup_message(self.controller, 'INFO', 'Copied all sets to clipboard.')
+
+
+def update_statistics(self):
+    if hasattr(self, 'ban_list'):
+        for team in self.ban_list:
+            for pkmn in team:
+                if pkmn:
+                    pkmn.banned += 1
+    if hasattr(self, 'pkmn_pool_list'):
+        for pkmn in self.pkmn_pool_list:
+            if self.draft_mode.get() == 'Nemesis':
+                pkmn.generated_nemesis += 1
+            else:
+                pkmn.generated_draft += 1
+    for team in self.pkmn_team_list:
+        for pkmn in team:
+            if hasattr(self, 'draft_mode'):
+                if self.draft_mode.get() == 'Nemesis':
+                    pkmn.picked_nemesis += 1
+                else:
+                    pkmn.picked_draft += 1
+            else:
+                pkmn.generated_random += 1
+    file = os.path.join(DATA, 'Singles.csv')
+    with open(file, 'w', encoding='utf-8', newline='') as fileName:
+        writer = csv.writer(fileName, delimiter=',')
+        writer.writerow(['POKEMON', 'DEX', 'TYPE 1', 'TYPE 2', 'TIER',
+                         'RARITY', 'SRL', 'TAG', 'ITEM', 'ABILITY', 'EV SPREAD',
+                         'NATURE', 'IV SPREAD', 'MOVE 1', 'MOVE 2', 'MOVE 3',
+                         'MOVE 4', 'GENERATED (D)', 'GENERATED (N)',
+                         'GENERATED (R)', 'PICKED (D)', 'PICKED (N)', 'BANNED'])
+        for pkmn in ALL_POKEMON_S:
+            writer.writerow(
+                [pkmn.name, pkmn.dex, pkmn.type[0], pkmn.type[1],
+                 pkmn.tier, pkmn.rarity, pkmn.tag, pkmn.item, pkmn.ability,
+                 pkmn.evSpread, pkmn.nature, pkmn.ivSpread,
+                 pkmn.moves[0], pkmn.moves[1], pkmn.moves[2], pkmn.moves[3],
+                 str(pkmn.generated_draft), str(pkmn.generated_nemesis),
+                 str(pkmn.generated_random), str(pkmn.picked_draft),
+                 str(pkmn.picked_nemesis), str(pkmn.banned)])
+
+
+def clean_up(self):
+    if hasattr(self.parent_page(), 'game_activated'):
+        self.parent_page().game_activated = False
+    if hasattr(self.parent_page(), 'turn'):
+        self.parent_page().turn = 0
+    if hasattr(self.parent_page(), 'pkmn_pool_list'):
+        self.parent_page().pkmn_pool_list = []
+        for i in range(18):
+            self.parent_page().pool_buttons[i].config(command=lambda: None)
+    if hasattr(self.parent_page(), 'ban_list'):
+        self.parent_page().ban_list = [[None, None], [None, None]]
+    if hasattr(self.parent_page(), 'ban_phase_finished'):
+        self.parent_page().ban_phase_finished = False
+    self.parent_page().pkmn_team_list = [[None for i in range(6)] for j in range(2)]
+    if hasattr(self.parent_page(), 'pkmn_not_picked'):
+        self.parent_page().pkmn_not_picked = [True for i in range(18)]
+    for i in range(2):
+        if hasattr(self.parent_page(), 'ban_buttons'):
+            for j in range(2):
+                self.parent_page().ban_buttons[i][j].config(command=lambda: None)
+        for j in range(6):
+            self.parent_page().team_buttons[i][j].config(command=lambda: None)
+    if hasattr(self.parent_page(), 'pool_buttons'):
+        for i in range(len(self.parent_page().pool_buttons)):
+            self.parent_page().pool_buttons[i].config(
+                image=self.parent_page().controller.img_blank[0],
+                command=lambda: None)
+    if hasattr(self.parent_page(), 'ban_buttons'):
+        for i in range(len(self.parent_page().ban_buttons)):
+            for j in range(len(self.parent_page().ban_buttons[i])):
+                self.parent_page().ban_buttons[i][j].config(
+                    image=self.parent_page().controller.img_blank[0],
+                    command=lambda: None)
+    if hasattr(self.parent_page(), 'team_buttons'):
+        for i in range(len(self.parent_page().team_buttons)):
+            for j in range(len(self.parent_page().team_buttons[i])):
+                self.parent_page().team_buttons[i][j].config(
+                    image=self.parent_page().controller.img_blank[0],
+                    command=lambda: None)
+
+
+def setup_pkmn_settings(self, page):
+    for i in range(1, 22):
+        self.grid_rowconfigure(i, weight=1)
+
+    # exclusions header
+    self.exclusions_img = RGBAImage(os.path.join(COMMON, 'label_exclusions.png'))
+    self.exclusions_text = tk.Label(self, image=self.exclusions_img)
+    self.exclusions_text.grid(row=0, column=0, columnspan=6, sticky='nsw')
+
+    # singles tiers section
+    self.tier_text = tk.Label(self, text='Tiers (Singles)')
+    self.tier_text.grid(row=1, column=0, rowspan=2, sticky='w')
+    self.tier_buttons = []
+    for i in range(len(TIERS_SINGLES)):
+        self.tier_buttons.append(tk.Checkbutton(self,
+            text=TIERS_SINGLES[i],
+            variable=self.parent_page().pkmn_excl_tiers_s[i],
+            onvalue=TIERS_SINGLES[i],
+            offvalue=''))
+        self.tier_buttons[i].grid(row=1 + int(i/5), column=(i%5) + 1, sticky='w')
+
+    # create horizontal separators for clarity
+    self.separators = [ttk.Separator(self, orient='horizontal') for i in range(7)]
+    self.separators[0].grid(row=3, column=0, columnspan=6, sticky='nsew')
+
+    # doubles tiers section
+    self.tier2_text = tk.Label(self, text='Tiers (Doubles)')
+    self.tier2_text.grid(row=4, column=0, sticky='w')
+    self.tier2_buttons = []
+    for i in range(len(TIERS_DOUBLES)):
+        self.tier2_buttons.append(tk.Checkbutton(self,
+            text=TIERS_DOUBLES[i],
+            variable=self.parent_page().pkmn_excl_tiers_d[i],
+            onvalue=TIERS_DOUBLES[i],
+            state='disabled',
+            offvalue=''))
+        self.tier2_buttons[i].grid(row=4 + int(i/5), column=(i%5) + 1, sticky='w')
+    self.separators[1].grid(row=5, column=0, columnspan=6, sticky='nsew')
+
+    # generations section
+    self.gen_text = tk.Label(self, text='Generations')
+    self.gen_text.grid(row=6, column=0, rowspan=2, sticky='w')
+    self.gen_buttons = []
+    for i in range(len(GENERATIONS)):
+        self.gen_buttons.append(tk.Checkbutton(self,
+            text=GENERATIONS[i],
+            variable=self.parent_page().pkmn_excl_gens[i],
+            onvalue=GENERATIONS[i],
+            offvalue=''))
+        self.gen_buttons[i].grid(row=6 + int(i/5), column=(i%5) + 1, sticky='w')
+    self.separators[2].grid(row=8, column=0, columnspan=6, sticky='nsew')
+
+    # types section
+    self.type_text = tk.Label(self, text='Types')
+    self.type_text.grid(row=9, column=0, rowspan=4, sticky='w')
+    self.type_buttons = []
+    for i in range(len(TYPES)):
+        self.type_buttons.append(tk.Checkbutton(self,
+            text=TYPES[i],
+            variable=self.parent_page().pkmn_excl_types[i],
+            onvalue=TYPES[i],
+            offvalue=''))
+        self.type_buttons[i].grid(row=9 + int(i/5), column=(i%5) + 1, sticky='w')
+    self.separators[3].grid(row=13, column=0, columnspan=6, sticky='nsew')
+
+    # held items section
+    self.item_text = tk.Label(self, text='Items')
+    self.item_text.grid(row=14, column=0, rowspan=2, sticky='w')
+    self.item_buttons = []
+    for i in range(len(ITEMS)):
+        self.item_buttons.append(tk.Checkbutton(self,
+            text=ITEMS[i],
+            variable=self.parent_page().pkmn_excl_items[i],
+            onvalue=ITEMS[i],
+            offvalue=''))
+        self.item_buttons[i].grid(row=14 + int(i/5), column=(i%5) + 1, sticky='w')
+    self.separators[4].grid(row=16, column=0, columnspan=6, sticky='nsew')
+
+    # gimmick section
+    self.gimmick_text = tk.Label(self, text='Gimmicks')
+    self.gimmick_text.grid(row=17, column=0, rowspan=3, sticky='w')
+    self.gimmick_buttons = []
+    for i in range(len(GIMMICKS)):
+        self.gimmick_buttons.append(tk.Checkbutton(self,
+            text=GIMMICKS[i],
+            variable=self.parent_page().pkmn_excl_gimmicks[i],
+            onvalue=GIMMICKS[i],
+            offvalue=''))
+        self.gimmick_buttons[i].grid(row=17 + int(i/5), column=(i%5) + 1, sticky='w')
+    self.separators[5].grid(row=19, column=0, columnspan=6, sticky='nsew')
+
+    # rentals usage section (empty)
+    self.usage_text = tk.Label(self, text='Usage')
+    self.usage_text.grid(row=20, column=0, sticky='w')
+    self.separators[6].grid(row=21, column=0, columnspan=6, sticky='nsew')
+
+    # back button
+    self.back_frame = tk.Frame(self)
+    self.back_frame.grid(row=22, column=0, columnspan=6, padx=5, pady=5, sticky='nsew')
+    self.back_frame.grid_columnconfigure(0, weight=1)
+    self.back_button = tk.Button(self.back_frame, image=self.controller.img_back['inactive'], bd=0.1, command=lambda page=page: validate(self, page))
+    self.back_button.grid(row=0, column=0, sticky='nsew')
+    self.back_button.bind('<Enter>', lambda event: self.controller.on_enter(self.back_button, self.controller.img_back['active']))
+    self.back_button.bind('<Leave>', lambda event: self.controller.on_leave(self.back_button, self.controller.img_back['inactive']))
+
+
+def setup_game_settings(self, page):
+    for i in range(1, 6):
+        self.grid_rowconfigure(i, weight=1)
+    for i in range(4):
+        self.grid_columnconfigure(i, weight=1)
+
+    # rules header
+    self.rules_img = RGBAImage(os.path.join(COMMON, 'label_rules.png'))
+    self.rules_label = tk.Label(self, image=self.rules_img)
+    self.rules_label.grid(row=0, column=0, columnspan=4, sticky='nsw')
+
+    # battle mode | singles | doubles | srl
+    self.battle_mode_text = tk.Label(self, text='Battle Mode')
+    self.battle_mode_text.grid(row=1, column=0, padx=5, pady=5, sticky='w')
+    self.battle_mode_buttons = []
+    battle_modes = ['Singles', 'Doubles', 'SRL']
+    for i in range(len(battle_modes)):
+        self.battle_mode_buttons.append(tk.Radiobutton(self,
+            text=battle_modes[i],
+            variable=self.parent_page().battle_mode,
+            indicatoron=0,
+            width=10,
+            value=battle_modes[i],
+            command=self.update_gen_settings))
+        self.battle_mode_buttons[i].grid(row=1+int(i/5), column=(i % 5)+1, padx=5, pady=5, sticky='nsew')
+
+    if page == 'Draft':
+        # draft mode | standard | nemesis | first pick
+        self.draft_mode_text = tk.Label(self, text='Draft Mode')
+        self.draft_mode_text.grid(row=2, column=0, padx=5, pady=5, sticky='w')
+        self.draft_mode_buttons = []
+        draft_modes = ['Standard', 'Nemesis', 'First Pick']
+        for i in range(len(draft_modes)):
+            self.draft_mode_buttons.append(tk.Radiobutton(self,
+                text=draft_modes[i],
+                variable=self.parent_page().draft_mode,
+                indicatoron=0,
+                value=draft_modes[i],
+                command=self.reset_game))
+            self.draft_mode_buttons[i].grid(row=2 + int(i/5), column=(i % 5) + 1, padx=5, pady=5, sticky='nsew')
+
+        # bans | 0 | 1 | 2
+        self.ban_number_text = tk.Label(self, text='Bans')
+        self.ban_number_text.grid(row=3, column=0, padx=5, pady=5, sticky='w')
+        self.ban_number_buttons = []
+        ban_number = [0, 1, 2]
+        for i in range(len(ban_number)):
+            self.ban_number_buttons.append(tk.Radiobutton(self,
+                text=ban_number[i],
+                variable=self.parent_page().ban_number,
+                indicatoron=0,
+                value=ban_number[i],
+                command=self.reset_game))
+            self.ban_number_buttons[i].grid(row=3 + int(i/5), column=(i % 5) + 1, padx=5, pady=5, sticky='nsew')
+    else:
+        # theme | random | balanced | monotype
+        self.theme_text = tk.Label(self, text='Theme')
+        self.theme_text.grid(row=2, column=0, padx=5, pady=5, sticky='w')
+        self.theme_buttons = []
+        themes = ['Random', 'Balanced', 'Monotype']
+        for i in range(len(themes)):
+            self.theme_buttons.append(tk.Radiobutton(self, text=themes[i],
+                variable=self.parent_page().theme,
+                indicatoron=0,
+                width=10,
+                value=themes[i],
+                command=self.update_gen_settings))
+            self.theme_buttons[i].grid(row=2+int(i/5), column=(i%5)+1, padx=5, pady=5, sticky='nsew')
+
+        # create dropdown menus for two types
+        self.type_option = []
+        for i in range(2):
+            self.type_option.append(tk.OptionMenu(self, self.parent_page().type[i], *TYPES))
+            self.type_option[i].config(width=10)
+            self.type_option[i].grid(row=7, column=i*2, columnspan=2, padx=5, pady=5, sticky='ew')
+            # remove since the mode is not monotype
+            self.type_option[i].grid_remove()
+
+    # megas | no | yes
+    self.mega_text = tk.Label(self, text='Show Megas')
+    self.mega_text.grid(row=4 if (page == 'Draft') else 3, column=0, padx=5, pady=5, sticky='w')
+    self.mega_buttons = []
+    megas = ['No', 'Yes']
+    for i in range(len(megas)):
+        self.mega_buttons.append(tk.Radiobutton(self,
+            text=megas[i],
+            variable=self.parent_page().show_megas,
+            indicatoron=0,
+            value=megas[i],
+            command=self.parent_page().replace_images))
+        self.mega_buttons[i].grid(row=4 + int(i/5) if (page == 'Draft') else 3 + int(i/5), column=(i%5) + 1, padx=5, pady=5, sticky='nsew')
+
+    # hidden | no | yes
+    self.hidden_text = tk.Label(self, text='Hide Pokemon')
+    self.hidden_text.grid(row=5 if (page == 'Draft') else 4, column=0, padx=5, pady=5, sticky='w')
+    self.hidden_buttons = []
+    hidden = ['No', 'Yes']
+    for i in range(len(hidden)):
+        self.hidden_buttons.append(tk.Radiobutton(self,
+            text=hidden[i],
+            variable=self.parent_page().hidden,
+            indicatoron=0,
+            value=hidden[i]))
+        self.hidden_buttons[i].grid(row=5 + int(i/5) if (page == 'Draft') else 4 + int(i/5), column=(i % 5) + 1, padx=5, pady=5, sticky='nsew')
+
+    # create dropdown menus for two players
+    self.player_option = []
+    for i in range(2):
+        self.player_option.append(tk.OptionMenu(self, self.parent_page().current_player[i], *playerNames))
+        self.player_option[i].config(width=10)
+        self.player_option[i].grid(row=6, column=i*2, columnspan=2, padx=5, pady=5, sticky='ew')
+        self.player_option[i].grid_remove()
+
+    # back button
+    self.back_frame = tk.Frame(self)
+    self.back_frame.grid(row=9, column=0, columnspan=4, pady=5, sticky='nsew')
+    self.back_frame.grid_columnconfigure(0, weight=1)
+    self.back_button = tk.Button(self.back_frame, image=self.controller.img_back['inactive'], bd=0.1, command=lambda page=page: exit(self, page))
+    self.back_button.grid(row=0, column=0, sticky='nsew')
+    self.back_button.bind('<Enter>', lambda event: self.controller.on_enter(self.back_button, self.controller.img_back['active']))
+    self.back_button.bind('<Leave>', lambda event: self.controller.on_leave(self.back_button, self.controller.img_back['inactive']))
+
+
+def exit(self, page):
+    # get number of Pokemon on each roster
+    list1 = len(PLAYERS[playerNames.index(self.parent_page().current_player[0].get())].pkmn_list) if (self.parent_page().current_player[0].get()) else 0
+    list2 = len(PLAYERS[playerNames.index(self.parent_page().current_player[1].get())].pkmn_list) if (self.parent_page().current_player[1].get()) else 0
+    # check if amount of Pokemon is invalid
+    if (self.parent_page().battle_mode.get() == 'SRL' and (list1 + list2 < 18) and page == 'Draft'):
+        popup_message(self.controller, 'ERROR', 'Not enough Pokemon required to Draft (18 needed).')
+    elif (self.parent_page().battle_mode.get() == 'SRL' and (list1 < 12 or list2 < 12) and page == 'Random'):
+        popup_message(self.controller, 'ERROR', 'Not enough Pokemon required for Random (12 needed per player).')
+    else:
+        # valid amount, update page info and change page
+        self.parent_page().replace_images()
+        self.controller.change_page(page)
