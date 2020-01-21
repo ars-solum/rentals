@@ -498,7 +498,9 @@ def get_stat(pokemon_set, stat):
     return atk_ev
 
 def get_nature_multiplier(pokemon_set, category):
+    #FIX HERE PLEASE
     if nature_dex[pokemon_set.nature]:
+        print(nature_dex[pokemon_set.nature])
         if ((nature_dex[pokemon_set.nature][0] == 'attack' and category == 'physical') or
             (nature_dex[pokemon_set.nature][0] == 'spattack' and category == 'special')):
             multiplier = 1.1
@@ -575,7 +577,7 @@ def damage_calc(attacking_pokemon, defending_pokemon, attack):
 
 
     defense_stat = math.floor(math.floor(((2 * def_base_stat + def_iv + math.floor(def_ev / 4)) * def_level) / 100 + 5) * def_nature)
-    if attack_dex[attack][0] in attacking_pokemon.type:
+    if attack_dex[attack][0].capitalize() in attacking_pokemon.type:
         STAB = 1.5
     else:
         STAB = 1.0
@@ -584,6 +586,7 @@ def damage_calc(attacking_pokemon, defending_pokemon, attack):
     else:
         effectiveness = TypeChart[(attack_dex[attack][0].capitalize(), defending_pokemon.type[0])]
     damage_rolls = []
+    print(def_nature)
     for RandomNumber in RandomNumbers:
         damage_rolls.append(round(((((2 * atk_level / 5 + 2) * attack_stat * attack_power / defense_stat) / 50) + 2) * STAB * effectiveness * RandomNumber))
     return damage_rolls
