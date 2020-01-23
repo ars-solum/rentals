@@ -2,6 +2,8 @@ import os
 import math
 import sys
 import random
+import pandas as pd
+from pandas import ExcelFile
 
 TypeChart = {
     ('Bug', 'Bug')      : 1.0,
@@ -375,11 +377,19 @@ nature_dex = {'Adamant' : ('attack', 'spattack'),
               'Serious' : None,
               'Timid'   : ('speed', 'attack')}
 
-attack_dex = {'Flamethrower' : ('fire', 'special', 90),
-              'Tackle' : ('normal', 'physical', 40),
-              'Agility' : ('psychic', 'status', 0),
-              'Crabhammer' : ('water', 'physical', 100),
-              'Branch Poke' : ('grass', 'physical', 40)}
+attack_item_file = pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+    'data', 'attacks_items.xlsx'))
+attack_dex = {}
+item_dex = []
+xl_atk = pd.read_excel(attack_item_file, 'Attacks')
+xl_item = pd.read_excel(attack_item_file, 'Items')
+for i in range(724):
+    if str(xl_atk['power'].values[i]) == '*':
+        attack_dex[str(xl_atk['name'].values[i])] = (str(xl_atk['type'].values[i]), str(xl_atk['category'].values[i]), str(xl_atk['power'].values[i]))
+    else:
+        attack_dex[str(xl_atk['name'].values[i])] = (str(xl_atk['type'].values[i]), str(xl_atk['category'].values[i]), int(xl_atk['power'].values[i]))
+for i in range(145):
+    item_dex.append(str(xl_item['name'].values[i]))
 
 # we're defining the pokemon's traits here.
 class Pokemon:
@@ -440,7 +450,10 @@ class PokemonSet:
         else:
             self.item = ''
         self.ability = ability
-        self.level = level
+        if usage_tier == 'LC' or usage_tier == 'LC Uber':
+            self.level = 5
+        else:
+            self.level = level
         self.ev_spread = ev_spread
         self.nature = nature
         if str(iv_spread) != 'nan':
@@ -474,6 +487,19 @@ class PokemonSet:
         for move in self.moves:
             print('- ' + move)
 
+def get_iv(pokemon_set, stat):
+    if stat in pokemon_set.iv_spread:
+        stat_index = pokemon_set.iv_spread.find(stat) - 2
+        if stat_index - 1 >= 0:
+            if pokemon_set.iv_spread[stat_index-1].isnumeric():
+                return int(pokemon_set.iv_spread[stat_index-1:stat_index+1])
+            else:
+                return int(pokemon_set.iv_spread[stat_index])
+        else:
+            return int(pokemon_set.iv_spread[0])
+    else:
+        return 31
+
 
 def get_stat(pokemon_set, stat):
     if stat in pokemon_set.ev_spread:
@@ -481,31 +507,29 @@ def get_stat(pokemon_set, stat):
         if stat_index - 1 >= 0:
             if stat_index - 2 >= 0:
                 if pokemon_set.ev_spread[stat_index - 2].isnumeric():
-                    atk_ev = int(pokemon_set.ev_spread[stat_index-2:stat_index+1])
+                    value = int(pokemon_set.ev_spread[stat_index-2:stat_index+1])
                 elif pokemon_set.ev_spread[stat_index - 1].isnumeric():
-                    atk_ev = int(pokemon_set.ev_spread[stat_index-1:stat_index+1])
+                    value = int(pokemon_set.ev_spread[stat_index-1:stat_index+1])
                 else:
-                    atk_ev = int(pokemon_set.ev_spread[stat_index])
+                    value = int(pokemon_set.ev_spread[stat_index])
             else:
                 if pokemon_set.ev_spread[stat_index - 1].isnumeric():
-                    atk_ev = int(pokemon_set.ev_spread[stat_index-1:stat_index+1])
+                    value = int(pokemon_set.ev_spread[stat_index-1:stat_index+1])
                 else:
-                    atk_ev = int(pokemon_set.ev_spread[stat_index])
+                    value = int(pokemon_set.ev_spread[stat_index])
         else:
-            atk_ev = int(pokemon_set.ev_spread[stat_index])
+            value = int(pokemon_set.ev_spread[stat_index])
     else:
-        atk_ev = 0
-    return atk_ev
+        value = 0
+    return value
 
-def get_nature_multiplier(pokemon_set, category):
-    #FIX HERE PLEASE
+def get_nature_multiplier(pokemon_set, stat):
+    if pokemon_set.nature not in nature_dex.keys():
+        sys.exit('Set has invalid Nature.')
     if nature_dex[pokemon_set.nature]:
-        print(nature_dex[pokemon_set.nature])
-        if ((nature_dex[pokemon_set.nature][0] == 'attack' and category == 'physical') or
-            (nature_dex[pokemon_set.nature][0] == 'spattack' and category == 'special')):
+        if nature_dex[pokemon_set.nature][0] == stat:
             multiplier = 1.1
-        elif ((nature_dex[pokemon_set.nature][1] == 'attack' and category == 'physical') or
-              (nature_dex[pokemon_set.nature][1] == 'spattack' and category == 'special')):
+        elif nature_dex[pokemon_set.nature][1] == stat:
             multiplier = 0.9
         else:
             multiplier = 1.0
@@ -513,89 +537,177 @@ def get_nature_multiplier(pokemon_set, category):
         multiplier = 1.0
     return multiplier
 
-def damage_calc(attacking_pokemon, defending_pokemon, attack):
+def get_other_multipliers(attacking_pokemon, defending_pokemon, attack, critical,
+                          effectiveness, aurora_veil, light_screen, reflect):
+    other = 1.0
+    category = attack_dex[attack][1]
+    attack_type = attack_dex[attack][0]
+
+    # abilities
+    if attacking_pokemon.ability == 'Tinted Lens' and effectiveness < 1.0:
+        other *= 2.0
+    # fix this in the future
+    if attacking_pokemon.ability == 'Sniper' and critical > 1.0:
+        other *= 1.5
+    if attacking_pokemon.ability == 'Mold Breaker' or attacking_pokemon.ability == 'Teravolt' or attacking_pokemon.ability == 'Turboblaze':
+        pass
+    if attacking_pokemon.ability != 'Mold Breaker':
+        if defending_pokemon.ability == 'Water Bubble' and attacking_type == 'Fire':
+            other *= 0.5
+        if ((defending_pokemon.ability == 'Levitate' and (attack != 'Thousand Arrows' or defending_pokemon.item != 'Iron Ball')) or
+            (defending_pokemon.ability == 'Damp' and (attack == 'Explosion' or attack == 'Self-Destruct')) or
+            ((defending_pokemon.ability == 'Dry Skin' or defending_pokemon.ability == 'Storm Drain') and attacking_type == 'water') or
+            ((defending_pokemon.ability == 'Motor Drive' or defending_pokemon.ability == 'Lightning Rod' or defending_pokemon.ability == 'Volt Absorb') and attacking_type == 'electric') or
+            (defending_pokemon.ability == 'Flash Fire' and attacking_type == 'fire') or
+            (defending_pokemon.ability == 'Sap Sipper' and attacking_type == 'grass')):
+            return 0.0
+        if ((defending_pokemon.ability == 'Filter' or defending_pokemon.ability == 'Prism Armor' or defending_pokemon.ability == 'Solid Rock') and effectiveness > 1.0):
+            other *= 0.75
+        if defending_pokemon.ability == 'Water Bubble' and attacking_type == 'Fire':
+            other *= 0.5
+        if defending_pokemon.ability == 'Thick Fat' and (attacking_type == 'Fire' or attacking_type == 'Ice'):
+            other *= 0.5
+        if defending_pokemon.ability == 'Punk Rock' and attack in ['Boomburst', 'Bug Buzz', 'Chatter', 'Clanging Scales',
+                                                                   'Disarming Voice', 'Echoed Voice', 'Hyper Voice', 'Overdrive',
+                                                                   'Relic Song', 'Round', 'Snarl', 'Snore', 'Uproar']:
+            other *= 0.5
+
+        # assume full HP
+        if defending_pokemon.ability == 'Multiscale' or defending_pokemon.ability == 'Shadow Shield':
+            other *= 0.5
+        if defending_pokemon.ability == 'Fluffy':
+            if category== 'special' and attack_type != 'fire':
+                other *= 2.0
+            elif category == 'physical' and attack_type != 'fire':
+                other *= 0.5
+            else:
+                other *= 1.0
+        if defending_pokemon.ability == 'Wonder Guard':
+            if effectiveness > 1.0:
+                other *= 1.0
+            else:
+                other *= 0.0
+
+    # items
+    if attacking_pokemon.item == 'Expert Belt' and effectiveness > 1.0:
+        other *= 1.2
+    if attacking_pokemon.item == 'Life Orb':
+        other *= 1.3
+    if ((defending_pokemon.item == 'Babiri Berry' and attack_type == 'steel' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Charti Berry' and attack_type == 'rock' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Chilan Berry' and attack_type == 'normal') or
+        (defending_pokemon.item == 'Chople Berry' and attack_type == 'fighting' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Coba Berry' and attack_type == 'flying' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Colbur Berry' and attack_type == 'dark' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Haban Berry' and attack_type == 'dragon' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Kasib Berry' and attack_type == 'ghost' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Kebia Berry' and attack_type == 'poison' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Occa Berry' and attack_type == 'fire' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Passho Berry' and attack_type == 'water' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Payapa Berry' and attack_type == 'psychic' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Rindo Berry' and attack_type == 'grass' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Roseli Berry' and attack_type == 'fairy' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Shuca Berry' and attack_type == 'ground' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Tanga Berry' and attack_type == 'bug' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Wacan Berry' and attack_type == 'electric' and effectiveness > 1.0) or
+        (defending_pokemon.item == 'Yache Berry' and attack_type == 'ice' and effectiveness > 1.0)):
+        other *= 0.5
+    if aurora_veil:
+        other *= 0.5
+    if light_screen and category == 'special':
+        other *= 0.5
+    if reflect and category == 'physical':
+        other *= 0.5
+    return other
+
+def damage_calc(attacking_pokemon, defending_pokemon, attack, critical=False,
+                weather_condition='clear', burned=False, aurora_veil=False,
+                light_screen=False, reflect=False):
     atk_level = attacking_pokemon.level
-    def_level = defending_pokemon.level
-    if attack_dex[attack][1] == 'physical':
-        if 'Atk' in attacking_pokemon.iv_spread:
-            stat_index = attacking_pokemon.iv_spread.find('Atk') - 2
-            if stat_index - 1 >= 0:
-                if attacking_pokemon.iv_spread[stat_index - 1].isnumeric():
-                    atk_iv = int(attacking_pokemon.iv_spread[stat_index-1:stat_index+1])
-                else:
-                    atk_iv = int(attacking_pokemon.iv_spread[stat_index])
-            else:
-                atk_iv = int(attacking_pokemon.iv_spread[0])
-        else:
-            atk_iv = 31
-        # some special cases
+    atk_category = attack_dex[attack][1].casefold()
+    if atk_category == 'physical':
+        # some special cases missing
         atk_base_stat = attacking_pokemon.pokemon.base_attack
+        atk_iv = get_iv(attacking_pokemon, 'Atk')
         atk_ev = get_stat(attacking_pokemon, 'Atk')
-        atk_nature = get_nature_multiplier(attacking_pokemon, 'physical')
+        atk_nature = get_nature_multiplier(attacking_pokemon, 'attack')
 
-        if 'Def' in defending_pokemon.iv_spread:
-            stat_index = defending_pokemon.iv_spread.find('Def') - 2
-            if stat_index - 1 >= 0:
-                if defending_pokemon.iv_spread[stat_index - 1].isnumeric():
-                    def_iv = int(defending_pokemon.iv_spread[stat_index-1:stat_index+1])
-                else:
-                    def_iv = int(defending_pokemon.iv_spread[stat_index])
-            else:
-                def_iv = int(defending_pokemon.iv_spread[0])
-        else:
-            def_iv = 31
         def_base_stat = defending_pokemon.pokemon.base_defense
+        def_iv = get_iv(defending_pokemon, 'Def')
         def_ev = get_stat(defending_pokemon, 'Def')
-        def_nature = get_nature_multiplier(defending_pokemon, 'physical')
+        def_nature = get_nature_multiplier(defending_pokemon, 'defense')
 
-    elif attack_dex[attack][1] == 'special':
-        atk_iv = 31
+    elif atk_category == 'special':
         atk_base_stat = attacking_pokemon.pokemon.base_spattack
+        atk_iv = 31 # Showdown always assumes 31 IVs
         atk_ev = get_stat(attacking_pokemon, 'SpA')
-        atk_nature = get_nature_multiplier(attacking_pokemon, 'special')
+        atk_nature = get_nature_multiplier(attacking_pokemon, 'spattack')
 
-        if 'SpD' in defending_pokemon.iv_spread:
-            stat_index = defending_pokemon.iv_spread.find('SpD') - 2
-            if stat_index - 1 >= 0:
-                if defending_pokemon.iv_spread[stat_index - 1].isnumeric():
-                    def_iv = int(defending_pokemon.iv_spread[stat_index-1:stat_index+1])
-                else:
-                    def_iv = int(defending_pokemon.iv_spread[stat_index])
-            else:
-                def_iv = int(defending_pokemon.iv_spread[0])
-        else:
-            def_iv = 31
         def_base_stat = defending_pokemon.pokemon.base_spdefense
+        def_iv = get_iv(defending_pokemon, 'SpD')
         def_ev = get_stat(defending_pokemon, 'SpD')
-        def_nature = get_nature_multiplier(defending_pokemon, 'special')
+        def_nature = get_nature_multiplier(defending_pokemon, 'spdefense')
     else:
-        return 0
+        return [0 for i in range(15)]
 
     attack_stat = math.floor(math.floor(((2 * atk_base_stat + atk_iv + math.floor(atk_ev / 4)) * atk_level) / 100 + 5) * atk_nature)
     attack_power = attack_dex[attack][2]
     attacking_type = [attack_dex[attack][0]]
 
+    defense_stat = math.floor(math.floor(((2 * def_base_stat + def_iv + math.floor(def_ev / 4)) * defending_pokemon.level) / 100 + 5) * def_nature)
 
-    defense_stat = math.floor(math.floor(((2 * def_base_stat + def_iv + math.floor(def_ev / 4)) * def_level) / 100 + 5) * def_nature)
+    # check for STAB
     if attack_dex[attack][0].capitalize() in attacking_pokemon.type:
         STAB = 1.5
     else:
         STAB = 1.0
+
+    # check for Effectiveness
     if len(defending_pokemon.type) > 1:
         effectiveness = TypeChart[(attack_dex[attack][0].capitalize(), defending_pokemon.type[0])] * TypeChart[(attack_dex[attack][0].capitalize(), defending_pokemon.type[1])]
     else:
         effectiveness = TypeChart[(attack_dex[attack][0].capitalize(), defending_pokemon.type[0])]
+
+    other = get_other_multipliers(attacking_pokemon, defending_pokemon, attack, critical, effectiveness, aurora_veil, light_screen, reflect)
+
+    # weather toggle
+    if weather_condition == 'sun':
+        if attack_dex[attack][0] == 'fire':
+            weather = 1.5
+        elif attack_dex[attack][0] == 'water':
+            weather = 0.5
+        else:
+            weather = 1.0
+    elif weather_condition == 'rain':
+        if attack_dex[attack][0] == 'water':
+            weather = 1.5
+        elif attack_dex[attack][0] == 'fire':
+            weather = 0.5
+        else:
+            weather = 1.0
+    else:
+        weather = 1.0 # clear weather assumed
+
+    # burn toggle
+    if burned and attacking_pokemon.ability != 'Guts':
+        burn = 0.5
+    else:
+        burn = 1.0
+
+    # crit toggle
+    if critical and defending_pokemon.ability != 'Battle Armor':
+        crit = 1.5
+    else:
+        crit = 1.0
+
     damage_rolls = []
-    print(def_nature)
     for RandomNumber in RandomNumbers:
-        damage_rolls.append(round(((((2 * atk_level / 5 + 2) * attack_stat * attack_power / defense_stat) / 50) + 2) * STAB * effectiveness * RandomNumber))
+        modifiers = STAB * weather * burn * effectiveness * crit * RandomNumber * other
+        damage_rolls.append(math.floor(((((2 * atk_level / 5 + 2) * attack_power * attack_stat / defense_stat) / 50) + 2) * modifiers))
     return damage_rolls
 
 #testing
 #open a pokemon file
-import pandas as pd
-from pandas import ExcelFile
-
 pokedex = pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
     'data', 'Pokedex.xlsx'))
 pokemon_list = {}
@@ -625,8 +737,5 @@ for i in range(2):
                            database['ability'].values[i], database['ev_spread'].values[i], database['nature'].values[i],
                            database['iv_spread'].values[i], [database['move1'].values[i], database['move2'].values[i], database['move3'].values[i], database['move4'].values[i]]))
 
-damage_rolls = damage_calc(sets[0], sets[1], 'Flamethrower')
-sets[0].print_set()
-sets[1].print_set()
-print("Charmander uses Flamethrower vs. Kingler:")
+damage_rolls = damage_calc(sets[1], sets[0], 'Fishious Rend')
 print(damage_rolls)

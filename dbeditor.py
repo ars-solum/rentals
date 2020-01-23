@@ -1,8 +1,14 @@
 import xlrd
 import xlwt
 import tkinter as tk
+from PIL import Image, ImageTk
+import os
 
 VERSION = '0.1'
+
+def RGBAImage(path):
+    return ImageTk.PhotoImage(Image.open(path).convert('RGBA'))
+
 def donothing():
     pass
 
@@ -30,6 +36,15 @@ class DBEditor (tk.Tk):
         self.editmenu.add_command(label="Select All", command=donothing)
         self.menubar.add_cascade(label="Edit", menu=self.editmenu)
         self.config(menu=self.menubar)
+
+        self.test_img = [RGBAImage(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'SwSh', 'charizard-gi.png'))),
+                         RGBAImage(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'SwSh', 'lapras-gi.png'))),
+                         RGBAImage(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'SwSh', 'hoothoot.png')))]
+        self.test_buttons = []
+
+        for i in range(3):
+            self.test_buttons.append(tk.Button(self, image=self.test_img[i], bd=0.1))
+            self.test_buttons[i].grid(row=0, column=i, padx=10, pady=10)
 
 if __name__ == '__main__':
     dbapp = DBEditor()
