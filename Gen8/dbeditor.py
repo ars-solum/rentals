@@ -6,14 +6,35 @@ from PIL import Image, ImageTk
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from pygame import mixer
 
-VERSION = '0.1'
+VERSION = '0.3'
 mixer.init()
 
-def RGBAImage(subdir, filename):
-    return ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', subdir, filename))).convert('RGBA'))
+#os.path.join(os.path.dirname(os.path.realpath(__file__))
 
-def get_newset_images():
-    pass
+def RGBAImage(subdir, filename):
+    try:
+        return ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', subdir, filename))).convert('RGBA'))
+    except FileNotFoundError:
+        print('Could not find file: ' + os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', subdir, filename)))
+        return None
+
+def get_newset_images(key):
+    directory = os.fsencode(str(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key)))
+    temp_dict = {}
+    last_name = ''
+    for file in os.listdir(directory):
+        filename = os.fsdecode(file)
+        object_name = filename.replace('.png', '').replace('-hover', '')
+        if object_name == last_name:
+            hover = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
+            if key == 'pokemon':
+                temp_dict[object_name] = [hover, normal, RGBAImage('SwSh', filename.replace('-hover.png', '.png'))]
+            else:
+                temp_dict[object_name] = [hover, normal]
+        else:
+            normal = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
+        last_name = object_name
+    return temp_dict
 
 class NewSetPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -24,21 +45,12 @@ class NewSetPage(tk.Frame):
                        'bg'        : [RGBAImage('menu', 'newbg.png'), RGBAImage('menu', 'inner_bg.png')],
                        'buttons'   : {'back'  : [RGBAImage('menu', 'back_button.png'), RGBAImage('menu', 'back_button2.png')],
                                       'stats' : [RGBAImage('menu', 'stats.png'), RGBAImage('menu', 'stats2.png')]},
-                       'pokemon'   : {'aegislash' : [RGBAImage('bar', 'aegislash.png'), RGBAImage('bar', 'aegislash-hover.png'), RGBAImage('SwSh', 'aegislash.png')],
-                                      'abomasnow' : [RGBAImage('bar', 'abomasnow.png'), RGBAImage('bar', 'abomasnow-hover.png'), RGBAImage('SwSh', 'abomasnow.png')],
-                                      'alcremie'  : [RGBAImage('bar', 'alcremie.png'), RGBAImage('bar', 'alcremie-hover.png'), RGBAImage('SwSh', 'alcremie.png')],
-                                      'accelgor'  : [RGBAImage('bar', 'accelgor.png'), RGBAImage('bar', 'accelgor-hover.png'), RGBAImage('SwSh', 'accelgor.png')],
-                                      'appletun'  : [RGBAImage('bar', 'appletun.png'), RGBAImage('bar', 'appletun-hover.png'), RGBAImage('SwSh', 'appletun.png')]},
-                       'items'     : {'Life Orb'     : [RGBAImage('bar', 'Life Orb.png'), RGBAImage('bar', 'Life Orb-hover.png')],
-                                      'Choice Scarf' : [RGBAImage('bar', 'Choice Scarf.png'), RGBAImage('bar', 'Choice Scarf-hover.png')],
-                                      'Choice Specs' : [RGBAImage('bar', 'Choice Specs.png'), RGBAImage('bar', 'Choice Specs-hover.png')],
-                                      'Choice Band'  : [RGBAImage('bar', 'Choice Band.png'), RGBAImage('bar', 'Choice Band-hover.png')],
-                                      'Assault Vest' : [RGBAImage('bar', 'Assault Vest.png'), RGBAImage('bar', 'Assault Vest-hover.png')]},
-                       'abilities' : {'Stance Change' : [RGBAImage('bar', 'Stance Change.png'), RGBAImage('bar', 'Stance Change-hover.png')]},
+                       'pokemon'   : get_newset_images('pokemon'),
+                       'items'     : get_newset_images('items'),
+                       'abilities' : get_newset_images('abilities'),
                        'attacks'   : { },
                        'other'     : RGBAImage('menu', 'egg.png')
                       }
-
 
         self.canvas = tk.Canvas(self, height=651, width=651, highlightthickness=0)
         self.canvas.pack()
@@ -46,12 +58,14 @@ class NewSetPage(tk.Frame):
         self.in_frame = tk.Frame(self, height=431, width=651, borderwidth=0, highlightthickness=0)
         self.in_frame.pack_propagate(0)
         self.frame = self.canvas.create_window((0,223), window=self.in_frame, anchor='nw')
-        self.canvas2 = tk.Canvas(self.in_frame, height=1000, width=651, highlightthickness=0)
+        self.canvas2 = tk.Canvas(self.in_frame, height=1000, width=651, highlightthickness=0, scrollregion=(0, 0, 651, 1000))
         self.inner_bg = self.canvas2.create_image((0,0), image=self.images['bg'][1], anchor='nw')
         self.scrollbar = tk.Scrollbar(self.in_frame, orient='vertical', command=self.custom_yview)
         self.scrollbar.pack(side='right', fill='y')
         self.canvas2.config(yscrollcommand=self.scrollbar.set)
-        self.canvas2.pack()
+        self.canvas2.pack(side='left', expand=True, fill='both')
+        self.canvas2.bind('<Enter>', self._on_mousewheel)
+        self.canvas2.bind('<Leave>', self._off_mousewheel)
 
         # back button
         self.back = self.canvas.create_image((80,40), image=self.images['buttons']['back'][0])
@@ -138,6 +152,8 @@ class NewSetPage(tk.Frame):
             self.canvas2.tag_bind(self.ability_buttons[ability], '<Button-1>', lambda event, ability=ability: self.pick_ability(ability))
             self.canvas2.itemconfig(self.ability_buttons[ability], state='hidden')
 
+###############################################################################
+# canvas stuff
     def get_pokemon_list(self):
         for pkmn, button in self.pokemon_buttons.items():
             self.canvas2.itemconfig(button, state='normal')
@@ -175,7 +191,6 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='normal')
         for ability, button in self.ability_buttons.items():
             self.canvas2.itemconfig(button, state='hidden')
-
 
     def pick_item(self, item_name):
         self.entry2.delete(0,tk.END)
@@ -215,7 +230,19 @@ class NewSetPage(tk.Frame):
         self.canvas2.yview(*args, **kwargs)
         x = self.canvas2.canvasx(0)
         y = self.canvas2.canvasy(0)
-        self.canvas.coords(self.inner_bg, x, y)
+        self.canvas2.coords(self.inner_bg, x, y)
+
+    def _on_mousewheel(self, event):
+        self.canvas2.bind_all('<MouseWheel>', self._scroll)
+
+    def _off_mousewheel(self, event):
+        self.canvas2.unbind_all('<MouseWheel>')
+
+    def _scroll(self, event):
+        self.canvas2.yview_scroll(int(-1*(event.delta/120)), 'units')
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas2.coords(self.inner_bg, x, y)
 
 
 class EditSetPage(tk.Frame):

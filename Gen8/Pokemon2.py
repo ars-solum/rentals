@@ -377,8 +377,7 @@ nature_dex = {'Adamant' : ('attack', 'spattack'),
               'Serious' : None,
               'Timid'   : ('speed', 'attack')}
 
-attack_item_file = pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-    'data', 'attacks_items.xlsx'))
+attack_item_file = pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'attacks_items.xlsx'))
 attack_dex = {}
 item_dex = []
 xl_atk = pd.read_excel(attack_item_file, 'Attacks')
@@ -391,7 +390,6 @@ for i in range(724):
 for i in range(145):
     item_dex.append(str(xl_item['name'].values[i]))
 
-# we're defining the pokemon's traits here.
 class Pokemon:
     def __init__(self, name=None, nat_dex=None, type=None, abilities=None,
                  weight=None, base_stats=None, can_dynamax=True,
@@ -431,7 +429,6 @@ class Pokemon:
         for attack in self.attacks:
             print('  ' + attack)
 
-# we're reading in the database sets here.
 class PokemonSet:
     def __init__(self, pokemon, dex, type, usage_tier, tags, item, ability,
                  ev_spread, nature, iv_spread, moves, dynamax=False,
@@ -500,7 +497,6 @@ def get_iv(pokemon_set, stat):
     else:
         return 31
 
-
 def get_stat(pokemon_set, stat):
     if stat in pokemon_set.ev_spread:
         stat_index = pokemon_set.ev_spread.find(stat) - 2
@@ -537,8 +533,7 @@ def get_nature_multiplier(pokemon_set, stat):
         multiplier = 1.0
     return multiplier
 
-def get_other_multipliers(attacking_pokemon, defending_pokemon, attack, critical,
-                          effectiveness, aurora_veil, light_screen, reflect):
+def get_other_multipliers(attacking_pokemon, defending_pokemon, attack, critical, effectiveness, aurora_veil, light_screen, reflect):
     other = 1.0
     category = attack_dex[attack][1]
     attack_type = attack_dex[attack][0]
@@ -620,9 +615,7 @@ def get_other_multipliers(attacking_pokemon, defending_pokemon, attack, critical
         other *= 0.5
     return other
 
-def damage_calc(attacking_pokemon, defending_pokemon, attack, critical=False,
-                weather_condition='clear', burned=False, aurora_veil=False,
-                light_screen=False, reflect=False):
+def damage_calc(attacking_pokemon, defending_pokemon, attack, critical=False, weather_condition='clear', burned=False, aurora_veil=False, light_screen=False, reflect=False):
     atk_level = attacking_pokemon.level
     atk_category = attack_dex[attack][1].casefold()
     if atk_category == 'physical':
