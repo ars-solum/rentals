@@ -12,6 +12,9 @@ mixer.init()
 def RGBAImage(subdir, filename):
     return ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', subdir, filename))).convert('RGBA'))
 
+def get_newset_images():
+    pass
+
 class NewSetPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -40,12 +43,15 @@ class NewSetPage(tk.Frame):
         self.canvas = tk.Canvas(self, height=651, width=651, highlightthickness=0)
         self.canvas.pack()
         self.background = self.canvas.create_image((0,0), image=self.images['bg'][0], anchor='nw')
-        # for i in range(40):
-        #     self.canvas.rowconfigure(i, weight=10)
-        #     self.canvas.columnconfigure(i, weight=10)
-        self.canvas2 = tk.Canvas(self, height=1000, width=651, highlightthickness=0)
+        self.in_frame = tk.Frame(self, height=431, width=651, borderwidth=0, highlightthickness=0)
+        self.in_frame.pack_propagate(0)
+        self.frame = self.canvas.create_window((0,223), window=self.in_frame, anchor='nw')
+        self.canvas2 = tk.Canvas(self.in_frame, height=1000, width=651, highlightthickness=0)
         self.inner_bg = self.canvas2.create_image((0,0), image=self.images['bg'][1], anchor='nw')
-        self.inner_canvas = self.canvas.create_window((0,223), window=self.canvas2, anchor='nw')
+        self.scrollbar = tk.Scrollbar(self.in_frame, orient='vertical', command=self.custom_yview)
+        self.scrollbar.pack(side='right', fill='y')
+        self.canvas2.config(yscrollcommand=self.scrollbar.set)
+        self.canvas2.pack()
 
         # back button
         self.back = self.canvas.create_image((80,40), image=self.images['buttons']['back'][0])
@@ -112,13 +118,13 @@ class NewSetPage(tk.Frame):
         # bottom canvas
         self.pokemon_buttons = {}
         for i, (pkmn, img) in enumerate(self.images['pokemon'].items()):
-            self.pokemon_buttons[pkmn] = self.canvas2.create_image((320,60+65*i), image=img[0])
+            self.pokemon_buttons[pkmn] = self.canvas2.create_image((315,40+65*i), image=img[0])
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Enter>', lambda event, pkmn=pkmn, img=img: self.on_hover(self.canvas2, self.pokemon_buttons[pkmn], img[1]))
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Leave>', lambda event, pkmn=pkmn, img=img: self.on_hover(self.canvas2, self.pokemon_buttons[pkmn], img[0]))
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Button-1>', lambda event, pkmn=pkmn: self.pick_pokemon(pkmn.capitalize()))
         self.item_buttons = {}
         for i, (item, img) in enumerate(self.images['items'].items()):
-            self.item_buttons[item] = self.canvas2.create_image((320,60+65*i), image=img[0])
+            self.item_buttons[item] = self.canvas2.create_image((315,40+65*i), image=img[0])
             self.canvas2.tag_bind(self.item_buttons[item], '<Enter>', lambda event, item=item, img=img: self.on_hover(self.canvas2, self.item_buttons[item], img[1]))
             self.canvas2.tag_bind(self.item_buttons[item], '<Leave>', lambda event, item=item, img=img: self.on_hover(self.canvas2, self.item_buttons[item], img[0]))
             self.canvas2.tag_bind(self.item_buttons[item], '<Button-1>', lambda event, item=item: self.pick_item(item))
@@ -126,7 +132,7 @@ class NewSetPage(tk.Frame):
 
         self.ability_buttons = {}
         for i, (ability, img) in enumerate(self.images['abilities'].items()):
-            self.ability_buttons[ability] = self.canvas2.create_image((320,60+65*i), image=img[0])
+            self.ability_buttons[ability] = self.canvas2.create_image((315,40+65*i), image=img[0])
             self.canvas2.tag_bind(self.ability_buttons[ability], '<Enter>', lambda event, ability=ability, img=img: self.on_hover(self.canvas2, self.ability_buttons[ability], img[1]))
             self.canvas2.tag_bind(self.ability_buttons[ability], '<Leave>', lambda event, ability=ability, img=img: self.on_hover(self.canvas2, self.ability_buttons[ability], img[0]))
             self.canvas2.tag_bind(self.ability_buttons[ability], '<Button-1>', lambda event, ability=ability: self.pick_ability(ability))
@@ -158,7 +164,8 @@ class NewSetPage(tk.Frame):
         self.entry2.delete(0,tk.END)
         self.entry2.insert(0,'')
         self.entry3.delete(0,tk.END)
-        self.entry3.insert(0,'Stance Change')
+        self.entry3.insert(0,'')
+        self.entry2.focus_set()
         self.get_item_list()
 
     def get_item_list(self):
@@ -171,9 +178,9 @@ class NewSetPage(tk.Frame):
 
 
     def pick_item(self, item_name):
-        print(item_name)
         self.entry2.delete(0,tk.END)
         self.entry2.insert(0,item_name)
+        self.entry3.focus_set()
         self.get_ability_list()
 
     def get_ability_list(self):
@@ -187,6 +194,7 @@ class NewSetPage(tk.Frame):
     def pick_ability(self, ability_name):
         self.entry3.delete(0,tk.END)
         self.entry3.insert(0,ability_name)
+        self.entry4[0].focus_set()
         self.get_move_list()
 
     def get_move_list(self):
@@ -202,6 +210,12 @@ class NewSetPage(tk.Frame):
 
     def on_hover(self, canvas, button, image):
         canvas.itemconfig(button, image=image)
+
+    def custom_yview(self, *args, **kwargs):
+        self.canvas2.yview(*args, **kwargs)
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas.coords(self.inner_bg, x, y)
 
 
 class EditSetPage(tk.Frame):
@@ -287,7 +301,7 @@ class DBEditor (tk.Tk):
 if __name__ == '__main__':
     dbapp = DBEditor()
 
-    dbapp.resizable(False, False)
+    #dbapp.resizable(False, False)
     dbapp.geometry("651x651")
     dbapp.title('Rentals DB Editor v%s' %VERSION)
     dbapp.mainloop()
