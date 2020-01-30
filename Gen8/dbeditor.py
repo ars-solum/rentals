@@ -28,7 +28,7 @@ def get_newset_images(key):
         if object_name == last_name:
             hover = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
             if key == 'pokemon':
-                temp_dict[object_name] = [hover, normal, RGBAImage('SwSh', filename.replace('-hover.png', '.png'))]
+                temp_dict[object_name] = [hover, normal, RGBAImage('pokemon', filename.replace('-hover', ''))]
             else:
                 temp_dict[object_name] = [hover, normal]
         else:
@@ -109,17 +109,12 @@ class NewSetPage(tk.Frame):
         self.moves_text = self.canvas.create_text((378,105), text='Moves')
         self.canvas.itemconfig(self.moves_text, state='hidden')
         self.entry4 = []
+        self.moves_entry = []
         for i in range(4):
             self.entry4.append(tk.Entry(self.canvas, textvariable=self.moves[i], width=20))
             self.entry4[i].bind('<Button-1>', lambda event: self.get_move_list())
-        self.moves_entry1 = self.canvas.create_window((420,125), window=self.entry4[0])
-        self.moves_entry2 = self.canvas.create_window((420,150), window=self.entry4[1])
-        self.moves_entry3 = self.canvas.create_window((420,175), window=self.entry4[2])
-        self.moves_entry4 = self.canvas.create_window((420,200), window=self.entry4[3])
-        self.canvas.itemconfig(self.moves_entry1, state='hidden')
-        self.canvas.itemconfig(self.moves_entry2, state='hidden')
-        self.canvas.itemconfig(self.moves_entry3, state='hidden')
-        self.canvas.itemconfig(self.moves_entry4, state='hidden')
+            self.moves_entry.append(self.canvas.create_window((420,125+25*i), window=self.entry4[i]))
+            self.canvas.itemconfig(self.moves_entry[i], state='hidden')
 
         # stats section
         self.stats_text = self.canvas.create_text((510,105), text='Stats')
@@ -127,6 +122,7 @@ class NewSetPage(tk.Frame):
         self.stats_button = self.canvas.create_image((560,165), image=self.images['buttons']['stats'][0])
         self.canvas.tag_bind(self.stats_button, '<Enter>', lambda event: self.on_hover(self.canvas, self.stats_button, self.images['buttons']['stats'][1]))
         self.canvas.tag_bind(self.stats_button, '<Leave>', lambda event: self.on_hover(self.canvas, self.stats_button, self.images['buttons']['stats'][0]))
+        self.canvas.tag_bind(self.stats_button, '<Button-1>', lambda event: self.stats_menu())
         self.canvas.itemconfig(self.stats_button, state='hidden')
 
         # bottom canvas
@@ -153,7 +149,10 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ability_buttons[ability], state='hidden')
 
 ###############################################################################
-# canvas stuff
+    def stats_menu(self):
+        print('hi')
+        self.scrollbar.pack_forget()
+        pass
     def get_pokemon_list(self):
         for pkmn, button in self.pokemon_buttons.items():
             self.canvas2.itemconfig(button, state='normal')
@@ -169,10 +168,8 @@ class NewSetPage(tk.Frame):
         self.canvas.itemconfig(self.ability_entry, state='normal')
         self.canvas.itemconfig(self.pokemon_icon, image=self.images['pokemon'][name.casefold()][2])
         self.canvas.itemconfig(self.moves_text, state='normal')
-        self.canvas.itemconfig(self.moves_entry1, state='normal')
-        self.canvas.itemconfig(self.moves_entry2, state='normal')
-        self.canvas.itemconfig(self.moves_entry3, state='normal')
-        self.canvas.itemconfig(self.moves_entry4, state='normal')
+        for i in range(4):
+            self.canvas.itemconfig(self.moves_entry[i], state='normal')
         self.canvas.itemconfig(self.stats_text, state='normal')
         self.canvas.itemconfig(self.stats_button, state='normal')
         self.entry.delete(0,tk.END)
