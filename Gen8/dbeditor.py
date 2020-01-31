@@ -152,6 +152,9 @@ class NewSetPage(tk.Frame):
     def stats_menu(self):
         print('hi')
         self.scrollbar.pack_forget()
+        self.canvas2.pack_forget()
+        self.canvas2.config(height=1000, scrollregion=(0, 0, 651, 431))
+        self.canvas2.pack(side='left', expand=True, fill='both')
         pass
     def get_pokemon_list(self):
         for pkmn, button in self.pokemon_buttons.items():
@@ -160,6 +163,10 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='hidden')
         for ability, button in self.ability_buttons.items():
             self.canvas2.itemconfig(button, state='hidden')
+        self.scrollbar.pack(side='right', fill='y')
+        self.canvas2.pack_forget()
+        self.canvas2.config(height=1000, scrollregion=(0, 0, 651, 1000))
+        self.canvas2.pack(side='left', expand=True, fill='both')
 
     def pick_pokemon(self, name):
         self.canvas.itemconfig(self.item_text, state='normal')
@@ -188,6 +195,11 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='normal')
         for ability, button in self.ability_buttons.items():
             self.canvas2.itemconfig(button, state='hidden')
+        self.scrollbar.pack(side='right', fill='y')
+        self.canvas2.pack_forget()
+        self.canvas2.config(height=1000, scrollregion=(0, 0, 651, 1000))
+        self.canvas2.pack(side='left', expand=True, fill='both')
+
 
     def pick_item(self, item_name):
         self.entry2.delete(0,tk.END)
@@ -202,6 +214,8 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='hidden')
         for ability, button in self.ability_buttons.items():
             self.canvas2.itemconfig(button, state='normal')
+        self.canvas2.config(height=431, scrollregion=(0, 0, 651, 431))
+        self.scrollbar.pack_forget()
 
     def pick_ability(self, ability_name):
         self.entry3.delete(0,tk.END)
@@ -216,6 +230,10 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='hidden')
         for ability, button in self.ability_buttons.items():
             self.canvas2.itemconfig(button, state='hidden')
+        self.scrollbar.pack(side='right', fill='y')
+        self.canvas2.pack_forget()
+        self.canvas2.config(height=1000, scrollregion=(0, 0, 651, 1000))
+        self.canvas2.pack(side='left', expand=True, fill='both')
 
     def test_print(self, name):
         print(name.get())
