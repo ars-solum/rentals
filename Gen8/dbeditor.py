@@ -24,15 +24,18 @@ def get_newset_images(key):
     last_name = ''
     for file in os.listdir(directory):
         filename = os.fsdecode(file)
-        object_name = filename.replace('.png', '').replace('-hover', '')
-        if object_name == last_name:
-            hover = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
-            if key == 'pokemon':
-                temp_dict[object_name] = [hover, normal, RGBAImage('pokemon', filename.replace('-hover', ''))]
+        object_name = filename.replace('mr ', 'mr. ').replace(' jr', ' jr.').replace('.png', '').replace('-hover', '')
+        try:
+            if object_name == last_name:
+                hover = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
+                if key == 'pokemon':
+                    temp_dict[object_name] = [hover, normal, RGBAImage('pokemon', filename.replace('-hover', ''))]
+                else:
+                    temp_dict[object_name] = [hover, normal]
             else:
-                temp_dict[object_name] = [hover, normal]
-        else:
-            normal = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
+                normal = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
+        except OSError:
+            pass
         last_name = object_name
     return temp_dict
 
@@ -58,7 +61,7 @@ class NewSetPage(tk.Frame):
         self.in_frame = tk.Frame(self, height=431, width=651, borderwidth=0, highlightthickness=0)
         self.in_frame.pack_propagate(0)
         self.frame = self.canvas.create_window((0,223), window=self.in_frame, anchor='nw')
-        self.canvas2 = tk.Canvas(self.in_frame, height=1000, width=651, highlightthickness=0, scrollregion=(0, 0, 651, 1000))
+        self.canvas2 = tk.Canvas(self.in_frame, height=24000, width=651, highlightthickness=0, scrollregion=(0, 0, 651, 24000))
         self.inner_bg = self.canvas2.create_image((0,0), image=self.images['bg'][1], anchor='nw')
         self.scrollbar = tk.Scrollbar(self.in_frame, orient='vertical', command=self.custom_yview)
         self.scrollbar.pack(side='right', fill='y')
@@ -103,7 +106,7 @@ class NewSetPage(tk.Frame):
         self.canvas.itemconfig(self.ability_entry, state='hidden')
 
         # move entry
-        self.moves = [tk.StringVar(), tk.StringVar(), tk.StringVar(), tk.StringVar()]
+        self.moves = [tk.StringVar() for i in range(4)]
         for i in range(4):
             self.moves[i].trace('w', lambda name, index, mode, moves=self.moves, i=i: self.test_print(moves[i]))
         self.moves_text = self.canvas.create_text((378,105), text='Moves')
@@ -148,12 +151,42 @@ class NewSetPage(tk.Frame):
             self.canvas2.tag_bind(self.ability_buttons[ability], '<Button-1>', lambda event, ability=ability: self.pick_ability(ability))
             self.canvas2.itemconfig(self.ability_buttons[ability], state='hidden')
 
+        # ev stats
+        self.ev_stats = [tk.StringVar() for i in range(6)]
+        for i in range(6):
+            self.ev_stats[i].trace('w', lambda name, index, mode, stats=self.ev_stats, i=i: self.test_print(stats[i]))
+        self.entry5 = []
+        self.ev_stats_entry = []
+        for i in range(6):
+            self.entry5.append(tk.Entry(self.canvas2, textvariable=self.ev_stats[i], width=7))
+            self.ev_stats_entry.append(self.canvas2.create_window((300, 50+25*i), window=self.entry5[i]))
+            self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
+
+        # iv stats
+        self.iv_stats = [tk.IntVar() for i in range(6)]
+        for i in range(6):
+            self.ev_stats[i].trace('w', lambda name, index, mode, stats=self.ev_stats, i=i: self.test_print(stats[i]))
+        self.entry5 = []
+        self.ev_stats_entry = []
+        for i in range(6):
+            self.entry5.append(tk.Entry(self.canvas2, textvariable=self.ev_stats[i], width=7))
+            self.ev_stats_entry.append(self.canvas2.create_window((300, 50+25*i), window=self.entry5[i]))
+            self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
+        print(self.pokemon_buttons)
+
 ###############################################################################
     def stats_menu(self):
-        print('hi')
+        for pkmn, button in self.pokemon_buttons.items():
+            self.canvas2.itemconfig(button, state='hidden')
+        for item, button in self.item_buttons.items():
+            self.canvas2.itemconfig(button, state='hidden')
+        for ability, button in self.ability_buttons.items():
+            self.canvas2.itemconfig(button, state='hidden')
+        for i in range(6):
+            self.canvas2.itemconfig(self.ev_stats_entry[i], state='normal')
         self.scrollbar.pack_forget()
         self.canvas2.pack_forget()
-        self.canvas2.config(height=1000, scrollregion=(0, 0, 651, 431))
+        self.canvas2.config(height=24000, scrollregion=(0, 0, 651, 431))
         self.canvas2.pack(side='left', expand=True, fill='both')
         pass
     def get_pokemon_list(self):
@@ -163,9 +196,11 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='hidden')
         for ability, button in self.ability_buttons.items():
             self.canvas2.itemconfig(button, state='hidden')
+        for i in range(6):
+            self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.scrollbar.pack(side='right', fill='y')
         self.canvas2.pack_forget()
-        self.canvas2.config(height=1000, scrollregion=(0, 0, 651, 1000))
+        self.canvas2.config(height=24000, scrollregion=(0, 0, 651, 24000))
         self.canvas2.pack(side='left', expand=True, fill='both')
 
     def pick_pokemon(self, name):
@@ -195,9 +230,11 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='normal')
         for ability, button in self.ability_buttons.items():
             self.canvas2.itemconfig(button, state='hidden')
+        for i in range(6):
+            self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.scrollbar.pack(side='right', fill='y')
         self.canvas2.pack_forget()
-        self.canvas2.config(height=1000, scrollregion=(0, 0, 651, 1000))
+        self.canvas2.config(height=24000, scrollregion=(0, 0, 651, 24000))
         self.canvas2.pack(side='left', expand=True, fill='both')
 
 
@@ -214,6 +251,8 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='hidden')
         for ability, button in self.ability_buttons.items():
             self.canvas2.itemconfig(button, state='normal')
+        for i in range(6):
+            self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.canvas2.config(height=431, scrollregion=(0, 0, 651, 431))
         self.scrollbar.pack_forget()
 
@@ -230,9 +269,11 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='hidden')
         for ability, button in self.ability_buttons.items():
             self.canvas2.itemconfig(button, state='hidden')
+        for i in range(6):
+            self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.scrollbar.pack(side='right', fill='y')
         self.canvas2.pack_forget()
-        self.canvas2.config(height=1000, scrollregion=(0, 0, 651, 1000))
+        self.canvas2.config(height=24000, scrollregion=(0, 0, 651, 24000))
         self.canvas2.pack(side='left', expand=True, fill='both')
 
     def test_print(self, name):
