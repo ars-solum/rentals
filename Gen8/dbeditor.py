@@ -71,7 +71,7 @@ class NewSetPage(tk.Frame):
         self.canvas2.bind('<Leave>', self._off_mousewheel)
 
         # back button
-        self.back = self.canvas.create_image((80,40), image=self.images['buttons']['back'][0])
+        self.back = self.canvas.create_image((50,40), image=self.images['buttons']['back'][0])
         self.canvas.tag_bind(self.back, '<Enter>', lambda event: self.on_hover(self.canvas, self.back, self.images['buttons']['back'][1]))
         self.canvas.tag_bind(self.back, '<Leave>', lambda event: self.on_hover(self.canvas, self.back, self.images['buttons']['back'][0]))
         self.canvas.tag_bind(self.back, '<Button-1>', lambda event: self.controller.change_page('NewSetPage', 'MainPage'))
