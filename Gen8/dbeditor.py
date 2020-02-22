@@ -6,8 +6,11 @@ from PIL import Image, ImageTk
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from pygame import mixer
 
-VERSION = '0.3'
-mixer.init()
+VERSION = '0.4'
+mixer.init(22100, -16, 2, 32)
+move_sfx = mixer.Sound(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound', 'move.wav'))
+move2_sfx = mixer.Sound(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound', 'move2.wav'))
+change_screen_sfx = mixer.Sound(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound', 'change_screen.wav'))
 
 #os.path.join(os.path.dirname(os.path.realpath(__file__))
 
@@ -35,6 +38,7 @@ def get_newset_images(key):
             else:
                 normal = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
         except OSError:
+            print('Could not load %s' % object_name)
             pass
         last_name = object_name
     return temp_dict
@@ -72,7 +76,7 @@ class NewSetPage(tk.Frame):
 
         # back button
         self.back = self.canvas.create_image((50,40), image=self.images['buttons']['back'][0])
-        self.canvas.tag_bind(self.back, '<Enter>', lambda event: self.on_hover(self.canvas, self.back, self.images['buttons']['back'][1]))
+        self.canvas.tag_bind(self.back, '<Enter>', lambda event: self.on_hover(self.canvas, self.back, self.images['buttons']['back'][1], sound=True))
         self.canvas.tag_bind(self.back, '<Leave>', lambda event: self.on_hover(self.canvas, self.back, self.images['buttons']['back'][0]))
         self.canvas.tag_bind(self.back, '<Button-1>', lambda event: self.controller.change_page('NewSetPage', 'MainPage'))
 
@@ -123,7 +127,7 @@ class NewSetPage(tk.Frame):
         self.stats_text = self.canvas.create_text((510,105), text='Stats')
         self.canvas.itemconfig(self.stats_text, state='hidden')
         self.stats_button = self.canvas.create_image((560,165), image=self.images['buttons']['stats'][0])
-        self.canvas.tag_bind(self.stats_button, '<Enter>', lambda event: self.on_hover(self.canvas, self.stats_button, self.images['buttons']['stats'][1]))
+        self.canvas.tag_bind(self.stats_button, '<Enter>', lambda event: self.on_hover(self.canvas, self.stats_button, self.images['buttons']['stats'][1], sound=True))
         self.canvas.tag_bind(self.stats_button, '<Leave>', lambda event: self.on_hover(self.canvas, self.stats_button, self.images['buttons']['stats'][0]))
         self.canvas.tag_bind(self.stats_button, '<Button-1>', lambda event: self.stats_menu())
         self.canvas.itemconfig(self.stats_button, state='hidden')
@@ -132,13 +136,13 @@ class NewSetPage(tk.Frame):
         self.pokemon_buttons = {}
         for i, (pkmn, img) in enumerate(self.images['pokemon'].items()):
             self.pokemon_buttons[pkmn] = self.canvas2.create_image((315,40+65*i), image=img[0])
-            self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Enter>', lambda event, pkmn=pkmn, img=img: self.on_hover(self.canvas2, self.pokemon_buttons[pkmn], img[1]))
+            self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Enter>', lambda event, pkmn=pkmn, img=img: self.on_hover(self.canvas2, self.pokemon_buttons[pkmn], img[1], sound=True))
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Leave>', lambda event, pkmn=pkmn, img=img: self.on_hover(self.canvas2, self.pokemon_buttons[pkmn], img[0]))
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Button-1>', lambda event, pkmn=pkmn: self.pick_pokemon(pkmn.capitalize()))
         self.item_buttons = {}
         for i, (item, img) in enumerate(self.images['items'].items()):
             self.item_buttons[item] = self.canvas2.create_image((315,40+65*i), image=img[0])
-            self.canvas2.tag_bind(self.item_buttons[item], '<Enter>', lambda event, item=item, img=img: self.on_hover(self.canvas2, self.item_buttons[item], img[1]))
+            self.canvas2.tag_bind(self.item_buttons[item], '<Enter>', lambda event, item=item, img=img: self.on_hover(self.canvas2, self.item_buttons[item], img[1], sound=True))
             self.canvas2.tag_bind(self.item_buttons[item], '<Leave>', lambda event, item=item, img=img: self.on_hover(self.canvas2, self.item_buttons[item], img[0]))
             self.canvas2.tag_bind(self.item_buttons[item], '<Button-1>', lambda event, item=item: self.pick_item(item))
             self.canvas2.itemconfig(self.item_buttons[item], state='hidden')
@@ -146,7 +150,7 @@ class NewSetPage(tk.Frame):
         self.ability_buttons = {}
         for i, (ability, img) in enumerate(self.images['abilities'].items()):
             self.ability_buttons[ability] = self.canvas2.create_image((315,40+65*i), image=img[0])
-            self.canvas2.tag_bind(self.ability_buttons[ability], '<Enter>', lambda event, ability=ability, img=img: self.on_hover(self.canvas2, self.ability_buttons[ability], img[1]))
+            self.canvas2.tag_bind(self.ability_buttons[ability], '<Enter>', lambda event, ability=ability, img=img: self.on_hover(self.canvas2, self.ability_buttons[ability], img[1], sound=True))
             self.canvas2.tag_bind(self.ability_buttons[ability], '<Leave>', lambda event, ability=ability, img=img: self.on_hover(self.canvas2, self.ability_buttons[ability], img[0]))
             self.canvas2.tag_bind(self.ability_buttons[ability], '<Button-1>', lambda event, ability=ability: self.pick_ability(ability))
             self.canvas2.itemconfig(self.ability_buttons[ability], state='hidden')
@@ -279,8 +283,10 @@ class NewSetPage(tk.Frame):
     def test_print(self, name):
         print(name.get())
 
-    def on_hover(self, canvas, button, image):
+    def on_hover(self, canvas, button, image, sound=False):
         canvas.itemconfig(button, image=image)
+        if sound:
+            move_sfx.play()
 
     def custom_yview(self, *args, **kwargs):
         self.canvas2.yview(*args, **kwargs)
@@ -355,8 +361,10 @@ class MainPage(tk.Frame):
         self.canvas.tag_bind(self.buttons[2], '<Button-1>', lambda event: self.controller.change_page('MainPage', 'TeamPage'))
         self.canvas.tag_bind(self.buttons[3], '<Button-1>', lambda event: self.controller.quit)
 
-    def on_hover(self, button, image):
+    def on_hover(self, button, image, sound=False):
         self.canvas.itemconfig(button, image=image)
+        if sound:
+            move2_sfx.play()
 
 
 class DBEditor (tk.Tk):
@@ -376,6 +384,7 @@ class DBEditor (tk.Tk):
             self.pages[page].pack_forget()
 
     def change_page(self, old_page_name, page_name):
+        change_screen_sfx.play()
         frame = self.pages[old_page_name]
         frame.pack_forget()
         frame = self.pages[page_name]
