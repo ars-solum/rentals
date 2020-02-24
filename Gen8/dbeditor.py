@@ -58,14 +58,14 @@ class NewSetPage(tk.Frame):
                        'attacks'   : { },
                        'other'     : RGBAImage('menu', 'egg.png')
                       }
-
+        self.canvas_height = len(self.images['pokemon'])*65+15
         self.canvas = tk.Canvas(self, height=651, width=651, highlightthickness=0)
         self.canvas.pack()
         self.background = self.canvas.create_image((0,0), image=self.images['bg'][0], anchor='nw')
         self.in_frame = tk.Frame(self, height=431, width=651, borderwidth=0, highlightthickness=0)
         self.in_frame.pack_propagate(0)
         self.frame = self.canvas.create_window((0,223), window=self.in_frame, anchor='nw')
-        self.canvas2 = tk.Canvas(self.in_frame, height=24000, width=651, highlightthickness=0, scrollregion=(0, 0, 651, 24000))
+        self.canvas2 = tk.Canvas(self.in_frame, height=self.canvas_height, width=651, highlightthickness=0, scrollregion=(0, 0, 651, self.canvas_height))
         self.inner_bg = self.canvas2.create_image((0,0), image=self.images['bg'][1], anchor='nw')
         self.scrollbar = tk.Scrollbar(self.in_frame, orient='vertical', command=self.custom_yview)
         self.scrollbar.pack(side='right', fill='y')
@@ -73,6 +73,8 @@ class NewSetPage(tk.Frame):
         self.canvas2.pack(side='left', expand=True, fill='both')
         self.canvas2.bind('<Enter>', self._on_mousewheel)
         self.canvas2.bind('<Leave>', self._off_mousewheel)
+        self.origX = self.canvas2.xview()[0]
+        self.origY = self.canvas2.yview()[0]
 
         # back button
         self.back = self.canvas.create_image((50,40), image=self.images['buttons']['back'][0])
@@ -83,7 +85,6 @@ class NewSetPage(tk.Frame):
         # pokemon entry
         self.pokemon_icon = self.canvas.create_image((100,120), image=self.images['other'])
         self.pkmn = tk.StringVar()
-        self.pkmn.trace('w', lambda name, index, mode, pkmn=self.pkmn: self.test_print(pkmn))
         self.pokemon_text = self.canvas.create_text((80,180), text='Pokémon')
         self.entry = tk.Entry(self.canvas, textvariable=self.pkmn, width=15)
         self.entry.bind('<Button-1>', lambda event: self.get_pokemon_list())
@@ -91,7 +92,6 @@ class NewSetPage(tk.Frame):
 
         # item entry
         self.item = tk.StringVar()
-        self.item.trace('w', lambda name, index, mode, item=self.item: self.test_print(item))
         self.item_text = self.canvas.create_text((170,180), text='Item')
         self.canvas.itemconfig(self.item_text, state='hidden')
         self.entry2 = tk.Entry(self.canvas, textvariable=self.item, width=15)
@@ -101,7 +101,6 @@ class NewSetPage(tk.Frame):
 
         # ability entry
         self.ability = tk.StringVar()
-        self.ability.trace('w', lambda name, index, mode, ability=self.ability: self.test_print(ability))
         self.ability_text = self.canvas.create_text((275,180), text='Ability')
         self.canvas.itemconfig(self.ability_text, state='hidden')
         self.entry3 = tk.Entry(self.canvas, textvariable=self.ability, width=15)
@@ -112,7 +111,7 @@ class NewSetPage(tk.Frame):
         # move entry
         self.moves = [tk.StringVar() for i in range(4)]
         for i in range(4):
-            self.moves[i].trace('w', lambda name, index, mode, moves=self.moves, i=i: self.test_print(moves[i]))
+            self.moves[i].trace('w', lambda name, index, mode, moves=self.moves, i=i: self.filter(moves[i], self.images['attacks']))
         self.moves_text = self.canvas.create_text((378,105), text='Moves')
         self.canvas.itemconfig(self.moves_text, state='hidden')
         self.entry4 = []
@@ -139,6 +138,7 @@ class NewSetPage(tk.Frame):
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Enter>', lambda event, pkmn=pkmn, img=img: self.on_hover(self.canvas2, self.pokemon_buttons[pkmn], img[1], sound=True))
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Leave>', lambda event, pkmn=pkmn, img=img: self.on_hover(self.canvas2, self.pokemon_buttons[pkmn], img[0]))
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Button-1>', lambda event, pkmn=pkmn: self.pick_pokemon(pkmn.capitalize()))
+        self.pkmn.trace('w', lambda name, index, mode, pkmn=self.pkmn: self.filter(pkmn, 'pokemon', self.images['pokemon']))
         self.item_buttons = {}
         for i, (item, img) in enumerate(self.images['items'].items()):
             self.item_buttons[item] = self.canvas2.create_image((315,40+65*i), image=img[0])
@@ -146,6 +146,7 @@ class NewSetPage(tk.Frame):
             self.canvas2.tag_bind(self.item_buttons[item], '<Leave>', lambda event, item=item, img=img: self.on_hover(self.canvas2, self.item_buttons[item], img[0]))
             self.canvas2.tag_bind(self.item_buttons[item], '<Button-1>', lambda event, item=item: self.pick_item(item))
             self.canvas2.itemconfig(self.item_buttons[item], state='hidden')
+        self.item.trace('w', lambda name, index, mode, item=self.item: self.filter(item, 'items', self.images['items']))
 
         self.ability_buttons = {}
         for i, (ability, img) in enumerate(self.images['abilities'].items()):
@@ -154,11 +155,12 @@ class NewSetPage(tk.Frame):
             self.canvas2.tag_bind(self.ability_buttons[ability], '<Leave>', lambda event, ability=ability, img=img: self.on_hover(self.canvas2, self.ability_buttons[ability], img[0]))
             self.canvas2.tag_bind(self.ability_buttons[ability], '<Button-1>', lambda event, ability=ability: self.pick_ability(ability))
             self.canvas2.itemconfig(self.ability_buttons[ability], state='hidden')
+        self.ability.trace('w', lambda name, index, mode, ability=self.ability: self.filter(ability, 'abilities', self.images['abilities']))
 
         # ev stats
         self.ev_stats = [tk.StringVar() for i in range(6)]
         for i in range(6):
-            self.ev_stats[i].trace('w', lambda name, index, mode, stats=self.ev_stats, i=i: self.test_print(stats[i]))
+            self.ev_stats[i].trace('w', lambda name, index, mode, stats=self.ev_stats, i=i: self.filter(stats[i], 'ev_stats'))
         self.entry5 = []
         self.ev_stats_entry = []
         for i in range(6):
@@ -169,7 +171,7 @@ class NewSetPage(tk.Frame):
         # iv stats
         self.iv_stats = [tk.IntVar() for i in range(6)]
         for i in range(6):
-            self.ev_stats[i].trace('w', lambda name, index, mode, stats=self.ev_stats, i=i: self.test_print(stats[i]))
+            self.ev_stats[i].trace('w', lambda name, index, mode, stats=self.ev_stats, i=i: self.filter(stats[i], 'iv_stats'))
         self.entry5 = []
         self.ev_stats_entry = []
         for i in range(6):
@@ -190,9 +192,12 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='normal')
         self.scrollbar.pack_forget()
         self.canvas2.pack_forget()
-        self.canvas2.config(height=24000, scrollregion=(0, 0, 651, 431))
+        self.canvas2.config(height=self.canvas_height, scrollregion=(0, 0, 651, 431))
         self.canvas2.pack(side='left', expand=True, fill='both')
-        pass
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas2.coords(self.inner_bg, x, y)
+
     def get_pokemon_list(self):
         for pkmn, button in self.pokemon_buttons.items():
             self.canvas2.itemconfig(button, state='normal')
@@ -204,8 +209,13 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.scrollbar.pack(side='right', fill='y')
         self.canvas2.pack_forget()
-        self.canvas2.config(height=24000, scrollregion=(0, 0, 651, 24000))
+        self.canvas2.config(height=self.canvas_height, scrollregion=(0, 0, 651, self.canvas_height))
         self.canvas2.pack(side='left', expand=True, fill='both')
+        self.canvas2.xview_moveto(self.origX)
+        self.canvas2.yview_moveto(self.origY)
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas2.coords(self.inner_bg, x, y)
 
     def pick_pokemon(self, name):
         self.canvas.itemconfig(self.item_text, state='normal')
@@ -238,9 +248,13 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.scrollbar.pack(side='right', fill='y')
         self.canvas2.pack_forget()
-        self.canvas2.config(height=24000, scrollregion=(0, 0, 651, 24000))
+        self.canvas2.config(height=self.canvas_height, scrollregion=(0, 0, 651, self.canvas_height))
         self.canvas2.pack(side='left', expand=True, fill='both')
-
+        self.canvas2.xview_moveto(self.origX)
+        self.canvas2.yview_moveto(self.origY)
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas2.coords(self.inner_bg, x, y)
 
     def pick_item(self, item_name):
         self.entry2.delete(0,tk.END)
@@ -259,6 +273,9 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.canvas2.config(height=431, scrollregion=(0, 0, 651, 431))
         self.scrollbar.pack_forget()
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas2.coords(self.inner_bg, x, y)
 
     def pick_ability(self, ability_name):
         self.entry3.delete(0,tk.END)
@@ -277,11 +294,60 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.scrollbar.pack(side='right', fill='y')
         self.canvas2.pack_forget()
-        self.canvas2.config(height=24000, scrollregion=(0, 0, 651, 24000))
+        self.canvas2.config(height=self.canvas_height, scrollregion=(0, 0, 651, self.canvas_height))
         self.canvas2.pack(side='left', expand=True, fill='both')
+        self.canvas2.xview_moveto(self.origX)
+        self.canvas2.yview_moveto(self.origY)
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas2.coords(self.inner_bg, x, y)
 
-    def test_print(self, name):
-        print(name.get())
+    def filter(self, name, buttons, field):
+        # get list of matching pokemon
+        search_list = {}
+        for list_item, i in field.items():
+            if list_item.startswith(name.get().casefold()):
+                search_list[list_item] = i
+        if not search_list:
+            return
+        # clear canvas of all buttons
+        if buttons == 'pokemon':
+            for list_item, button in self.pokemon_buttons.items():
+                self.canvas2.delete(button)
+                self.pokemon_buttons = {}
+        elif buttons == 'items':
+            for list_item, button in self.item_buttons.items():
+                self.canvas2.delete(button)
+                self.item_buttons = {}
+        elif buttons == 'abilities':
+            for list_item, button in self.ability_buttons.items():
+                self.canvas2.delete(button)
+                self.ability_buttons = {}
+        # resize canvas
+        self.canvas2.config(height=len(search_list)*65+15, scrollregion=(0, 0, 651, len(search_list)*65+15))
+        # if len(search_list)*65+15 <= 651:
+        #     self.scrollbar.pack_forget()
+        # else:
+        #     self.scrollbar.pack(side='right', fill='y')
+        # repopulate canvas with new list
+        for i, (list_item, button) in enumerate(search_list.items()):
+            if buttons == 'pokemon':
+                self.pokemon_buttons[list_item] = self.canvas2.create_image((315,40+65*i), image=field[list_item][0])
+                self.canvas2.tag_bind(self.pokemon_buttons[list_item], '<Enter>', lambda event, item=list_item, img=field[list_item]: self.on_hover(self.canvas2, self.pokemon_buttons[item], img[1], sound=True))
+                self.canvas2.tag_bind(self.pokemon_buttons[list_item], '<Leave>', lambda event, item=list_item, img=field[list_item]: self.on_hover(self.canvas2, self.pokemon_buttons[item], img[0]))
+                self.canvas2.tag_bind(self.pokemon_buttons[list_item], '<Button-1>', lambda event, item=list_item: self.pick_pokemon(item.capitalize()))
+            elif buttons == 'items':
+                self.item_buttons[list_item] = self.canvas2.create_image((315,40+65*i), image=field[list_item][0])
+                self.canvas2.tag_bind(self.item_buttons[list_item], '<Enter>', lambda event, item=list_item, img=field[list_item]: self.on_hover(self.canvas2, self.item_buttons[item], img[1], sound=True))
+                self.canvas2.tag_bind(self.item_buttons[list_item], '<Leave>', lambda event, item=list_item, img=field[list_item]: self.on_hover(self.canvas2, self.item_buttons[item], img[0]))
+                self.canvas2.tag_bind(self.item_buttons[list_item], '<Button-1>', lambda event, item=list_item: self.pick_item(item.capitalize()))
+            elif buttons == 'abilites':
+                self.ability_buttons[list_item] = self.canvas2.create_image((315,40+65*i), image=field[list_item][0])
+                self.canvas2.tag_bind(self.ability_buttons[list_item], '<Enter>', lambda event, item=list_item, img=field[list_item]: self.on_hover(self.canvas2, self.ability_buttons[item], img[1], sound=True))
+                self.canvas2.tag_bind(self.ability_buttons[list_item], '<Leave>', lambda event, item=list_item, img=field[list_item]: self.on_hover(self.canvas2, self.ability_buttons[item], img[0]))
+                self.canvas2.tag_bind(self.ability_buttons[list_item], '<Button-1>', lambda event, item=list_item: self.pick_ability(item.capitalize()))
+
+
 
     def on_hover(self, canvas, button, image, sound=False):
         canvas.itemconfig(button, image=image)
