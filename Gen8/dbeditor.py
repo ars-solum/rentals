@@ -88,6 +88,7 @@ class NewSetPage(tk.Frame):
         self.pokemon_text = self.canvas.create_text((80,180), text='Pokémon')
         self.entry = tk.Entry(self.canvas, textvariable=self.pkmn, width=15)
         self.entry.bind('<Button-1>', lambda event: self.get_pokemon_list())
+        self.entry.bind('<Return>', lambda event: self.check_pokemon())
         self.pokemon_entry = self.canvas.create_window((100,200), window=self.entry)
 
         # item entry
@@ -197,6 +198,13 @@ class NewSetPage(tk.Frame):
         x = self.canvas2.canvasx(0)
         y = self.canvas2.canvasy(0)
         self.canvas2.coords(self.inner_bg, x, y)
+
+    def check_pokemon(self):
+        for pkmn, i in self.pokemon_buttons.items():
+            if pkmn.startswith(self.entry.get().casefold()):
+                pokemon_name = pkmn
+                break
+        self.pick_pokemon(pokemon_name)
 
     def get_pokemon_list(self):
         for pkmn, button in self.pokemon_buttons.items():
