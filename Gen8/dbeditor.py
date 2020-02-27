@@ -24,23 +24,21 @@ def RGBAImage(subdir, filename):
 def get_newset_images(key):
     directory = os.fsencode(str(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key)))
     temp_dict = {}
-    last_name = ''
+    running_list = []
     for file in os.listdir(directory):
-        filename = os.fsdecode(file)
-        object_name = filename.replace('mr ', 'mr. ').replace(' jr', ' jr.').replace('.png', '').replace('-hover', '')
-        try:
-            if object_name == last_name:
-                hover = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
-                if key == 'pokemon':
-                    temp_dict[object_name] = [hover, normal, RGBAImage('pokemon', filename.replace('-hover', ''))]
-                else:
-                    temp_dict[object_name] = [hover, normal]
+        if os.fsdecode(file) not in running_list and os.fsdecode(file).endswith('.png') and not os.fsdecode(file).endswith('-hover.png'):
+            normal_filename = os.fsdecode(file)
+            hover_filename = normal_filename.replace('.png', '-hover.png')
+            running_list.append(normal_filename)
+            running_list.append(hover_filename)
+            normal_img = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, normal_filename))).convert('RGBA'))
+            hover_img = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, hover_filename))).convert('RGBA'))
+            object_name = normal_filename.replace('e null', 'e: null').replace('mr ', 'mr. ').replace(' jr', ' jr.').replace('.png', '').replace('-hover', '')
+            if key == 'pokemon':
+                temp_dict[object_name] = [normal_img, hover_img, RGBAImage('pokemon', normal_filename.replace('-hover', ''))]
             else:
-                normal = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, filename))).convert('RGBA'))
-        except OSError:
-            print('Could not load %s' % object_name)
-            pass
-        last_name = object_name
+                temp_dict[object_name] = [normal_img, hover_img]
+
     return temp_dict
 
 class NewSetPage(tk.Frame):
@@ -58,14 +56,17 @@ class NewSetPage(tk.Frame):
                        'attacks'   : { },
                        'other'     : RGBAImage('menu', 'egg.png')
                       }
-        self.canvas_height = len(self.images['pokemon'])*65+15
+        self.pkmn_canvas_height = len(self.images['pokemon'])*65+15
+        self.item_canvas_height = len(self.images['items'])*65+15
+        self.default_canvas_height = 431
+
         self.canvas = tk.Canvas(self, height=651, width=651, highlightthickness=0)
         self.canvas.pack()
         self.background = self.canvas.create_image((0,0), image=self.images['bg'][0], anchor='nw')
         self.in_frame = tk.Frame(self, height=431, width=651, borderwidth=0, highlightthickness=0)
         self.in_frame.pack_propagate(0)
         self.frame = self.canvas.create_window((0,223), window=self.in_frame, anchor='nw')
-        self.canvas2 = tk.Canvas(self.in_frame, height=self.canvas_height, width=651, highlightthickness=0, scrollregion=(0, 0, 651, self.canvas_height))
+        self.canvas2 = tk.Canvas(self.in_frame, height=self.pkmn_canvas_height, width=651, highlightthickness=0, scrollregion=(0, 0, 651, self.pkmn_canvas_height))
         self.inner_bg = self.canvas2.create_image((0,0), image=self.images['bg'][1], anchor='nw')
         self.scrollbar = tk.Scrollbar(self.in_frame, orient='vertical', command=self.custom_yview)
         self.scrollbar.pack(side='right', fill='y')
@@ -179,7 +180,6 @@ class NewSetPage(tk.Frame):
             self.entry5.append(tk.Entry(self.canvas2, textvariable=self.ev_stats[i], width=7))
             self.ev_stats_entry.append(self.canvas2.create_window((300, 50+25*i), window=self.entry5[i]))
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
-        print(self.pokemon_buttons)
 
 ###############################################################################
     def stats_menu(self):
@@ -193,7 +193,7 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='normal')
         self.scrollbar.pack_forget()
         self.canvas2.pack_forget()
-        self.canvas2.config(height=self.canvas_height, scrollregion=(0, 0, 651, 431))
+        self.canvas2.config(height=self.pkmn_canvas_height, scrollregion=(0, 0, 651, 431))
         self.canvas2.pack(side='left', expand=True, fill='both')
         x = self.canvas2.canvasx(0)
         y = self.canvas2.canvasy(0)
@@ -217,7 +217,7 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.scrollbar.pack(side='right', fill='y')
         self.canvas2.pack_forget()
-        self.canvas2.config(height=self.canvas_height, scrollregion=(0, 0, 651, self.canvas_height))
+        self.canvas2.config(height=self.pkmn_canvas_height, scrollregion=(0, 0, 651, self.pkmn_canvas_height))
         self.canvas2.pack(side='left', expand=True, fill='both')
         self.canvas2.xview_moveto(self.origX)
         self.canvas2.yview_moveto(self.origY)
@@ -225,19 +225,23 @@ class NewSetPage(tk.Frame):
         y = self.canvas2.canvasy(0)
         self.canvas2.coords(self.inner_bg, x, y)
 
-    def pick_pokemon(self, name):
+    def pick_pokemon(self, pkmn_name):
         self.canvas.itemconfig(self.item_text, state='normal')
         self.canvas.itemconfig(self.item_entry, state='normal')
         self.canvas.itemconfig(self.ability_text, state='normal')
         self.canvas.itemconfig(self.ability_entry, state='normal')
-        self.canvas.itemconfig(self.pokemon_icon, image=self.images['pokemon'][name.casefold()][2])
+        self.canvas.itemconfig(self.pokemon_icon, image=self.images['pokemon'][pkmn_name.casefold()][2])
         self.canvas.itemconfig(self.moves_text, state='normal')
         for i in range(4):
             self.canvas.itemconfig(self.moves_entry[i], state='normal')
         self.canvas.itemconfig(self.stats_text, state='normal')
         self.canvas.itemconfig(self.stats_button, state='normal')
+        name = [word.capitalize() for word in pkmn_name.split()]
+        pkmn_name = ' '.join(name)
+        name = [word.capitalize() for word in pkmn_name.split('-')]
+        pkmn_name = '-'.join(name)
         self.entry.delete(0,tk.END)
-        self.entry.insert(0,name)
+        self.entry.insert(0,pkmn_name)
         self.entry2.delete(0,tk.END)
         self.entry2.insert(0,'')
         self.entry3.delete(0,tk.END)
@@ -254,9 +258,12 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='hidden')
         for i in range(6):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
-        self.scrollbar.pack(side='right', fill='y')
+        if self.item_canvas_height > self.default_canvas_height:
+            self.scrollbar.pack(side='right', fill='y')
+        else:
+            self.scrollbar.pack_forget()
         self.canvas2.pack_forget()
-        self.canvas2.config(height=self.canvas_height, scrollregion=(0, 0, 651, self.canvas_height))
+        self.canvas2.config(height=self.item_canvas_height, scrollregion=(0, 0, 651, self.item_canvas_height))
         self.canvas2.pack(side='left', expand=True, fill='both')
         self.canvas2.xview_moveto(self.origX)
         self.canvas2.yview_moveto(self.origY)
@@ -265,6 +272,8 @@ class NewSetPage(tk.Frame):
         self.canvas2.coords(self.inner_bg, x, y)
 
     def pick_item(self, item_name):
+        name = [word.capitalize() for word in item_name.split()]
+        item_name = ' '.join(name)
         self.entry2.delete(0,tk.END)
         self.entry2.insert(0,item_name)
         self.entry3.focus_set()
@@ -279,13 +288,15 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='normal')
         for i in range(6):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
-        self.canvas2.config(height=431, scrollregion=(0, 0, 651, 431))
+        self.canvas2.config(height=self.default_canvas_height, scrollregion=(0, 0, 651, self.default_canvas_height))
         self.scrollbar.pack_forget()
         x = self.canvas2.canvasx(0)
         y = self.canvas2.canvasy(0)
         self.canvas2.coords(self.inner_bg, x, y)
 
     def pick_ability(self, ability_name):
+        name = [word.capitalize() for word in ability_name.split()]
+        ability_name = ' '.join(name)
         self.entry3.delete(0,tk.END)
         self.entry3.insert(0,ability_name)
         self.entry4[0].focus_set()
@@ -302,7 +313,7 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
         self.scrollbar.pack(side='right', fill='y')
         self.canvas2.pack_forget()
-        self.canvas2.config(height=self.canvas_height, scrollregion=(0, 0, 651, self.canvas_height))
+        self.canvas2.config(height=self.default_canvas_height, scrollregion=(0, 0, 651, self.default_canvas_height))
         self.canvas2.pack(side='left', expand=True, fill='both')
         self.canvas2.xview_moveto(self.origX)
         self.canvas2.yview_moveto(self.origY)
@@ -332,11 +343,15 @@ class NewSetPage(tk.Frame):
                 self.canvas2.delete(button)
                 self.ability_buttons = {}
         # resize canvas
-        self.canvas2.config(height=len(search_list)*65+15, scrollregion=(0, 0, 651, len(search_list)*65+15))
-        # if len(search_list)*65+15 <= 651:
-        #     self.scrollbar.pack_forget()
-        # else:
-        #     self.scrollbar.pack(side='right', fill='y')
+        self.new_canvas_height = len(search_list)*65+15 if len(search_list)*65+15 > 431 else 431
+        self.canvas2.config(height=self.new_canvas_height, scrollregion=(0, 0, 651, self.new_canvas_height))
+        if self.new_canvas_height <= self.default_canvas_height:
+            self.scrollbar.pack_forget()
+        else:
+            self.scrollbar.pack(side='right', fill='y')
+            self.canvas2.pack_forget()
+            self.canvas2.config(height=self.new_canvas_height, scrollregion=(0, 0, 651, self.new_canvas_height))
+            self.canvas2.pack(side='left', expand=True, fill='both')
         # repopulate canvas with new list
         for i, (list_item, button) in enumerate(search_list.items()):
             if buttons == 'pokemon':
@@ -467,7 +482,7 @@ class DBEditor (tk.Tk):
 if __name__ == '__main__':
     dbapp = DBEditor()
 
-    #dbapp.resizable(False, False)
+    dbapp.resizable(False, False)
     dbapp.geometry("651x651")
     dbapp.title('Rentals DB Editor v%s' %VERSION)
     dbapp.mainloop()
