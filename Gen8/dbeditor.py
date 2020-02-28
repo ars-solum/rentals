@@ -88,7 +88,7 @@ class NewSetPage(tk.Frame):
         self.pkmn = tk.StringVar()
         self.pokemon_text = self.canvas.create_text((80,180), text='Pokémon')
         self.entry = tk.Entry(self.canvas, textvariable=self.pkmn, width=15)
-        self.entry.bind('<Button-1>', lambda event: self.get_pokemon_list())
+        self.entry.bind('<Button-1>', lambda event: self.get_pokemon_list(check=True))
         self.entry.bind('<Return>', lambda event: self.check_pokemon())
         self.pokemon_entry = self.canvas.create_window((100,200), window=self.entry)
 
@@ -206,7 +206,7 @@ class NewSetPage(tk.Frame):
                 break
         self.pick_pokemon(pokemon_name)
 
-    def get_pokemon_list(self):
+    def get_pokemon_list(self, check=False):
         for pkmn, button in self.pokemon_buttons.items():
             self.canvas2.itemconfig(button, state='normal')
         for item, button in self.item_buttons.items():
@@ -215,10 +215,27 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(button, state='hidden')
         for i in range(6):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
-        self.scrollbar.pack(side='right', fill='y')
-        self.canvas2.pack_forget()
-        self.canvas2.config(height=self.pkmn_canvas_height, scrollregion=(0, 0, 651, self.pkmn_canvas_height))
-        self.canvas2.pack(side='left', expand=True, fill='both')
+        if check:
+            search_list = {}
+            for list_item, i in self.images['pokemon'].items():
+                if list_item.startswith(self.entry.get().casefold()):
+                    search_list[list_item] = i
+            new_height = len(search_list)*65+15
+            if new_height > 431:
+                self.scrollbar.pack(side='right', fill='y')
+                self.canvas2.pack_forget()
+                self.canvas2.config(height=new_height, scrollregion=(0, 0, 651, new_height))
+                self.canvas2.pack(side='left', expand=True, fill='both')
+            else:
+                self.scrollbar.pack_forget()
+                self.canvas2.pack_forget()
+                self.canvas2.config(height=431, scrollregion=(0, 0, 651, 431))
+                self.canvas2.pack(side='left', expand=True, fill='both')
+        else:
+            self.scrollbar.pack(side='right', fill='y')
+            self.canvas2.pack_forget()
+            self.canvas2.config(height=self.pkmn_canvas_height, scrollregion=(0, 0, 651, self.pkmn_canvas_height))
+            self.canvas2.pack(side='left', expand=True, fill='both')
         self.canvas2.xview_moveto(self.origX)
         self.canvas2.yview_moveto(self.origY)
         x = self.canvas2.canvasx(0)
