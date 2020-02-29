@@ -90,6 +90,7 @@ class NewSetPage(tk.Frame):
         self.entry = tk.Entry(self.canvas, textvariable=self.pkmn, width=15)
         self.entry.bind('<Button-1>', lambda event: self.get_pokemon_list(check=True))
         self.entry.bind('<Return>', lambda event: self.check_pokemon())
+        self.entry.bind('<Tab>', lambda event: self.check_pokemon())
         self.pokemon_entry = self.canvas.create_window((100,200), window=self.entry)
 
         # item entry
