@@ -699,27 +699,25 @@ def damage_calc(attacking_pokemon, defending_pokemon, attack, critical=False, we
         damage_rolls.append(math.floor(((((2 * atk_level / 5 + 2) * attack_power * attack_stat / defense_stat) / 50) + 2) * modifiers))
     return damage_rolls
 
-#testing
-#open a pokemon file
-pokedex = pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-    'data', 'Pokedex.xlsx'))
-pokemon_list = {}
-for i in ['4', '99', '810']:
+pokedex = pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'Pokedex.xlsx'))
+sheet_list = pokedex.sheet_names
+POKEMON_LIST = {}
+for i in sheet_list:
     xl_pkmn = pd.read_excel(pokedex, i)
-    pokemon_list[xl_pkmn['name'].values[0]] = Pokemon(name=xl_pkmn['name'].values[0],
-                                                      nat_dex=xl_pkmn['nat_dex'].values[0],
-                                                      type=xl_pkmn['type'].tolist(),
-                                                      abilities=xl_pkmn['abilities'].tolist(),
-                                                      weight=xl_pkmn['weight'].values[0],
-                                                      base_stats=xl_pkmn['base_stats'].tolist(),
-                                                      can_dynamax=xl_pkmn['dynamax'].values[0],
-                                                      can_gigantimax=xl_pkmn['gigantimax'].values[0],
-                                                      attacks=xl_pkmn['attacks'].tolist())
+    POKEMON_LIST[i] = Pokemon(name=xl_pkmn['name'].values[0],
+                              nat_dex=xl_pkmn['nat_dex'].values[0],
+                              type=xl_pkmn['type'].tolist(),
+                              abilities=xl_pkmn['abilities'].tolist(),
+                              weight=xl_pkmn['weight'].values[0],
+                              base_stats=xl_pkmn['base_stats'].tolist(),
+                              can_dynamax=xl_pkmn['dynamax'].values[0],
+                              can_gigantimax=xl_pkmn['gigantamax'].values[0],
+                              attacks=xl_pkmn['attacks'].tolist())
 def get_pokemon(i):
     if i == 0:
-        return pokemon_list['Charmander']
+        return POKEMON_LIST['Charmander']
     if i == 1:
-        return pokemon_list['Kingler']
+        return POKEMON_LIST['Kingler']
 
 database = pd.read_excel(pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
     'data', 'database.xlsx')), 'Sheet1')
@@ -730,5 +728,5 @@ for i in range(2):
                            database['ability'].values[i], database['ev_spread'].values[i], database['nature'].values[i],
                            database['iv_spread'].values[i], [database['move1'].values[i], database['move2'].values[i], database['move3'].values[i], database['move4'].values[i]]))
 
-damage_rolls = damage_calc(sets[1], sets[0], 'Fishious Rend')
-print(damage_rolls)
+# damage_rolls = damage_calc(sets[1], sets[0], 'Fishious Rend')
+# print(damage_rolls)
