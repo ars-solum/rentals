@@ -399,15 +399,15 @@ class Pokemon:
         self.type = [x for x in type if str(x) != 'nan']
         self.abilities = [x for x in abilities if str(x) != 'nan']
         self.weight = weight
-        self.base_hp = base_stats[0]
-        self.base_attack = base_stats[1]
-        self.base_defense = base_stats[2]
-        self.base_spattack = base_stats[3]
-        self.base_spdefense = base_stats[4]
-        self.base_speed = base_stats[5]
+        self.base_hp = int(base_stats[0])
+        self.base_attack = int(base_stats[1])
+        self.base_defense = int(base_stats[2])
+        self.base_spattack = int(base_stats[3])
+        self.base_spdefense = int(base_stats[4])
+        self.base_speed = int(base_stats[5])
         self.can_dynamax = can_dynamax
         self.can_gigantimax = can_gigantimax
-        self.attacks = attacks
+        self.attacks = [x for x in attacks if str(x) != 'nan']
 
     def print_info(self):
         print('Name: ' + self.name)
@@ -484,7 +484,7 @@ class PokemonSet:
         for move in self.moves:
             print('- ' + move)
 
-def get_iv(pokemon_set, stat):
+def get_iv_stat(pokemon_set, stat):
     if stat in pokemon_set.iv_spread:
         stat_index = pokemon_set.iv_spread.find(stat) - 2
         if stat_index - 1 >= 0:
@@ -497,7 +497,7 @@ def get_iv(pokemon_set, stat):
     else:
         return 31
 
-def get_stat(pokemon_set, stat):
+def get_ev_stat(pokemon_set, stat):
     if stat in pokemon_set.ev_spread:
         stat_index = pokemon_set.ev_spread.find(stat) - 2
         if stat_index - 1 >= 0:
@@ -621,24 +621,24 @@ def damage_calc(attacking_pokemon, defending_pokemon, attack, critical=False, we
     if atk_category == 'physical':
         # some special cases missing
         atk_base_stat = attacking_pokemon.pokemon.base_attack
-        atk_iv = get_iv(attacking_pokemon, 'Atk')
-        atk_ev = get_stat(attacking_pokemon, 'Atk')
+        atk_iv = get_iv_stat(attacking_pokemon, 'Atk')
+        atk_ev = get_ev_stat(attacking_pokemon, 'Atk')
         atk_nature = get_nature_multiplier(attacking_pokemon, 'attack')
 
         def_base_stat = defending_pokemon.pokemon.base_defense
-        def_iv = get_iv(defending_pokemon, 'Def')
-        def_ev = get_stat(defending_pokemon, 'Def')
+        def_iv = get_iv_stat(defending_pokemon, 'Def')
+        def_ev = get_ev_stat(defending_pokemon, 'Def')
         def_nature = get_nature_multiplier(defending_pokemon, 'defense')
 
     elif atk_category == 'special':
         atk_base_stat = attacking_pokemon.pokemon.base_spattack
         atk_iv = 31 # Showdown always assumes 31 IVs
-        atk_ev = get_stat(attacking_pokemon, 'SpA')
+        atk_ev = get_ev_stat(attacking_pokemon, 'SpA')
         atk_nature = get_nature_multiplier(attacking_pokemon, 'spattack')
 
         def_base_stat = defending_pokemon.pokemon.base_spdefense
-        def_iv = get_iv(defending_pokemon, 'SpD')
-        def_ev = get_stat(defending_pokemon, 'SpD')
+        def_iv = get_iv_stat(defending_pokemon, 'SpD')
+        def_ev = get_ev_stat(defending_pokemon, 'SpD')
         def_nature = get_nature_multiplier(defending_pokemon, 'spdefense')
     else:
         return [0 for i in range(15)]
@@ -713,20 +713,20 @@ for i in sheet_list:
                               can_dynamax=xl_pkmn['dynamax'].values[0],
                               can_gigantimax=xl_pkmn['gigantamax'].values[0],
                               attacks=xl_pkmn['attacks'].tolist())
-def get_pokemon(i):
-    if i == 0:
-        return POKEMON_LIST['Charmander']
-    if i == 1:
-        return POKEMON_LIST['Kingler']
+# def get_pokemon(i):
+#     if i == 0:
+#         return POKEMON_LIST['Charmander']
+#     if i == 1:
+#         return POKEMON_LIST['Kingler']
 
 database = pd.read_excel(pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
     'data', 'database.xlsx')), 'Sheet1')
 sets = []
-for i in range(2):
-    sets.append(PokemonSet(get_pokemon(i), database['nat_dex'].values[i], [database['type1'].values[i], database['type2'].values[i]],
-                           database['usage_tier'].values[i], database['tags'].values[i], database['item'].values[i],
-                           database['ability'].values[i], database['ev_spread'].values[i], database['nature'].values[i],
-                           database['iv_spread'].values[i], [database['move1'].values[i], database['move2'].values[i], database['move3'].values[i], database['move4'].values[i]]))
+# for i in range(2):
+#     sets.append(PokemonSet(get_pokemon(i), database['nat_dex'].values[i], [database['type1'].values[i], database['type2'].values[i]],
+#                            database['usage_tier'].values[i], database['tags'].values[i], database['item'].values[i],
+#                            database['ability'].values[i], database['ev_spread'].values[i], database['nature'].values[i],
+#                            database['iv_spread'].values[i], [database['move1'].values[i], database['move2'].values[i], database['move3'].values[i], database['move4'].values[i]]))
 
 # damage_rolls = damage_calc(sets[1], sets[0], 'Fishious Rend')
 # print(damage_rolls)
