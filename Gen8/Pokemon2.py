@@ -632,7 +632,7 @@ def damage_calc(attacking_pokemon, defending_pokemon, attack, critical=False, we
 
     elif atk_category == 'special':
         atk_base_stat = attacking_pokemon.pokemon.base_spattack
-        atk_iv = 31 # Showdown always assumes 31 IVs
+        atk_iv = 31 # assumes 31 IVs
         atk_ev = get_ev_stat(attacking_pokemon, 'SpA')
         atk_nature = get_nature_multiplier(attacking_pokemon, 'spattack')
 
@@ -713,11 +713,6 @@ for i in sheet_list:
                               can_dynamax=xl_pkmn['dynamax'].values[0],
                               can_gigantimax=xl_pkmn['gigantamax'].values[0],
                               attacks=xl_pkmn['attacks'].tolist())
-# def get_pokemon(i):
-#     if i == 0:
-#         return POKEMON_LIST['Charmander']
-#     if i == 1:
-#         return POKEMON_LIST['Kingler']
 
 database = pd.read_excel(pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
     'data', 'database.xlsx')), 'Sheet1')

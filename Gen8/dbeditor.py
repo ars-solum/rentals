@@ -66,6 +66,7 @@ class NewSetPage(tk.Frame):
         self.min_height = 431
         self._WIDTH = 651
         self.revealed = False
+        self.imported_set = ''
         self.canvas = tk.Canvas(self, height=self._WIDTH, width=self._WIDTH, highlightthickness=0)
         self.canvas.pack()
         self.background = self.canvas.create_image((0,0), image=self.images['bg'][0], anchor='nw')
@@ -93,6 +94,7 @@ class NewSetPage(tk.Frame):
         self.import_button = self.canvas.create_image((150,40), image=self.images['buttons']['import'][0])
         self.canvas.tag_bind(self.import_button, '<Enter>', lambda event: self._on_hover(self.canvas, self.import_button, self.images['buttons']['import'][1], sound=True))
         self.canvas.tag_bind(self.import_button, '<Leave>', lambda event: self._on_hover(self.canvas, self.import_button, self.images['buttons']['import'][0]))
+        self.canvas.tag_bind(self.import_button, '<Button-1>', lambda event: self._get_import_screen())
 
         # clear button
         self.clear_button = self.canvas.create_image((225,40), image=self.images['buttons']['clear'][0])
@@ -219,10 +221,10 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
 
         # ev scale
-        self.scale = [tk.Scale(self, from_=min(EV_VALUES), to=max(EV_VALUES),
-                              length=225, showvalue=False, sliderlength=20,
-                              troughcolor='#af5032', borderwidth=0,
-                              command=self.test_slider_callback, orient='horizontal') for i in range(6)]
+        self.scale = [tk.Scale(self.canvas2, from_=min(EV_VALUES), to=max(EV_VALUES),
+                               length=225, showvalue=False, sliderlength=20,
+                               troughcolor='#af5032', borderwidth=0,
+                               command=self.test_slider_callback, orient='horizontal') for i in range(6)]
 
         self.scale_widgets = []
         for i in range(6):
@@ -240,9 +242,95 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.iv_stats_entry[i], state='hidden')
 
         # import/export
-        # TODO FIXME: add textbox for import/export
+        self.i_box = tk.Text(self.canvas2, height=20, width=75)
+        self.import_box = self.canvas2.create_window((325,215), window=self.i_box)
+        self.canvas2.itemconfig(self.import_box, state='hidden')
+        self.i_back = tk.Button(self.canvas2, text='Back', width=10, command=lambda: self._get_pokemon_list(check=True))
+        self.i_save = tk.Button(self.canvas2, text='Save', width=10, command=self._save_import)
+        self.i_back_button = self.canvas2.create_window((100,25), window=self.i_back)
+        self.i_save_button = self.canvas2.create_window((200,25), window=self.i_save)
+        self.canvas2.itemconfig(self.i_back_button, state='hidden')
+        self.canvas2.itemconfig(self.i_save_button, state='hidden')
 
 ###############################################################################
+    def _save_import(self):
+        def _string_isolate(string, bool):
+            return ''.join(char for char in string if char.isdigit() == bool).replace(' ', '')
+        # import/export the set
+        if self.i_box.get('1.0', 'end-1c') == '':
+            return
+        self.imported_set = self.i_box.get('1.0', 'end-1c')
+        # parse the input
+        input = self.imported_set.splitlines()
+        if len(input) > 9:
+            input = input[:8]
+        name = input[0].split('@')[0].strip()
+        if not name.casefold() in self.images['pokemon'].keys():
+            return
+        item = '' if '@' not in input[0] else input[0].split('@')[1].strip()
+        if not item.casefold() in self.images['items'].keys():
+            return
+        ability = input[1][9:].strip()
+        if not ability.casefold() in self._get_abilities(name):
+            return
+        ev_index = -1
+        iv_index = -1
+        nat_index = -1
+        move_index = []
+        for i in range(len(input)):
+            if 'EVs:' in input[i]:
+                ev_index = i
+            if 'IVs:' in input[i]:
+                iv_index = i
+            if 'Nature' in input[i]:
+                nat_index = i
+            if input[i].startswith('- '):
+                move_index.append(i)
+        ev_dict = {'HP': '0', 'Atk': '0', 'Def': '0', 'SpA': '0', 'SpD': '0', 'Spe': '0'}
+        if ev_index != -1:
+            ev_string = input[ev_index][4:]
+            for e in ev_string.split('/'):
+                ev_dict[_string_isolate(e.strip(), False)] = _string_isolate(e.strip(), True)
+        iv_dict = {'HP': '31', 'Atk': '31', 'Def': '31', 'SpA': '31', 'SpD': '31', 'Spe': '31'}
+        if iv_index != -1:
+            iv_string = input[iv_index][4:]
+            for i in iv_string.split('/'):
+                iv_dict[_string_isolate(i.strip(), False)] = _string_isolate(i.strip(), True)
+        if nat_index != -1:
+            nature = input[nat_index].split()[0].strip()
+        moves = []
+        for i in move_index:
+            moves.append(input[i][2:].strip())
+
+        # assign values
+        self.pkmn.set(name)
+        self.item.set(item)
+        self.ability.set(ability)
+        for i in range(len(moves)):
+            self.moves[i].set(moves[i])
+        for i, (_, value) in enumerate(ev_dict.items()):
+            self.ev_stats[i].set(value)
+        for i, (_, value) in enumerate(iv_dict.items()):
+            self.iv_stats[i].set(value)
+
+        # revert to normal screen state
+        self.canvas.itemconfig(self.item_text, state='normal')
+        self.canvas.itemconfig(self.item_entry, state='normal')
+        self.canvas.itemconfig(self.ability_text, state='normal')
+        self.canvas.itemconfig(self.ability_entry, state='normal')
+        self.canvas.itemconfig(self.pokemon_icon, image=self.images['pokemon'][name.casefold()][2])
+        self.canvas.itemconfig(self.moves_text, state='normal')
+        for i in range(4):
+            self.canvas.itemconfig(self.moves_entry[i], state='normal')
+        self.canvas.itemconfig(self.stats_text, state='normal')
+        self.canvas.itemconfig(self.stats_button, state='normal')
+        self.canvas.itemconfig(self.clear_button, state='normal')
+        self.canvas.itemconfig(self.save_button, state='normal')
+        if not self.revealed:
+            self.revealed = True
+        self._get_stats_screen()
+
+
     def test_slider_callback(self, value):
         # TODO FIXME: Broken, figure out how to pass in value and index
         newvalue = min(EV_VALUES, key=lambda x:abs(x-float(value)))
@@ -260,7 +348,7 @@ class NewSetPage(tk.Frame):
         y = self.canvas2.canvasy(0)
         self.canvas2.coords(self.inner_bg, x, y)
 
-    def _get_screen(self, pokemon=False, item=False, ability=False, moves=False, stats=False):
+    def _get_screen(self, pokemon=False, item=False, ability=False, moves=False, stats=False, import_=False):
         # TODO FIXME: add more params when import/export screen is done
         for _ in self.pokemon_buttons.values():
             self.canvas2.itemconfig(_, state='normal' if pokemon else 'hidden')
@@ -276,6 +364,31 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.iv_stats_entry[i], state='normal' if stats else 'hidden')
         for _ in self.stat_labels.values():
             self.canvas2.itemconfig(_, state='normal' if stats else 'hidden')
+        self.canvas2.itemconfig(self.i_back_button, state='normal' if import_ else 'hidden')
+        self.canvas2.itemconfig(self.i_save_button, state='normal' if import_ else 'hidden')
+        self.canvas2.itemconfig(self.import_box, state='normal' if import_ else 'hidden')
+        self.entry.config(state='disabled' if import_ else 'normal')
+        self.entry2.config(state='disabled' if import_ else 'normal')
+        self.entry3.config(state='disabled' if import_ else 'normal')
+        for entry in self.entry4:
+            entry.config(state='disabled' if import_ else 'normal')
+        if import_:
+            self.entry.unbind('<Button-1>')
+            self.entry2.unbind('<Button-1>')
+            self.entry3.unbind('<Button-1>')
+            for entry in self.entry4:
+                entry.unbind('<Button-1>')
+        else:
+            self.entry.bind('<Button-1>', lambda event: self._get_pokemon_list(check=True))
+            self.entry2.bind('<Button-1>', lambda event: self._get_item_list(check=True))
+            self.entry3.bind('<Button-1>', lambda event: self._get_ability_list())
+            for entry in self.entry4:
+                entry.bind('<Button-1>', lambda event: self._get_move_list())
+
+
+    def _get_import_screen(self):
+        self._get_screen(import_=True)
+        self._refresh_canvas(self.min_height)
 
     def _get_stats_screen(self):
         self._get_screen(stats=True)
