@@ -484,7 +484,58 @@ class PokemonSet:
         for move in self.moves:
             print('- ' + move)
 
-def get_iv_stat(pokemon_set, stat):
+def get_stat(pkmn_name, stat_name, iv, ev, nature, level='100'):
+    # Note: stat_name can be a name or an index, and all other params are casted for safety.
+    stat = str(stat_name)
+    if ev == '':
+        ev = 0
+    if stat.casefold() == 'hp' or stat == '0':
+        if pkmn_name.casefold() == 'shedinja':
+            return 1
+        base_stat = POKEMON_LIST[pkmn_name].base_hp
+        value = math.floor(((2 * int(base_stat) + int(iv) + math.floor(int(ev) / 4) * int(level)) / 100)) + int(level) + 10
+    else:
+        if stat == '1':
+            stat = 'attack'
+        if stat == '2':
+            stat = 'defense'
+        if stat == '3':
+            stat = 'spattack'
+        if stat == '4':
+            stat = 'spdefense'
+        if stat == '5':
+            stat = 'speed'
+        if stat.casefold() == 'atk' or stat.casefold() == 'attack' or stat == '1':
+            stat = 'attack'
+            base_stat = POKEMON_LIST[pkmn_name].base_attack
+        elif stat.casefold() == 'def' or stat.casefold() == 'defense' or stat == '2':
+            stat = 'defense'
+            base_stat = POKEMON_LIST[pkmn_name].base_defense
+        elif stat.casefold() == 'spa' or stat.casefold() == 'spattack' or stat == '3':
+            stat = 'spattack'
+            base_stat = POKEMON_LIST[pkmn_name].base_spattack
+        elif stat.casefold() == 'spd' or stat.casefold() == 'spdefense' or stat == '4':
+            stat = 'spdefense'
+            base_stat = POKEMON_LIST[pkmn_name].base_spdefense
+        elif stat.casefold() == 'spe' or stat.casefold() == 'speed' or stat == '5':
+            stat = 'speed'
+            base_stat = POKEMON_LIST[pkmn_name].base_speed
+        else:
+            print('Unknown parameter stat_name:', stat_name)
+            return -1
+        if nature_dex[nature]:
+            if nature_dex[nature][0] == stat:
+                nature_multiplier = 1.1
+            elif nature_dex[nature][1] == stat:
+                nature_multiplier = 0.9
+            else:
+                nature_multiplier = 1.0
+        else:
+            nature_multiplier = 1.0
+        value = math.floor(math.floor(((2 * int(base_stat) + int(iv) + math.floor(int(ev) / 4) * int(level)) / 100) + 5) * nature_multiplier)
+    return int(value)
+
+def _extract_iv_stat(pokemon_set, stat):
     if stat in pokemon_set.iv_spread:
         stat_index = pokemon_set.iv_spread.find(stat) - 2
         if stat_index - 1 >= 0:
@@ -497,7 +548,7 @@ def get_iv_stat(pokemon_set, stat):
     else:
         return 31
 
-def get_ev_stat(pokemon_set, stat):
+def _extract_ev_stat(pokemon_set, stat):
     if stat in pokemon_set.ev_spread:
         stat_index = pokemon_set.ev_spread.find(stat) - 2
         if stat_index - 1 >= 0:
@@ -519,7 +570,7 @@ def get_ev_stat(pokemon_set, stat):
         value = 0
     return value
 
-def get_nature_multiplier(pokemon_set, stat):
+def _get_nature_multiplier(pokemon_set, stat):
     if pokemon_set.nature not in nature_dex.keys():
         sys.exit('Set has invalid Nature.')
     if nature_dex[pokemon_set.nature]:
@@ -533,7 +584,7 @@ def get_nature_multiplier(pokemon_set, stat):
         multiplier = 1.0
     return multiplier
 
-def get_other_multipliers(attacking_pokemon, defending_pokemon, attack, critical, effectiveness, aurora_veil, light_screen, reflect):
+def _get_other_multipliers(attacking_pokemon, defending_pokemon, attack, critical, effectiveness, aurora_veil, light_screen, reflect):
     other = 1.0
     category = attack_dex[attack][1]
     attack_type = attack_dex[attack][0]
@@ -621,25 +672,25 @@ def damage_calc(attacking_pokemon, defending_pokemon, attack, critical=False, we
     if atk_category == 'physical':
         # some special cases missing
         atk_base_stat = attacking_pokemon.pokemon.base_attack
-        atk_iv = get_iv_stat(attacking_pokemon, 'Atk')
-        atk_ev = get_ev_stat(attacking_pokemon, 'Atk')
-        atk_nature = get_nature_multiplier(attacking_pokemon, 'attack')
+        atk_iv = _extract_iv_stat(attacking_pokemon, 'Atk')
+        atk_ev = _extract_ev_stat(attacking_pokemon, 'Atk')
+        atk_nature = _get_nature_multiplier(attacking_pokemon, 'attack')
 
         def_base_stat = defending_pokemon.pokemon.base_defense
-        def_iv = get_iv_stat(defending_pokemon, 'Def')
-        def_ev = get_ev_stat(defending_pokemon, 'Def')
-        def_nature = get_nature_multiplier(defending_pokemon, 'defense')
+        def_iv = _extract_iv_stat(defending_pokemon, 'Def')
+        def_ev = _extract_ev_stat(defending_pokemon, 'Def')
+        def_nature = _get_nature_multiplier(defending_pokemon, 'defense')
 
     elif atk_category == 'special':
         atk_base_stat = attacking_pokemon.pokemon.base_spattack
         atk_iv = 31 # assumes 31 IVs
-        atk_ev = get_ev_stat(attacking_pokemon, 'SpA')
-        atk_nature = get_nature_multiplier(attacking_pokemon, 'spattack')
+        atk_ev = _extract_ev_stat(attacking_pokemon, 'SpA')
+        atk_nature = _get_nature_multiplier(attacking_pokemon, 'spattack')
 
         def_base_stat = defending_pokemon.pokemon.base_spdefense
-        def_iv = get_iv_stat(defending_pokemon, 'SpD')
-        def_ev = get_ev_stat(defending_pokemon, 'SpD')
-        def_nature = get_nature_multiplier(defending_pokemon, 'spdefense')
+        def_iv = _extract_iv_stat(defending_pokemon, 'SpD')
+        def_ev = _extract_ev_stat(defending_pokemon, 'SpD')
+        def_nature = _get_nature_multiplier(defending_pokemon, 'spdefense')
     else:
         return [0 for i in range(15)]
 
@@ -661,7 +712,7 @@ def damage_calc(attacking_pokemon, defending_pokemon, attack, critical=False, we
     else:
         effectiveness = TypeChart[(attack_dex[attack][0].capitalize(), defending_pokemon.type[0])]
 
-    other = get_other_multipliers(attacking_pokemon, defending_pokemon, attack, critical, effectiveness, aurora_veil, light_screen, reflect)
+    other = _get_other_multipliers(attacking_pokemon, defending_pokemon, attack, critical, effectiveness, aurora_veil, light_screen, reflect)
 
     # weather toggle
     if weather_condition == 'sun':

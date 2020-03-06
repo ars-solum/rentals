@@ -3,6 +3,7 @@ import xlrd
 import xlwt
 import tkinter as tk
 from Pokemon2 import POKEMON_LIST
+from Pokemon2 import get_stat
 from PIL import Image, ImageTk
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 from pygame import mixer
@@ -23,26 +24,6 @@ def RGBAImage(subdir, filename):
         print('Could not find file: ' + os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', subdir, filename)))
         return None
 
-def get_newset_images(key):
-    directory = os.fsencode(str(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key)))
-    temp_dict = {}
-    running_list = []
-    for file in os.listdir(directory):
-        if os.fsdecode(file) not in running_list and os.fsdecode(file).endswith('.png') and not os.fsdecode(file).endswith('-hover.png'):
-            normal_filename = os.fsdecode(file)
-            hover_filename = normal_filename.replace('.png', '-hover.png')
-            running_list.append(normal_filename)
-            running_list.append(hover_filename)
-            normal_img = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, normal_filename))).convert('RGBA'))
-            hover_img = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, hover_filename))).convert('RGBA'))
-            object_name = normal_filename.replace('e null', 'e: null').replace('mr ', 'mr. ').replace(' jr', ' jr.').replace('.png', '').replace('-hover', '')
-            if key == 'pokemon':
-                temp_dict[object_name] = [normal_img, hover_img, RGBAImage('pokemon', normal_filename.replace('-hover', ''))]
-            else:
-                temp_dict[object_name] = [normal_img, hover_img]
-
-    return temp_dict
-
 class NewSetPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -55,10 +36,10 @@ class NewSetPage(tk.Frame):
                                       'import': [RGBAImage('menu', 'import.png'), RGBAImage('menu', 'import-hover.png')],
                                       'save'  : [RGBAImage('menu', 'save.png'), RGBAImage('menu', 'save-hover.png')],
                                       'stats' : [RGBAImage('menu', 'stats.png'), RGBAImage('menu', 'stats2.png')]},
-                       'pokemon'   : get_newset_images('pokemon'),
-                       'items'     : get_newset_images('items'),
-                       'abilities' : get_newset_images('abilities'),
-                       'attacks'   : get_newset_images('attacks'),
+                       'pokemon'   : self._get_images('pokemon'),
+                       'items'     : self._get_images('items'),
+                       'abilities' : self._get_images('abilities'),
+                       'attacks'   : self._get_images('attacks'),
                        'other'     : RGBAImage('menu', 'egg.png')
                       }
         self.pkmn_canvas_height = len(self.images['pokemon'])*65+15
@@ -124,6 +105,7 @@ class NewSetPage(tk.Frame):
         self.canvas.itemconfig(self.item_text, state='hidden')
         self.entry2 = tk.Entry(self.canvas, textvariable=self.item, width=15)
         self.entry2.bind('<Button-1>', lambda event: self._get_item_list(check=True))
+        self.entry2.bind('<Return>', lambda event: self._check_item())
         self.entry2.bind('<Tab>', lambda event: self._check_item())
         self.item_entry = self.canvas.create_window((200,200), window=self.entry2)
         self.canvas.itemconfig(self.item_entry, state='hidden')
@@ -134,6 +116,7 @@ class NewSetPage(tk.Frame):
         self.canvas.itemconfig(self.ability_text, state='hidden')
         self.entry3 = tk.Entry(self.canvas, textvariable=self.ability, width=15)
         self.entry3.bind('<Button-1>', lambda event: self._get_ability_list())
+        self.entry3.bind('<Return>', lambda event: self._check_ability())
         self.entry3.bind('<Tab>', lambda event: self._check_ability())
         self.ability_entry = self.canvas.create_window((300,200), window=self.entry3)
         self.canvas.itemconfig(self.ability_entry, state='hidden')
@@ -147,10 +130,11 @@ class NewSetPage(tk.Frame):
         for i in range(4):
             self.entry4.append(tk.Entry(self.canvas, textvariable=self.moves[i], width=20))
             self.entry4[i].bind('<Button-1>', lambda event: self._get_move_list())
+            # TODO FIXME: bind return, tab
             self.moves_entry.append(self.canvas.create_window((420,125+25*i), window=self.entry4[i]))
             self.canvas.itemconfig(self.moves_entry[i], state='hidden')
 
-        # stats section
+        # stats button
         self.stats_text = self.canvas.create_text((510,105), text='Stats')
         self.canvas.itemconfig(self.stats_text, state='hidden')
         self.stats_button = self.canvas.create_image((560,165), image=self.images['buttons']['stats'][0])
@@ -253,6 +237,26 @@ class NewSetPage(tk.Frame):
         self.canvas2.itemconfig(self.i_save_button, state='hidden')
 
 ###############################################################################
+    def _get_images(self, key):
+        directory = os.fsencode(str(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key)))
+        temp_dict = {}
+        running_list = []
+        for file in os.listdir(directory):
+            if os.fsdecode(file) not in running_list and os.fsdecode(file).endswith('.png') and not os.fsdecode(file).endswith('-hover.png'):
+                normal_filename = os.fsdecode(file)
+                hover_filename = normal_filename.replace('.png', '-hover.png')
+                running_list.append(normal_filename)
+                running_list.append(hover_filename)
+                normal_img = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, normal_filename))).convert('RGBA'))
+                hover_img = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, hover_filename))).convert('RGBA'))
+                object_name = normal_filename.replace('e null', 'e: null').replace('mr ', 'mr. ').replace(' jr', ' jr.').replace('.png', '').replace('-hover', '')
+                if key == 'pokemon':
+                    temp_dict[object_name] = [normal_img, hover_img, RGBAImage('pokemon', normal_filename.replace('-hover', ''))]
+                else:
+                    temp_dict[object_name] = [normal_img, hover_img]
+
+        return temp_dict
+
     def _save_import(self):
         def _string_isolate(string, bool):
             return ''.join(char for char in string if char.isdigit() == bool).replace(' ', '')
@@ -330,7 +334,6 @@ class NewSetPage(tk.Frame):
             self.revealed = True
         self._get_stats_screen()
 
-
     def test_slider_callback(self, value):
         # TODO FIXME: Broken, figure out how to pass in value and index
         newvalue = min(EV_VALUES, key=lambda x:abs(x-float(value)))
@@ -385,20 +388,25 @@ class NewSetPage(tk.Frame):
             for entry in self.entry4:
                 entry.bind('<Button-1>', lambda event: self._get_move_list())
 
-
     def _get_import_screen(self):
         self._get_screen(import_=True)
         self._refresh_canvas(self.min_height)
 
     def _get_stats_screen(self):
         self._get_screen(stats=True)
-        # TODO FIXME: modify ALL labels
+        # TODO FIXME: stat labels not right
         self.canvas2.itemconfig(self.stat_labels['hp_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_hp))
         self.canvas2.itemconfig(self.stat_labels['atk_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_attack))
         self.canvas2.itemconfig(self.stat_labels['def_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_defense))
         self.canvas2.itemconfig(self.stat_labels['spa_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_spattack))
         self.canvas2.itemconfig(self.stat_labels['spd_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_spdefense))
         self.canvas2.itemconfig(self.stat_labels['spe_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_speed))
+        self.canvas2.itemconfig(self.stat_labels['hp_stat'], text=str(get_stat(self.pkmn.get(), 'hp', self.iv_stats[0].get(), self.ev_stats[0].get(), 'Serious')))
+        self.canvas2.itemconfig(self.stat_labels['atk_stat'], text=str(get_stat(self.pkmn.get(), 'atk', self.iv_stats[1].get(), self.ev_stats[1].get(), 'Serious')))
+        self.canvas2.itemconfig(self.stat_labels['def_stat'], text=str(get_stat(self.pkmn.get(), 'def', self.iv_stats[2].get(), self.ev_stats[2].get(), 'Serious')))
+        self.canvas2.itemconfig(self.stat_labels['spa_stat'], text=str(get_stat(self.pkmn.get(), 'spa', self.iv_stats[3].get(), self.ev_stats[3].get(), 'Serious')))
+        self.canvas2.itemconfig(self.stat_labels['spd_stat'], text=str(get_stat(self.pkmn.get(), 'spd', self.iv_stats[4].get(), self.ev_stats[4].get(), 'Serious')))
+        self.canvas2.itemconfig(self.stat_labels['spe_stat'], text=str(get_stat(self.pkmn.get(), 'spe', self.iv_stats[5].get(), self.ev_stats[5].get(), 'Serious')))
         self._refresh_canvas(self.min_height)
 
     def _check_pokemon(self):
