@@ -377,6 +377,17 @@ nature_dex = {'Adamant' : ('attack', 'spattack'),
               'Serious' : None,
               'Timid'   : ('speed', 'attack')}
 
+stat_conversion = {'atk' : 'attack',
+                   'def' : 'defense',
+                   'spa' : 'spattack',
+                   'spd' : 'spdefense',
+                   'spe' : 'speed',
+                   1 : 'attack',
+                   2 : 'defense',
+                   3 : 'spattack',
+                   4 : 'spdefense',
+                   5 : 'speed'}
+
 attack_item_file = pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'attacks_items.xlsx'))
 attack_dex = {}
 item_dex = []
@@ -487,24 +498,15 @@ class PokemonSet:
 def get_stat(pkmn_name, stat_name, iv, ev, nature, level='100'):
     # Note: stat_name can be a name or an index, and all other params are casted for safety.
     stat = str(stat_name)
-    if ev == '':
+    if ev.replace('+', '').replace('-', '').replace(' ', '') == '':
         ev = 0
+    print(ev)
     if stat.casefold() == 'hp' or stat == '0':
         if pkmn_name.casefold() == 'shedinja':
             return 1
         base_stat = POKEMON_LIST[pkmn_name].base_hp
-        value = math.floor(((2 * int(base_stat) + int(iv) + math.floor(int(ev) / 4) * int(level)) / 100)) + int(level) + 10
+        value = math.floor((((2 * int(base_stat) + int(iv) + math.floor(int(ev) / 4)) * int(level)) / 100)) + int(level) + 10
     else:
-        if stat == '1':
-            stat = 'attack'
-        if stat == '2':
-            stat = 'defense'
-        if stat == '3':
-            stat = 'spattack'
-        if stat == '4':
-            stat = 'spdefense'
-        if stat == '5':
-            stat = 'speed'
         if stat.casefold() == 'atk' or stat.casefold() == 'attack' or stat == '1':
             stat = 'attack'
             base_stat = POKEMON_LIST[pkmn_name].base_attack
@@ -532,7 +534,7 @@ def get_stat(pkmn_name, stat_name, iv, ev, nature, level='100'):
                 nature_multiplier = 1.0
         else:
             nature_multiplier = 1.0
-        value = math.floor(math.floor(((2 * int(base_stat) + int(iv) + math.floor(int(ev) / 4) * int(level)) / 100) + 5) * nature_multiplier)
+        value = math.floor(math.floor((((2 * int(base_stat) + int(iv) + math.floor(int(ev) / 4)) * int(level)) / 100) + 5) * nature_multiplier)
     return int(value)
 
 def _extract_iv_stat(pokemon_set, stat):

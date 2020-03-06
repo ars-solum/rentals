@@ -4,6 +4,8 @@ import xlwt
 import tkinter as tk
 from Pokemon2 import POKEMON_LIST
 from Pokemon2 import get_stat
+from Pokemon2 import nature_dex
+from Pokemon2 import stat_conversion
 from PIL import Image, ImageTk
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 from pygame import mixer
@@ -195,16 +197,25 @@ class NewSetPage(tk.Frame):
         for item in self.stat_labels.values():
             self.canvas2.itemconfig(item, state='hidden')
 
+        # nature stuff
+        # TODO FIXME: add optionmenu
+        self.positive_stat = []
+        self.negative_stat = []
+        self.nature = tk.StringVar()
+        self.nature.set('Serious')
+
         # ev stats
         self.ev_stats = [tk.StringVar() for i in range(6)]
         self.entry5 = []
         self.ev_stats_entry = []
-        for i in range(6):
+        for i, stat in enumerate(['hp_stat', 'atk_stat', 'def_stat', 'spa_stat', 'spd_stat', 'spe_stat']):
             self.entry5.append(tk.Entry(self.canvas2, textvariable=self.ev_stats[i], width=7))
             self.ev_stats_entry.append(self.canvas2.create_window((200, 50+25*i), window=self.entry5[i]))
+            self.ev_stats[i].trace('w', lambda name, index, mode, i=i, stat=stat: self._update_stats(i, stat))
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
 
         # ev scale
+        # TODO FIXME: make new functions for each scale
         self.scale = [tk.Scale(self.canvas2, from_=min(EV_VALUES), to=max(EV_VALUES),
                                length=225, showvalue=False, sliderlength=20,
                                troughcolor='#af5032', borderwidth=0,
@@ -334,6 +345,58 @@ class NewSetPage(tk.Frame):
             self.revealed = True
         self._get_stats_screen()
 
+    def _update_nature(self):
+        pos_stat = None
+        neg_stat = None
+        stat = ['hp', 'attack', 'defense', 'spattack', 'spdefense', 'speed']
+        for i in range(1, 6):
+            if self.ev_stats[i].get().startswith('+') or self.ev_stats[i].get().endswith('+'):
+                self.positive_stat.append(stat[i])
+                pos_stat = stat_conversion[i]
+                if len(self.positive_stat) > 2:
+                    continue
+                if len(self.positive_stat) == 2:
+                    del self.positive_stat[0]
+            if self.ev_stats[i].get().startswith('-') or self.ev_stats[i].get().endswith('-'):
+                self.negative_stat.append(stat[i])
+                neg_stat = stat_conversion[i]
+                if len(self.negative_stat) > 2:
+                    continue
+                if len(self.negative_stat) == 2:
+                    del self.negative_stat[0]
+        if pos_stat == neg_stat:
+            return
+        if pos_stat == None:
+            self.positive_stat = []
+        if neg_stat == None:
+            self.negative_stat = []
+        if len(self.positive_stat) == 1 and len(self.negative_stat) == 1:
+            for nat, stat_combo in nature_dex.items():
+                if stat_combo == (pos_stat, neg_stat):
+                    nature = nat
+                    break
+            self.nature.set(nature)
+            print('Nature is now:', self.nature.get())
+
+    def _update_stats(self, index, stat):
+        iv = self.iv_stats[index].get().replace('+', '').replace('-', '').replace(' ', '')
+        ev = self.ev_stats[index].get().replace('+', '').replace('-', '').replace(' ', '')
+        if ev == '':
+            ev = '0'
+        if iv == '':
+            iv = '0'
+        self._update_nature()
+        if int(iv) > 31:
+            self.iv_stats[index].set('31')
+        if int(iv) < 0:
+            self.iv_stats[index].set('0')
+        if int(ev) > 252:
+            self.ev_stats[index].set('252')
+        if int(ev) < 0:
+            self.ev_stats[index].set('0')
+        for i in ['hp_stat', 'atk_stat', 'def_stat', 'spa_stat', 'spd_stat', 'spe_stat']:
+            self.canvas2.itemconfig(self.stat_labels[i], text=str(get_stat(self.pkmn.get(), i.replace('_stat', ''), iv, ev, self.nature.get())))
+
     def test_slider_callback(self, value):
         # TODO FIXME: Broken, figure out how to pass in value and index
         newvalue = min(EV_VALUES, key=lambda x:abs(x-float(value)))
@@ -401,12 +464,12 @@ class NewSetPage(tk.Frame):
         self.canvas2.itemconfig(self.stat_labels['spa_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_spattack))
         self.canvas2.itemconfig(self.stat_labels['spd_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_spdefense))
         self.canvas2.itemconfig(self.stat_labels['spe_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_speed))
-        self.canvas2.itemconfig(self.stat_labels['hp_stat'], text=str(get_stat(self.pkmn.get(), 'hp', self.iv_stats[0].get(), self.ev_stats[0].get(), 'Serious')))
-        self.canvas2.itemconfig(self.stat_labels['atk_stat'], text=str(get_stat(self.pkmn.get(), 'atk', self.iv_stats[1].get(), self.ev_stats[1].get(), 'Serious')))
-        self.canvas2.itemconfig(self.stat_labels['def_stat'], text=str(get_stat(self.pkmn.get(), 'def', self.iv_stats[2].get(), self.ev_stats[2].get(), 'Serious')))
-        self.canvas2.itemconfig(self.stat_labels['spa_stat'], text=str(get_stat(self.pkmn.get(), 'spa', self.iv_stats[3].get(), self.ev_stats[3].get(), 'Serious')))
-        self.canvas2.itemconfig(self.stat_labels['spd_stat'], text=str(get_stat(self.pkmn.get(), 'spd', self.iv_stats[4].get(), self.ev_stats[4].get(), 'Serious')))
-        self.canvas2.itemconfig(self.stat_labels['spe_stat'], text=str(get_stat(self.pkmn.get(), 'spe', self.iv_stats[5].get(), self.ev_stats[5].get(), 'Serious')))
+        self.canvas2.itemconfig(self.stat_labels['hp_stat'], text=str(get_stat(self.pkmn.get(), 'hp', self.iv_stats[0].get(), self.ev_stats[0].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
+        self.canvas2.itemconfig(self.stat_labels['atk_stat'], text=str(get_stat(self.pkmn.get(), 'atk', self.iv_stats[1].get(), self.ev_stats[1].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
+        self.canvas2.itemconfig(self.stat_labels['def_stat'], text=str(get_stat(self.pkmn.get(), 'def', self.iv_stats[2].get(), self.ev_stats[2].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
+        self.canvas2.itemconfig(self.stat_labels['spa_stat'], text=str(get_stat(self.pkmn.get(), 'spa', self.iv_stats[3].get(), self.ev_stats[3].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
+        self.canvas2.itemconfig(self.stat_labels['spd_stat'], text=str(get_stat(self.pkmn.get(), 'spd', self.iv_stats[4].get(), self.ev_stats[4].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
+        self.canvas2.itemconfig(self.stat_labels['spe_stat'], text=str(get_stat(self.pkmn.get(), 'spe', self.iv_stats[5].get(), self.ev_stats[5].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
         self._refresh_canvas(self.min_height)
 
     def _check_pokemon(self):
