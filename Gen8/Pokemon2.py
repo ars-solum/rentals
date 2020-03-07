@@ -4,6 +4,7 @@ import sys
 import random
 import pandas as pd
 from pandas import ExcelFile
+from openpyxl import load_workbook
 
 TypeChart = {
     ('Bug', 'Bug')      : 1.0,
@@ -441,46 +442,25 @@ class Pokemon:
             print('  ' + attack)
 
 class PokemonSet:
-    def __init__(self, pokemon, dex, type, usage_tier, tags, item, ability,
-                 ev_spread, nature, iv_spread, moves, dynamax=False,
-                 gigantimax=False, level=100):
-        self.pokemon = pokemon
-        self.name = pokemon.name.casefold().capitalize()
-        if str(dex) != pokemon.nat_dex:
-            sys.exit('Database has incorrect dex #.')
-        self.dex = str(int(dex))
-        ctype = [x for x in type if str(x) != 'nan']
-        if ctype != pokemon.type:
-            sys.exit('Database has incorrect type(s).')
-        self.type = ctype
-        if str(item) != 'nan':
-            self.item = item
-        else:
-            self.item = ''
+    def __init__(self, name, item, ability, ev_spread, nature, iv_spread, moves, dynamax=False, gigantimax=False, level=100):
+        self.name = name
+        self.item = item if str(item) != 'nan' else ''
         self.ability = ability
-        if usage_tier == 'LC' or usage_tier == 'LC Uber':
-            self.level = 5
-        else:
-            self.level = level
+        self.level = level
         self.ev_spread = ev_spread
         self.nature = nature
-        if str(iv_spread) != 'nan':
-            self.iv_spread = iv_spread
-        else:
-            self.iv_spread = ''
-        self.usage_tier = usage_tier if usage_tier else ''
-        self.tags = tags
+        self.iv_spread = iv_spread if str(iv_spread) != 'nan' else ''
         self.moves = [x for x in moves if str(x) != 'nan']
 
-        self.internal_name = pokemon.name.casefold()
+        self.internal_name = name.casefold()
         if dynamax:
             self.internal_name += '-dy.png'
         if gigantimax:
+            # TODO FIXME: This section is weird.
             if dynamax:
-                self.internal_name = pokemon.name.casefold()
+                self.internal_name = name.casefold()
             self.internal_name += '-gi.png'
-        self.icon_path = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)), 'media', 'SwSh', self.internal_name)
+        self.icon_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'SwSh', self.internal_name)
 
     def print_set(self):
         if self.item:
@@ -500,7 +480,6 @@ def get_stat(pkmn_name, stat_name, iv, ev, nature, level='100'):
     stat = str(stat_name)
     if ev.replace('+', '').replace('-', '').replace(' ', '') == '':
         ev = 0
-    print(ev)
     if stat.casefold() == 'hp' or stat == '0':
         if pkmn_name.casefold() == 'shedinja':
             return 1
@@ -767,9 +746,15 @@ for i in sheet_list:
                               can_gigantimax=xl_pkmn['gigantamax'].values[0],
                               attacks=xl_pkmn['attacks'].tolist())
 
-database = pd.read_excel(pd.ExcelFile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-    'data', 'database.xlsx')), 'Sheet1')
 sets = []
+
+db_wb = load_workbook(filename=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'database.xlsx'))
+database = db_wb.active
+
+def update_database(pset):
+    database.append([pset.name, pset.level, pset.item, pset.ability, pset.ev_spread, pset.nature, pset.iv_spread, *pset.moves])
+    db_wb.save(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'database.xlsx'))
+
 # for i in range(2):
 #     sets.append(PokemonSet(get_pokemon(i), database['nat_dex'].values[i], [database['type1'].values[i], database['type2'].values[i]],
 #                            database['usage_tier'].values[i], database['tags'].values[i], database['item'].values[i],

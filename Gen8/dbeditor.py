@@ -2,15 +2,12 @@ import os
 import xlrd
 import xlwt
 import tkinter as tk
-from Pokemon2 import POKEMON_LIST
-from Pokemon2 import get_stat
-from Pokemon2 import nature_dex
-from Pokemon2 import stat_conversion
+from Pokemon2 import *
 from PIL import Image, ImageTk
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 from pygame import mixer
 
-VERSION = '0.7'
+VERSION = '0.8'
 mixer.init(22100, -16, 2, 32)
 move_sfx = mixer.Sound(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound', 'move.wav'))
 move2_sfx = mixer.Sound(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound', 'move2.wav'))
@@ -31,8 +28,7 @@ class NewSetPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.pack_propagate(0)
-        self.images = {
-                       'bg'        : [RGBAImage('menu', 'newbg.png'), RGBAImage('menu', 'inner_bg.png')],
+        self.images = {'bg'        : [RGBAImage('menu', 'newbg.png'), RGBAImage('menu', 'inner_bg.png')],
                        'buttons'   : {'back'  : [RGBAImage('menu', 'back_button.png'), RGBAImage('menu', 'back_button2.png')],
                                       'clear' : [RGBAImage('menu', 'clear.png'), RGBAImage('menu', 'clear-hover.png')],
                                       'import': [RGBAImage('menu', 'import.png'), RGBAImage('menu', 'import-hover.png')],
@@ -42,8 +38,7 @@ class NewSetPage(tk.Frame):
                        'items'     : self._get_images('items'),
                        'abilities' : self._get_images('abilities'),
                        'attacks'   : self._get_images('attacks'),
-                       'other'     : RGBAImage('menu', 'egg.png')
-                      }
+                       'other'     : RGBAImage('menu', 'egg.png')}
         self.pkmn_canvas_height = len(self.images['pokemon'])*65+15
         self.item_canvas_height = len(self.images['items'])*65+15
         self.min_height = 431
@@ -83,12 +78,14 @@ class NewSetPage(tk.Frame):
         self.clear_button = self.canvas.create_image((225,40), image=self.images['buttons']['clear'][0])
         self.canvas.tag_bind(self.clear_button, '<Enter>', lambda event: self._on_hover(self.canvas, self.clear_button, self.images['buttons']['clear'][1], sound=True))
         self.canvas.tag_bind(self.clear_button, '<Leave>', lambda event: self._on_hover(self.canvas, self.clear_button, self.images['buttons']['clear'][0]))
+        self.canvas.tag_bind(self.clear_button, '<Button-1>', lambda event: self.clear_page())
         self.canvas.itemconfig(self.clear_button, state='hidden')
 
         # save button
         self.save_button = self.canvas.create_image((300,40), image=self.images['buttons']['save'][0])
         self.canvas.tag_bind(self.save_button, '<Enter>', lambda event: self._on_hover(self.canvas, self.save_button, self.images['buttons']['save'][1], sound=True))
         self.canvas.tag_bind(self.save_button, '<Leave>', lambda event: self._on_hover(self.canvas, self.save_button, self.images['buttons']['save'][0]))
+        self.canvas.tag_bind(self.save_button, '<Button-1>', lambda event: self._save_set())
         self.canvas.itemconfig(self.save_button, state='hidden')
 
         # pokemon entry
@@ -211,19 +208,25 @@ class NewSetPage(tk.Frame):
         for i, stat in enumerate(['hp_stat', 'atk_stat', 'def_stat', 'spa_stat', 'spd_stat', 'spe_stat']):
             self.entry5.append(tk.Entry(self.canvas2, textvariable=self.ev_stats[i], width=7))
             self.ev_stats_entry.append(self.canvas2.create_window((200, 50+25*i), window=self.entry5[i]))
-            self.ev_stats[i].trace('w', lambda name, index, mode, i=i, stat=stat: self._update_stats(i, stat))
+            self.ev_stats[i].trace('w', lambda name, index, mode, i=i, stat=stat: self._update_all_stats(i, stat))
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
 
-        # ev scale
-        # TODO FIXME: make new functions for each scale
-        self.scale = [tk.Scale(self.canvas2, from_=min(EV_VALUES), to=max(EV_VALUES),
-                               length=225, showvalue=False, sliderlength=20,
-                               troughcolor='#af5032', borderwidth=0,
-                               command=self.test_slider_callback, orient='horizontal') for i in range(6)]
+        # ev scales
+        self.scale = {}
+        for i in ['hp', 'atk', 'def', 'spa', 'spd', 'spe']:
+            self.scale[i] = tk.Scale(self.canvas2, from_=min(EV_VALUES), to=max(EV_VALUES),
+                length=225, showvalue=False, sliderlength=20,
+                troughcolor='#af5032', borderwidth=0, orient='horizontal')
+        self.scale['hp'].config(command=self._update_hp_scale)
+        self.scale['atk'].config(command=self._update_atk_scale)
+        self.scale['def'].config(command=self._update_def_scale)
+        self.scale['spa'].config(command=self._update_spa_scale)
+        self.scale['spd'].config(command=self._update_spd_scale)
+        self.scale['spe'].config(command=self._update_spe_scale)
 
         self.scale_widgets = []
-        for i in range(6):
-            self.scale_widgets.append(self.canvas2.create_window((350,50+25*i), window=self.scale[i]))
+        for i, stat in enumerate(self.scale.keys()):
+            self.scale_widgets.append(self.canvas2.create_window((350,50+25*i), window=self.scale[stat]))
             self.canvas2.itemconfig(self.scale_widgets[i], state='hidden')
 
         # iv stats
@@ -235,6 +238,8 @@ class NewSetPage(tk.Frame):
             self.entry6[i].insert(0,'31')
             self.iv_stats_entry.append(self.canvas2.create_window((500, 50+25*i), window=self.entry6[i]))
             self.canvas2.itemconfig(self.iv_stats_entry[i], state='hidden')
+        for i, stat in enumerate(['hp_stat', 'atk_stat', 'def_stat', 'spa_stat', 'spd_stat', 'spe_stat']):
+            self.iv_stats[i].trace('w', lambda name, index, mode, i=i, stat=stat: self._update_all_stats(i, stat))
 
         # import/export
         self.i_box = tk.Text(self.canvas2, height=20, width=75)
@@ -267,6 +272,26 @@ class NewSetPage(tk.Frame):
                     temp_dict[object_name] = [normal_img, hover_img]
 
         return temp_dict
+
+    def _format_evs(self):
+        ev_spread = [i.get().replace('+', '').replace('-', '') for i in self.ev_stats]
+        evs = {'HP' : ev_spread[0] if ev_spread[0] else None,
+               'Atk' : ev_spread[1] if ev_spread[1] else None,
+               'Def' : ev_spread[2] if ev_spread[2] else None,
+               'SpA' : ev_spread[3] if ev_spread[3] else None,
+               'SpD' : ev_spread[4] if ev_spread[4] else None,
+               'Spe' : ev_spread[5] if ev_spread[5] else None}
+        return ' / '.join(['%s %s' %(value, key) for (key, value) in evs.items() if value])
+
+    def _format_ivs(self):
+        iv_spread = [i.get().replace('+', '').replace('-', '') for i in self.iv_stats]
+        ivs = {'HP' : iv_spread[0] if iv_spread[0] != '31' else None,
+               'Atk' : iv_spread[1] if iv_spread[1] != '31' else None,
+               'Def' : iv_spread[2] if iv_spread[2] != '31' else None,
+               'SpA' : iv_spread[3] if iv_spread[3] != '31' else None,
+               'SpD' : iv_spread[4] if iv_spread[4] != '31' else None,
+               'Spe' : iv_spread[5] if iv_spread[5] != '31' else None}
+        return ' / '.join(['%s %s' %(value, key) for (key, value) in ivs.items() if value])
 
     def _save_import(self):
         def _string_isolate(string, bool):
@@ -346,6 +371,7 @@ class NewSetPage(tk.Frame):
         self._get_stats_screen()
 
     def _update_nature(self):
+        # check & update which stat(s) have + and -
         pos_stat = None
         neg_stat = None
         stat = ['hp', 'attack', 'defense', 'spattack', 'spdefense', 'speed']
@@ -364,21 +390,25 @@ class NewSetPage(tk.Frame):
                     continue
                 if len(self.negative_stat) == 2:
                     del self.negative_stat[0]
+
+        # error checking
         if pos_stat == neg_stat:
             return
         if pos_stat == None:
             self.positive_stat = []
         if neg_stat == None:
             self.negative_stat = []
+
+        # update the nature if everything is good
         if len(self.positive_stat) == 1 and len(self.negative_stat) == 1:
             for nat, stat_combo in nature_dex.items():
                 if stat_combo == (pos_stat, neg_stat):
                     nature = nat
                     break
             self.nature.set(nature)
-            print('Nature is now:', self.nature.get())
 
-    def _update_stats(self, index, stat):
+    def _update_all_stats(self, index, stat):
+        # process internal values
         iv = self.iv_stats[index].get().replace('+', '').replace('-', '').replace(' ', '')
         ev = self.ev_stats[index].get().replace('+', '').replace('-', '').replace(' ', '')
         if ev == '':
@@ -386,21 +416,69 @@ class NewSetPage(tk.Frame):
         if iv == '':
             iv = '0'
         self._update_nature()
+
+        # error check the entries
         if int(iv) > 31:
             self.iv_stats[index].set('31')
         if int(iv) < 0:
             self.iv_stats[index].set('0')
         if int(ev) > 252:
             self.ev_stats[index].set('252')
-        if int(ev) < 0:
-            self.ev_stats[index].set('0')
-        for i in ['hp_stat', 'atk_stat', 'def_stat', 'spa_stat', 'spd_stat', 'spe_stat']:
-            self.canvas2.itemconfig(self.stat_labels[i], text=str(get_stat(self.pkmn.get(), i.replace('_stat', ''), iv, ev, self.nature.get())))
+        if int(ev) <= 0:
+            self.ev_stats[index].set(self.ev_stats[index].get().replace(ev, '') + '')
 
-    def test_slider_callback(self, value):
-        # TODO FIXME: Broken, figure out how to pass in value and index
-        newvalue = min(EV_VALUES, key=lambda x:abs(x-float(value)))
-        self.scale.set(newvalue)
+        # update respestive stat labels
+        # TODO FIXME: When updating nature, only one of the labels updates, not multiple
+        for i in ['hp_stat', 'atk_stat', 'def_stat', 'spa_stat', 'spd_stat', 'spe_stat']:
+            self.canvas2.itemconfig(self.stat_labels[stat], text=str(get_stat(self.pkmn.get(), stat.replace('_stat', ''), iv, ev, self.nature.get())) if self.pkmn.get() else '999')
+
+        # update respective scale
+        self.scale[stat.replace('_stat', '')].set(int(ev))
+
+        # update remaining label
+        # TODO FIXME: have an upper limit of 508 EVs.
+        stat_list = [i.get().replace('+', '').replace('-', '').replace(' ', '') for i in self.ev_stats]
+        stat_list = map(lambda x: '0' if x == '' else x, stat_list)
+        stat_sum = sum(int(i) for i in stat_list)
+        self.canvas2.itemconfig(self.stat_labels['rem_value'], text=str(508-stat_sum))
+
+    def _update_stat_entry(self, scale_value, stat):
+        if scale_value == 0:
+            scale_value = ''
+        if self.ev_stats[stat].get().startswith('+'):
+            self.ev_stats[stat].set('+' + scale_value)
+        elif self.ev_stats[stat].get().endswith('+'):
+            self.ev_stats[stat].set(scale_value + '+')
+        elif self.ev_stats[stat].get().startswith('-'):
+            self.ev_stats[stat].set('-' + scale_value)
+        elif self.ev_stats[stat].get().endswith('-'):
+            self.ev_stats[stat].set(scale_value + '-')
+        else:
+            self.ev_stats[stat].set(scale_value)
+
+    def _update_hp_scale(self, value):
+        self.scale['hp'].set(value)
+        self._update_stat_entry(str(self.scale['hp'].get()), 0)
+
+    def _update_atk_scale(self, value):
+        self.scale['atk'].set(value)
+        self._update_stat_entry(str(self.scale['atk'].get()), 1)
+
+    def _update_def_scale(self, value):
+        self.scale['def'].set(value)
+        self._update_stat_entry(str(self.scale['def'].get()), 2)
+
+    def _update_spa_scale(self, value):
+        self.scale['spa'].set(value)
+        self._update_stat_entry(str(self.scale['spa'].get()), 3)
+
+    def _update_spd_scale(self, value):
+        self.scale['spd'].set(value)
+        self._update_stat_entry(str(self.scale['spd'].get()), 4)
+
+    def _update_spe_scale(self, value):
+        self.scale['spe'].set(value)
+        self._update_stat_entry(str(self.scale['spe'].get()), 5)
 
     def _refresh_canvas(self, height):
         if height <= self.min_height:
@@ -415,7 +493,6 @@ class NewSetPage(tk.Frame):
         self.canvas2.coords(self.inner_bg, x, y)
 
     def _get_screen(self, pokemon=False, item=False, ability=False, moves=False, stats=False, import_=False):
-        # TODO FIXME: add more params when import/export screen is done
         for _ in self.pokemon_buttons.values():
             self.canvas2.itemconfig(_, state='normal' if pokemon else 'hidden')
         for _ in self.item_buttons.values():
@@ -453,23 +530,38 @@ class NewSetPage(tk.Frame):
 
     def _get_import_screen(self):
         self._get_screen(import_=True)
+        text = ''
+        if self.pkmn.get():
+            if self.item.get():
+                text += self.pkmn.get() + ' @ ' + self.item.get() + '\n'
+            else:
+                text += self.pkmn.get() + '\n'
+            text += 'Ability: ' + self.ability.get() + '\n'
+            text += 'EVs: ' + self._format_evs() + '\n'
+            text += self.nature.get() + ' Nature\n'
+            if self._format_ivs():
+                text += 'IVs: ' + self._format_ivs() + '\n'
+            for i in self.moves:
+                if i.get():
+                    text += '- ' + i.get() + '\n'
+        self.i_box.delete('1.0', tk.END)
+        self.i_box.insert(tk.END, text)
         self._refresh_canvas(self.min_height)
 
     def _get_stats_screen(self):
         self._get_screen(stats=True)
-        # TODO FIXME: stat labels not right
-        self.canvas2.itemconfig(self.stat_labels['hp_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_hp))
-        self.canvas2.itemconfig(self.stat_labels['atk_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_attack))
-        self.canvas2.itemconfig(self.stat_labels['def_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_defense))
-        self.canvas2.itemconfig(self.stat_labels['spa_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_spattack))
-        self.canvas2.itemconfig(self.stat_labels['spd_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_spdefense))
+        self.canvas2.itemconfig(self.stat_labels['hp_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_hp) if self.pkmn.get() else '999')
+        self.canvas2.itemconfig(self.stat_labels['atk_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_attack) if self.pkmn.get() else '999')
+        self.canvas2.itemconfig(self.stat_labels['def_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_defense) if self.pkmn.get() else '999')
+        self.canvas2.itemconfig(self.stat_labels['spa_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_spattack) if self.pkmn.get() else '999')
+        self.canvas2.itemconfig(self.stat_labels['spd_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_spdefense) if self.pkmn.get() else '999')
         self.canvas2.itemconfig(self.stat_labels['spe_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_speed))
-        self.canvas2.itemconfig(self.stat_labels['hp_stat'], text=str(get_stat(self.pkmn.get(), 'hp', self.iv_stats[0].get(), self.ev_stats[0].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
-        self.canvas2.itemconfig(self.stat_labels['atk_stat'], text=str(get_stat(self.pkmn.get(), 'atk', self.iv_stats[1].get(), self.ev_stats[1].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
-        self.canvas2.itemconfig(self.stat_labels['def_stat'], text=str(get_stat(self.pkmn.get(), 'def', self.iv_stats[2].get(), self.ev_stats[2].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
-        self.canvas2.itemconfig(self.stat_labels['spa_stat'], text=str(get_stat(self.pkmn.get(), 'spa', self.iv_stats[3].get(), self.ev_stats[3].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
-        self.canvas2.itemconfig(self.stat_labels['spd_stat'], text=str(get_stat(self.pkmn.get(), 'spd', self.iv_stats[4].get(), self.ev_stats[4].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
-        self.canvas2.itemconfig(self.stat_labels['spe_stat'], text=str(get_stat(self.pkmn.get(), 'spe', self.iv_stats[5].get(), self.ev_stats[5].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())))
+        self.canvas2.itemconfig(self.stat_labels['hp_stat'], text=str(get_stat(self.pkmn.get(), 'hp', self.iv_stats[0].get(), self.ev_stats[0].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())) if self.pkmn.get() else '999')
+        self.canvas2.itemconfig(self.stat_labels['atk_stat'], text=str(get_stat(self.pkmn.get(), 'atk', self.iv_stats[1].get(), self.ev_stats[1].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())) if self.pkmn.get() else '999')
+        self.canvas2.itemconfig(self.stat_labels['def_stat'], text=str(get_stat(self.pkmn.get(), 'def', self.iv_stats[2].get(), self.ev_stats[2].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())) if self.pkmn.get() else '999')
+        self.canvas2.itemconfig(self.stat_labels['spa_stat'], text=str(get_stat(self.pkmn.get(), 'spa', self.iv_stats[3].get(), self.ev_stats[3].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())) if self.pkmn.get() else '999')
+        self.canvas2.itemconfig(self.stat_labels['spd_stat'], text=str(get_stat(self.pkmn.get(), 'spd', self.iv_stats[4].get(), self.ev_stats[4].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())) if self.pkmn.get() else '999')
+        self.canvas2.itemconfig(self.stat_labels['spe_stat'], text=str(get_stat(self.pkmn.get(), 'spe', self.iv_stats[5].get(), self.ev_stats[5].get().replace('+', '').replace('-', '').replace(' ', ''), self.nature.get())) if self.pkmn.get() else '999')
         self._refresh_canvas(self.min_height)
 
     def _check_pokemon(self):
@@ -496,13 +588,13 @@ class NewSetPage(tk.Frame):
     def _get_abilities(self, pokemon_name):
         pokemon_name = pokemon_name.replace('-Gmax', '')
         if pokemon_name not in POKEMON_LIST.keys():
-            print('Error, cant find Pokemon: %s' %pokemon_name)
+            return
         return [i.casefold() for i in POKEMON_LIST[pokemon_name].abilities]
 
     def _get_moves(self, pokemon_name):
         pokemon_name = pokemon_name.replace('-Gmax', '')
         if pokemon_name not in POKEMON_LIST.keys():
-            print('Error, cant find Pokemon: %s' %pokemon_name)
+            return
         return [i.casefold() for i in POKEMON_LIST[pokemon_name].attacks]
 
     def _get_pokemon_list(self, check=False):
@@ -655,13 +747,15 @@ class NewSetPage(tk.Frame):
                     search_list.append(x)
         else:
             if buttons == 'abilities':
-                for abil in self._get_abilities(self.entry.get()):
-                    if abil.casefold().startswith(name.get().casefold()):
-                        search_list.append(abil.casefold())
+                if self._get_abilities(self.entry.get()):
+                    for abil in self._get_abilities(self.entry.get()):
+                        if abil.casefold().startswith(name.get().casefold()):
+                            search_list.append(abil.casefold())
             if buttons == 'attacks':
-                for move in self._get_moves(self.entry.get()):
-                    if move.casefold().startswith(name.get().casefold()):
-                        search_list.append(move.casefold())
+                if self._get_moves(self.entry.get()):
+                    for move in self._get_moves(self.entry.get()):
+                        if move.casefold().startswith(name.get().casefold()):
+                            search_list.append(move.casefold())
         if not search_list:
             return
 
@@ -710,7 +804,7 @@ class NewSetPage(tk.Frame):
                 except:
                     print('Missing Ability:', list_item)
             else:
-                print('Error: I don\'t know what buttons to update', i, list_item, buttons)
+                print('Error: i=', i, 'list_item=', list_item, 'buttons=', buttons)
 
     def _on_hover(self, canvas, button, image, sound=False):
         canvas.itemconfig(button, image=image)
@@ -735,24 +829,52 @@ class NewSetPage(tk.Frame):
         y = self.canvas2.canvasy(0)
         self.canvas2.coords(self.inner_bg, x, y)
 
+    def clear_page(self):
+        self.pkmn.set('')
+        self.item.set('')
+        self.ability.set('')
+        for i in self.moves:
+            i.set('')
+        for i in self.ev_stats:
+            i.set('')
+        for i in self.iv_stats:
+            i.set('31')
+        self.nature.set('Serious')
+        self.canvas.itemconfig(self.item_text, state='hidden')
+        self.canvas.itemconfig(self.item_entry, state='hidden')
+        self.canvas.itemconfig(self.ability_text, state='hidden')
+        self.canvas.itemconfig(self.ability_entry, state='hidden')
+        self.canvas.itemconfig(self.pokemon_icon, image=self.images['other'])
+        self.canvas.itemconfig(self.moves_text, state='hidden')
+        for i in range(4):
+            self.canvas.itemconfig(self.moves_entry[i], state='hidden')
+        self.canvas.itemconfig(self.stats_text, state='hidden')
+        self.canvas.itemconfig(self.stats_button, state='hidden')
+        self.canvas.itemconfig(self.clear_button, state='hidden')
+        self.canvas.itemconfig(self.save_button, state='hidden')
+        self.revealed = False
+        self._get_pokemon_list()
+
+    def _save_set(self):
+        # TODO FIXME: Add saving SFX and some notification that it saved
+        set = PokemonSet(self.pkmn.get(), self.item.get(), self.ability.get(), self._format_evs(), self.nature.get(), self._format_ivs(), [move.get() for move in self.moves if move.get()])
+        update_database(set)
 
 class EditSetPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-
-        self.bg_imgs = []
-        self.button_imgs = []
+        self.pack_propagate(0)
+        self.images = {}
         self.buttons = []
 
 
-class TeamPage(tk.Frame):
+class TeamBuilderPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.bg_imgs = []
-        self.button_imgs = []
+        self.images = {}
         self.buttons = []
 
 
@@ -788,7 +910,7 @@ class MainPage(tk.Frame):
             self.canvas.tag_bind(self.buttons[i], '<Leave>', lambda event, i=i: self._on_hover(self.buttons[i], self.button_imgs[i]))
         self.canvas.tag_bind(self.buttons[0], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'NewSetPage'))
         self.canvas.tag_bind(self.buttons[1], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'EditSetPage'))
-        self.canvas.tag_bind(self.buttons[2], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'TeamPage'))
+        self.canvas.tag_bind(self.buttons[2], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'TeamBuilderPage'))
         self.canvas.tag_bind(self.buttons[3], '<Button-1>', lambda event: self.controller.quit)
 
     def _on_hover(self, button, image, sound=False):
@@ -805,12 +927,12 @@ class DBEditor (tk.Tk):
         self.main_frame.pack(fill='both', expand=True)
         self.pages = {}
 
-        for page in [MainPage, NewSetPage, EditSetPage, TeamPage,]:
+        for page in [MainPage, NewSetPage, EditSetPage, TeamBuilderPage,]:
             frame = page(parent=self.main_frame, controller=self)
             self.pages[page.__name__] = frame
             frame.pack(fill='both', expand=True)
 
-        for page in ['NewSetPage', 'EditSetPage', 'TeamPage',]:
+        for page in ['NewSetPage', 'EditSetPage', 'TeamBuilderPage',]:
             self.pages[page].pack_forget()
 
     def _change_page(self, old_page_name, page_name):
