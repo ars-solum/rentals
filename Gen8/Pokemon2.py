@@ -442,7 +442,7 @@ class Pokemon:
             print('  ' + attack)
 
 class PokemonSet:
-    def __init__(self, name, item, ability, ev_spread, nature, iv_spread, moves, dynamax=False, gigantimax=False, level=100):
+    def __init__(self, name, level, item, ability, ev_spread, nature, iv_spread, moves, dynamax=False, gigantimax=False):
         self.name = name
         self.item = item if str(item) != 'nan' else ''
         self.ability = ability
@@ -463,17 +463,22 @@ class PokemonSet:
         self.icon_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'SwSh', self.internal_name)
 
     def print_set(self):
-        if self.item:
-            print(self.name + ' @ ' + self.item)
-        else:
-            print(self.name)
-        print('Ability: ' + self.ability)
-        print('EVs: ' + self.ev_spread)
-        print(self.nature + ' Nature')
+        if self.name:
+            if self.item:
+                print(self.name + ' @ ' + self.item)
+            else:
+                print(self.name)
+        if self.ability:
+            print('Ability: ' + self.ability)
+        if self.ev_spread:
+            print('EVs: ' + self.ev_spread)
+        if self.nature:
+            print(self.nature + ' Nature')
         if self.iv_spread:
             print('IVs: ' + self.iv_spread)
         for move in self.moves:
-            print('- ' + move)
+            if move:
+                print('- ' + move)
 
 def get_stat(pkmn_name, stat_name, iv, ev, nature, level='100'):
     # Note: stat_name can be a name or an index, and all other params are casted for safety.
@@ -746,10 +751,34 @@ for i in sheet_list:
                               can_gigantimax=xl_pkmn['gigantamax'].values[0],
                               attacks=xl_pkmn['attacks'].tolist())
 
-sets = []
-
 db_wb = load_workbook(filename=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'database.xlsx'))
 database = db_wb.active
+
+sets = []
+for row in database.iter_rows(min_row=2, max_row=len(list(database.rows))):
+    dbl = []
+    for r in row:
+        dbl.append(r.value)
+    sets.append(PokemonSet(dbl[0], dbl[1], dbl[2], dbl[3], dbl[4], dbl[5], dbl[6], [dbl[7], dbl[8], dbl[9], dbl[10]]))
+
+def exists(pset):
+    moves = [i for i in pset.moves if i]
+    if len(pset.moves) < 4:
+        empty = 4 - len(moves)
+        for i in range(empty):
+            moves.append(None)
+    pset_tuple = (pset.name, pset.level, pset.item if pset.item else None,
+                  pset.ability if pset.ability else None, pset.ev_spread if pset.ev_spread else None,
+                  pset.nature if pset.nature else None, pset.iv_spread if pset.iv_spread else None,
+                  *moves)
+    for row in database.iter_rows(min_row=2, max_row=len(list(database.rows))):
+        dbl = []
+        for r in row:
+            dbl.append(r.value)
+        if pset_tuple == tuple(dbl):
+            print('Set exists! Not going to save this set.')
+            return True
+    return False
 
 def update_database(pset):
     database.append([pset.name, pset.level, pset.item, pset.ability, pset.ev_spread, pset.nature, pset.iv_spread, *pset.moves])

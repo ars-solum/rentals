@@ -1,18 +1,18 @@
 import os
-import xlrd
-import xlwt
 import tkinter as tk
 from Pokemon2 import *
 from PIL import Image, ImageTk
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 from pygame import mixer
 
-VERSION = '0.8'
+VERSION = '0.9'
 mixer.init(22100, -16, 2, 32)
-move_sfx = mixer.Sound(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound', 'move.wav'))
-move2_sfx = mixer.Sound(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound', 'move2.wav'))
-change_screen_sfx = mixer.Sound(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound', 'change_screen.wav'))
-EV_VALUES = [x*4 for x in range(64)]
+sfx = {}
+for file in os.listdir(os.fsencode(str(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound')))):
+    if os.fsdecode(file).endswith('.wav'):
+        sfx[os.fsdecode(file).replace('.wav', '')] = mixer.Sound(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sound', os.fsdecode(file)))
+
+EV_VALUES = [0, 252]
 
 #os.path.join(os.path.dirname(os.path.realpath(__file__))
 
@@ -29,11 +29,11 @@ class NewSetPage(tk.Frame):
         self.controller = controller
         self.pack_propagate(0)
         self.images = {'bg'        : [RGBAImage('menu', 'newbg.png'), RGBAImage('menu', 'inner_bg.png')],
-                       'buttons'   : {'back'  : [RGBAImage('menu', 'back_button.png'), RGBAImage('menu', 'back_button2.png')],
-                                      'clear' : [RGBAImage('menu', 'clear.png'), RGBAImage('menu', 'clear-hover.png')],
-                                      'import': [RGBAImage('menu', 'import.png'), RGBAImage('menu', 'import-hover.png')],
-                                      'save'  : [RGBAImage('menu', 'save.png'), RGBAImage('menu', 'save-hover.png')],
-                                      'stats' : [RGBAImage('menu', 'stats.png'), RGBAImage('menu', 'stats2.png')]},
+                       'buttons'   : {'back'   : [RGBAImage('menu', 'back_button.png'), RGBAImage('menu', 'back_button2.png')],
+                                      'clear'  : [RGBAImage('menu', 'clear.png'), RGBAImage('menu', 'clear-hover.png')],
+                                      'import' : [RGBAImage('menu', 'import.png'), RGBAImage('menu', 'import-hover.png')],
+                                      'save'   : [RGBAImage('menu', 'save.png'), RGBAImage('menu', 'save-hover.png')],
+                                      'stats'  : [RGBAImage('menu', 'stats.png'), RGBAImage('menu', 'stats2.png')]},
                        'pokemon'   : self._get_images('pokemon'),
                        'items'     : self._get_images('items'),
                        'abilities' : self._get_images('abilities'),
@@ -44,10 +44,10 @@ class NewSetPage(tk.Frame):
         self.min_height = 431
         self._WIDTH = 651
         self.revealed = False
-        self.imported_set = ''
         self.canvas = tk.Canvas(self, height=self._WIDTH, width=self._WIDTH, highlightthickness=0)
         self.canvas.pack()
         self.background = self.canvas.create_image((0,0), image=self.images['bg'][0], anchor='nw')
+        # make a nested canvas
         self.in_frame = tk.Frame(self, height=self.min_height, width=self._WIDTH, borderwidth=0, highlightthickness=0)
         self.in_frame.pack_propagate(0)
         self.frame = self.canvas.create_window((0,223), window=self.in_frame, anchor='nw')
@@ -59,6 +59,7 @@ class NewSetPage(tk.Frame):
         self.canvas2.pack(side='left', expand=True, fill='both')
         self.canvas2.bind('<Enter>', self._on_mousewheel)
         self.canvas2.bind('<Leave>', self._off_mousewheel)
+        # the top of the bottom canvas
         self.origX = self.canvas2.xview()[0]
         self.origY = self.canvas2.yview()[0]
 
@@ -120,6 +121,8 @@ class NewSetPage(tk.Frame):
         self.ability_entry = self.canvas.create_window((300,200), window=self.entry3)
         self.canvas.itemconfig(self.ability_entry, state='hidden')
 
+        # TODO FIXME: Add dynamax checkbox for non-Gmax Pokemon.
+
         # move entry
         self.moves = [tk.StringVar() for i in range(4)]
         self.moves_text = self.canvas.create_text((378,105), text='Moves')
@@ -129,7 +132,7 @@ class NewSetPage(tk.Frame):
         for i in range(4):
             self.entry4.append(tk.Entry(self.canvas, textvariable=self.moves[i], width=20))
             self.entry4[i].bind('<Button-1>', lambda event: self._get_move_list())
-            # TODO FIXME: bind return, tab
+            # TODO FIXME: bind return & tab
             self.moves_entry.append(self.canvas.create_window((420,125+25*i), window=self.entry4[i]))
             self.canvas.itemconfig(self.moves_entry[i], state='hidden')
 
@@ -194,12 +197,42 @@ class NewSetPage(tk.Frame):
         for item in self.stat_labels.values():
             self.canvas2.itemconfig(item, state='hidden')
 
-        # nature stuff
-        # TODO FIXME: add optionmenu
+        # nature
         self.positive_stat = []
         self.negative_stat = []
         self.nature = tk.StringVar()
         self.nature.set('Serious')
+        self._natures = {'Adamant (+Atk, -SpA)' : 'Adamant',
+                         'Bashful'              : 'Bashful',
+                         'Bold (+Def, -Atk)'    : 'Bold',
+                         'Brave (+Atk, -Spe)'   : 'Brave',
+                         'Calm (+SpD, -Atk)'    : 'Calm',
+                         'Careful (+SpD, -SpA)' : 'Careful',
+                         'Docile'               : 'Docile',
+                         'Gentle (+SpD, -Def)'  : 'Gentle',
+                         'Hardy'                : 'Hardy',
+                         'Hasty (+Spe, -Def)'   : 'Hasty',
+                         'Impish (+Def, -SpA)'  : 'Impish',
+                         'Jolly (+Spe, -SpA)'   : 'Jolly',
+                         'Lax (+Def, -SpD)'     : 'Lax',
+                         'Lonely (+Atk, -Def)'  : 'Lonely',
+                         'Mild (+SpA, -Def)'    : 'Mild',
+                         'Modest (+SpA, -Atk)'  : 'Modest',
+                         'Naive (+Spe, -SpD)'   : 'Naive',
+                         'Naughty (+Atk, -SpD)' : 'Naughty',
+                         'Quiet (+SpA, -Spe)'   : 'Quiet',
+                         'Quirky'               : 'Quirky',
+                         'Rash (+SpA, -SpD)'    : 'Rash',
+                         'Relaxed (+Def, -Spe)' : 'Relaxed',
+                         'Sassy (+SpD, -Spe)'   : 'Sassy',
+                         'Serious'              : 'Serious',
+                         'Timid (+Spe, -Atk)'   : 'Timid'}
+        self.display_nature = tk.StringVar()
+        self.display_nature.set('Serious')
+        self.nature_om = tk.OptionMenu(self.canvas2, self.display_nature, *self._natures.keys(), command=self._set_nature)
+        self.nature_om.config(width=20)
+        self.nature_widget = self.canvas2.create_window((175, 225), window=self.nature_om)
+        self.canvas2.itemconfig(self.nature_widget, state='hidden')
 
         # ev stats
         self.ev_stats = [tk.StringVar() for i in range(6)]
@@ -252,8 +285,8 @@ class NewSetPage(tk.Frame):
         self.canvas2.itemconfig(self.i_back_button, state='hidden')
         self.canvas2.itemconfig(self.i_save_button, state='hidden')
 
-###############################################################################
     def _get_images(self, key):
+        # return a dictionary of images based on the key/directory
         directory = os.fsencode(str(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key)))
         temp_dict = {}
         running_list = []
@@ -267,6 +300,7 @@ class NewSetPage(tk.Frame):
                 hover_img = ImageTk.PhotoImage(Image.open(os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'bar', key, hover_filename))).convert('RGBA'))
                 object_name = normal_filename.replace('e null', 'e: null').replace('mr ', 'mr. ').replace(' jr', ' jr.').replace('.png', '').replace('-hover', '')
                 if key == 'pokemon':
+                    # TODO FIXME: Add dynamax images
                     temp_dict[object_name] = [normal_img, hover_img, RGBAImage('pokemon', normal_filename.replace('-hover', ''))]
                 else:
                     temp_dict[object_name] = [normal_img, hover_img]
@@ -274,6 +308,7 @@ class NewSetPage(tk.Frame):
         return temp_dict
 
     def _format_evs(self):
+        # get the showdown formatted string for EVs
         ev_spread = [i.get().replace('+', '').replace('-', '') for i in self.ev_stats]
         evs = {'HP' : ev_spread[0] if ev_spread[0] else None,
                'Atk' : ev_spread[1] if ev_spread[1] else None,
@@ -284,6 +319,7 @@ class NewSetPage(tk.Frame):
         return ' / '.join(['%s %s' %(value, key) for (key, value) in evs.items() if value])
 
     def _format_ivs(self):
+        # get the showdown formatted string for IVs
         iv_spread = [i.get().replace('+', '').replace('-', '') for i in self.iv_stats]
         ivs = {'HP' : iv_spread[0] if iv_spread[0] != '31' else None,
                'Atk' : iv_spread[1] if iv_spread[1] != '31' else None,
@@ -296,12 +332,13 @@ class NewSetPage(tk.Frame):
     def _save_import(self):
         def _string_isolate(string, bool):
             return ''.join(char for char in string if char.isdigit() == bool).replace(' ', '')
+
         # import/export the set
         if self.i_box.get('1.0', 'end-1c') == '':
             return
-        self.imported_set = self.i_box.get('1.0', 'end-1c')
+
         # parse the input
-        input = self.imported_set.splitlines()
+        input = self.i_box.get('1.0', 'end-1c').splitlines()
         if len(input) > 9:
             input = input[:8]
         name = input[0].split('@')[0].strip()
@@ -370,6 +407,40 @@ class NewSetPage(tk.Frame):
             self.revealed = True
         self._get_stats_screen()
 
+    def _set_nature(self, nature):
+        self.display_nature.set(nature)
+        self.nature.set(self._natures[nature])
+
+        # update the stat entry fields with + or - if needed
+        if '+Atk' in nature:
+            self.entry5[1].insert(tk.END, '+')
+        elif '+Def' in nature:
+            self.entry5[2].insert(tk.END, '+')
+        elif '+SpA' in nature:
+            self.entry5[3].insert(tk.END, '+')
+        elif '+SpD' in nature:
+            self.entry5[4].insert(tk.END, '+')
+        elif '+Spe' in nature:
+            self.entry5[5].insert(tk.END, '+')
+
+        if '-Atk' in nature:
+            self.entry5[1].insert(tk.END, '-')
+        elif '-Def' in nature:
+            self.entry5[2].insert(tk.END, '-')
+        elif '-SpA' in nature:
+            self.entry5[3].insert(tk.END, '-')
+        elif '-SpD' in nature:
+            self.entry5[4].insert(tk.END, '-')
+        elif '-Spe' in nature:
+            self.entry5[5].insert(tk.END, '-')
+
+        if '+' not in nature and '-' not in nature:
+            for i in range(1,6):
+                entry_value = self.entry5[i].get()
+                entry_value = entry_value.replace('+', '').replace('-', '')
+                self.entry5[i].delete(0, tk.END)
+                self.entry5[i].insert(0, entry_value)
+
     def _update_nature(self):
         # check & update which stat(s) have + and -
         pos_stat = None
@@ -391,7 +462,7 @@ class NewSetPage(tk.Frame):
                 if len(self.negative_stat) == 2:
                     del self.negative_stat[0]
 
-        # error checking
+        # error checking and internal correcting
         if pos_stat == neg_stat:
             return
         if pos_stat == None:
@@ -406,9 +477,13 @@ class NewSetPage(tk.Frame):
                     nature = nat
                     break
             self.nature.set(nature)
+            for key, val in self._natures.items():
+                if val == nature:
+                    self.display_nature.set(key)
+                    break
 
     def _update_all_stats(self, index, stat):
-        # process internal values
+        # process internal values and update nature if + or - in entry field
         iv = self.iv_stats[index].get().replace('+', '').replace('-', '').replace(' ', '')
         ev = self.ev_stats[index].get().replace('+', '').replace('-', '').replace(' ', '')
         if ev == '':
@@ -417,7 +492,7 @@ class NewSetPage(tk.Frame):
             iv = '0'
         self._update_nature()
 
-        # error check the entries
+        # error check and correct the entries
         if int(iv) > 31:
             self.iv_stats[index].set('31')
         if int(iv) < 0:
@@ -427,12 +502,9 @@ class NewSetPage(tk.Frame):
         if int(ev) <= 0:
             self.ev_stats[index].set(self.ev_stats[index].get().replace(ev, '') + '')
 
-        # update respestive stat labels
-        # TODO FIXME: When updating nature, only one of the labels updates, not multiple
-        for i in ['hp_stat', 'atk_stat', 'def_stat', 'spa_stat', 'spd_stat', 'spe_stat']:
-            self.canvas2.itemconfig(self.stat_labels[stat], text=str(get_stat(self.pkmn.get(), stat.replace('_stat', ''), iv, ev, self.nature.get())) if self.pkmn.get() else '999')
-
-        # update respective scale
+        # update respestive stat labels and scale
+        # TODO FIXME: When updating nature here, only one of the labels updates, not the 2 that change
+        self.canvas2.itemconfig(self.stat_labels[stat], text=str(get_stat(self.pkmn.get(), stat.replace('_stat', ''), iv, ev, self.nature.get())) if self.pkmn.get() else '999')
         self.scale[stat.replace('_stat', '')].set(int(ev))
 
         # update remaining label
@@ -443,6 +515,7 @@ class NewSetPage(tk.Frame):
         self.canvas2.itemconfig(self.stat_labels['rem_value'], text=str(508-stat_sum))
 
     def _update_stat_entry(self, scale_value, stat):
+        # do not allow 0 on respective entry field
         if scale_value == 0:
             scale_value = ''
         if self.ev_stats[stat].get().startswith('+'):
@@ -481,6 +554,7 @@ class NewSetPage(tk.Frame):
         self._update_stat_entry(str(self.scale['spe'].get()), 5)
 
     def _refresh_canvas(self, height):
+        # re-pack canvas and scrollbar
         if height <= self.min_height:
             self.scrollbar.pack_forget()
         else:
@@ -488,11 +562,13 @@ class NewSetPage(tk.Frame):
         self.canvas2.pack_forget()
         self.canvas2.config(height=height, scrollregion=(0, 0, self._WIDTH, height))
         self.canvas2.pack(side='left', expand=True, fill='both')
+        # move bg to new coordinates for scrolling
         x = self.canvas2.canvasx(0)
         y = self.canvas2.canvasy(0)
         self.canvas2.coords(self.inner_bg, x, y)
 
     def _get_screen(self, pokemon=False, item=False, ability=False, moves=False, stats=False, import_=False):
+        # show/hide parts of screen depending on the screen we want to show
         for _ in self.pokemon_buttons.values():
             self.canvas2.itemconfig(_, state='normal' if pokemon else 'hidden')
         for _ in self.item_buttons.values():
@@ -507,6 +583,7 @@ class NewSetPage(tk.Frame):
             self.canvas2.itemconfig(self.iv_stats_entry[i], state='normal' if stats else 'hidden')
         for _ in self.stat_labels.values():
             self.canvas2.itemconfig(_, state='normal' if stats else 'hidden')
+        self.canvas2.itemconfig(self.nature_widget, state='normal' if stats else 'hidden')
         self.canvas2.itemconfig(self.i_back_button, state='normal' if import_ else 'hidden')
         self.canvas2.itemconfig(self.i_save_button, state='normal' if import_ else 'hidden')
         self.canvas2.itemconfig(self.import_box, state='normal' if import_ else 'hidden')
@@ -521,6 +598,7 @@ class NewSetPage(tk.Frame):
             self.entry3.unbind('<Button-1>')
             for entry in self.entry4:
                 entry.unbind('<Button-1>')
+            # TODO FIXME: Disable stats button hovering when on import screen, and re-enable otherwise.
         else:
             self.entry.bind('<Button-1>', lambda event: self._get_pokemon_list(check=True))
             self.entry2.bind('<Button-1>', lambda event: self._get_item_list(check=True))
@@ -530,6 +608,9 @@ class NewSetPage(tk.Frame):
 
     def _get_import_screen(self):
         self._get_screen(import_=True)
+        self._refresh_canvas(self.min_height)
+
+        # get existing set info and overwrite into entry field
         text = ''
         if self.pkmn.get():
             if self.item.get():
@@ -537,7 +618,8 @@ class NewSetPage(tk.Frame):
             else:
                 text += self.pkmn.get() + '\n'
             text += 'Ability: ' + self.ability.get() + '\n'
-            text += 'EVs: ' + self._format_evs() + '\n'
+            if self._format_evs():
+                text += 'EVs: ' + self._format_evs() + '\n'
             text += self.nature.get() + ' Nature\n'
             if self._format_ivs():
                 text += 'IVs: ' + self._format_ivs() + '\n'
@@ -546,10 +628,10 @@ class NewSetPage(tk.Frame):
                     text += '- ' + i.get() + '\n'
         self.i_box.delete('1.0', tk.END)
         self.i_box.insert(tk.END, text)
-        self._refresh_canvas(self.min_height)
 
     def _get_stats_screen(self):
         self._get_screen(stats=True)
+        # fill in values for each stat
         self.canvas2.itemconfig(self.stat_labels['hp_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_hp) if self.pkmn.get() else '999')
         self.canvas2.itemconfig(self.stat_labels['atk_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_attack) if self.pkmn.get() else '999')
         self.canvas2.itemconfig(self.stat_labels['def_base'], text=str(POKEMON_LIST[self.pkmn.get()].base_defense) if self.pkmn.get() else '999')
@@ -610,13 +692,12 @@ class NewSetPage(tk.Frame):
             self._refresh_canvas(self.pkmn_canvas_height)
 
     def _pick_pokemon(self, pkmn_name):
-        # reveal all the other entry fields
+        # show all the other entry fields
         if not self.revealed:
             self.canvas.itemconfig(self.item_text, state='normal')
             self.canvas.itemconfig(self.item_entry, state='normal')
             self.canvas.itemconfig(self.ability_text, state='normal')
             self.canvas.itemconfig(self.ability_entry, state='normal')
-            self.canvas.itemconfig(self.pokemon_icon, image=self.images['pokemon'][pkmn_name.casefold()][2])
             self.canvas.itemconfig(self.moves_text, state='normal')
             for i in range(4):
                 self.canvas.itemconfig(self.moves_entry[i], state='normal')
@@ -625,8 +706,9 @@ class NewSetPage(tk.Frame):
             self.canvas.itemconfig(self.clear_button, state='normal')
             self.canvas.itemconfig(self.save_button, state='normal')
             self.revealed = True
+        self.canvas.itemconfig(self.pokemon_icon, image=self.images['pokemon'][pkmn_name.casefold()][2])
 
-        # overwrite entry text
+        # format and overwrite pokemon name onto correct entry field
         name = [word.capitalize() for word in pkmn_name.split()]
         pkmn_name = ' '.join(name)
         if pkmn_name not in ['Jangmo-o', 'Hakamo-o', 'Kommo-o'] and '-' in pkmn_name:
@@ -691,6 +773,7 @@ class NewSetPage(tk.Frame):
             self._refresh_canvas(self.item_canvas_height)
 
     def _pick_item(self, item_name):
+        # format and overwrite item onto correct entry field
         name = [word.capitalize() for word in item_name.split()]
         item_name = ' '.join(name)
         self.entry2.delete(0,tk.END)
@@ -703,6 +786,7 @@ class NewSetPage(tk.Frame):
         self._refresh_canvas(self.min_height)
 
     def _pick_ability(self, ability_name):
+        # format and overwrite ability onto correct entry field
         name = [word.capitalize() for word in ability_name.split()]
         ability_name = ' '.join(name)
         ability_name = ability_name.replace('Rks', 'RKS')
@@ -758,6 +842,7 @@ class NewSetPage(tk.Frame):
                             search_list.append(move.casefold())
         if not search_list:
             return
+        # TODO FIXME: if I click the entry box, do not filter and give me full list again.
 
         # clear canvas of all buttons
         if buttons == 'pokemon':
@@ -772,7 +857,7 @@ class NewSetPage(tk.Frame):
             for _, button in self.ability_buttons.items():
                 self.canvas2.delete(button)
             self.ability_buttons = {}
-        # TODO FIXME: add moves later
+        # TODO FIXME: add moves/attacks
 
         # resize canvas
         self._refresh_canvas(len(search_list)*65+15 if len(search_list)*65+15 > self.min_height else self.min_height)
@@ -809,7 +894,7 @@ class NewSetPage(tk.Frame):
     def _on_hover(self, canvas, button, image, sound=False):
         canvas.itemconfig(button, image=image)
         if sound:
-            move_sfx.play()
+            sfx['move'].play()
 
     def _custom_yview(self, *args, **kwargs):
         self.canvas2.yview(*args, **kwargs)
@@ -830,6 +915,7 @@ class NewSetPage(tk.Frame):
         self.canvas2.coords(self.inner_bg, x, y)
 
     def clear_page(self):
+        # reset all fields
         self.pkmn.set('')
         self.item.set('')
         self.ability.set('')
@@ -853,36 +939,100 @@ class NewSetPage(tk.Frame):
         self.canvas.itemconfig(self.clear_button, state='hidden')
         self.canvas.itemconfig(self.save_button, state='hidden')
         self.revealed = False
+        sfx['back_page'].play()
         self._get_pokemon_list()
 
     def _save_set(self):
-        # TODO FIXME: Add saving SFX and some notification that it saved
+        # check if certain fields are filled in
+        if self.pkmn.get() not in POKEMON_LIST.keys() or self.ability.get() == '':
+            return
+
+        # update the database if the set is new
         set = PokemonSet(self.pkmn.get(), self.item.get(), self.ability.get(), self._format_evs(), self.nature.get(), self._format_ivs(), [move.get() for move in self.moves if move.get()])
-        update_database(set)
+        if not exists(set):
+            update_database(set)
+            # TODO FIXME: have a visual indicator that the set was saved and prompt if user wants to continue editing or start over.
+            sfx['save'].play()
+
 
 class EditSetPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.pack_propagate(0)
-        self.images = {}
-        self.buttons = []
+        self.images = {'bg'        : RGBAImage('menu', 'edit_bg.png'),
+                       'buttons'   : {'back'  : [RGBAImage('menu', 'back_button.png'), RGBAImage('menu', 'back_button2.png')]},
+                       'pokemon'   : self._get_sprites(),
+                       'other'     : RGBAImage('menu', 'sorry.png')}
+        self._WIDTH = 651
+        self.canvas = tk.Canvas(self, height=self._WIDTH, width=self._WIDTH, highlightthickness=0)
+        self.canvas.pack()
+        self.background = self.canvas.create_image((0,0), image=self.images['bg'], anchor='nw')
+
+        # back button
+        self.back_button = self.canvas.create_image((50,40), image=self.images['buttons']['back'][0])
+        self.canvas.tag_bind(self.back_button, '<Enter>', lambda event: self._on_hover(self.canvas, self.back_button, self.images['buttons']['back'][1], sound=True))
+        self.canvas.tag_bind(self.back_button, '<Leave>', lambda event: self._on_hover(self.canvas, self.back_button, self.images['buttons']['back'][0]))
+        self.canvas.tag_bind(self.back_button, '<Button-1>', lambda event: self.controller._change_page('EditSetPage', 'MainPage'))
+
+        # test zone
+        self.test_pkmn = []
+        self.set_num = []
+        self.pkmn_name = []
+        for j in range(3):
+            for i in range(3):
+                self.test_pkmn.append(self.canvas.create_image((130+200*i,200+200*j), image=self.images['pokemon']['eternatus']))
+                self.set_num.append(self.canvas.create_text((130+200*i,140+200*j), text='0 Sets'))
+                self.pkmn_name.append(self.canvas.create_text((130+200*i,235+200*j), text='Darmanitan-Galar-Zen-Mode'))
+
+        self.sorry = self.canvas.create_image((330,300), image=self.images['other'])
+
+    def _get_sprites(self):
+        temp_dict = {}
+        for file in os.listdir(os.fsencode(str(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sprites')))):
+            if os.fsdecode(file).endswith('.png'):
+                temp_dict[os.fsdecode(file).replace('e null', 'e: null').replace('mr ', 'mr. ').replace(' jr', ' jr.').replace('.png', '')] = ImageTk.PhotoImage(Image.open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'media', 'sprites', os.fsdecode(file))).convert('RGBA'))
+
+        return temp_dict
+
+    def _on_hover(self, canvas, button, image, sound=False):
+        canvas.itemconfig(button, image=image)
+        if sound:
+            sfx['move'].play()
 
 
 class TeamBuilderPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.pack_propagate(0)
+        self.images = {'bg'        : RGBAImage('menu', 'team_bg.png'),
+                       'buttons'   : {'back'  : [RGBAImage('menu', 'back_button.png'), RGBAImage('menu', 'back_button2.png')]},
+                       'other'     : RGBAImage('menu', 'sorry.png')}
+        self._WIDTH = 651
+        self.canvas = tk.Canvas(self, height=self._WIDTH, width=self._WIDTH, highlightthickness=0)
+        self.canvas.pack()
+        self.background = self.canvas.create_image((0,0), image=self.images['bg'], anchor='nw')
 
-        self.images = {}
-        self.buttons = []
+        # back button
+        self.back_button = self.canvas.create_image((50,40), image=self.images['buttons']['back'][0])
+        self.canvas.tag_bind(self.back_button, '<Enter>', lambda event: self._on_hover(self.canvas, self.back_button, self.images['buttons']['back'][1], sound=True))
+        self.canvas.tag_bind(self.back_button, '<Leave>', lambda event: self._on_hover(self.canvas, self.back_button, self.images['buttons']['back'][0]))
+        self.canvas.tag_bind(self.back_button, '<Button-1>', lambda event: self.controller._change_page('TeamBuilderPage', 'MainPage'))
 
+        self.sorry = self.canvas.create_image((330,300), image=self.images['other'])
+
+    def _on_hover(self, canvas, button, image, sound=False):
+        canvas.itemconfig(button, image=image)
+        if sound:
+            sfx['move'].play()
 
 class MainPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-
+        self.pack_propagate(0)
+        # TODO FIXME: clean up images into dictionaries
         self.bg_imgs = [RGBAImage('menu', 'testbg.png')]
         self.button_imgs = [RGBAImage('menu', 'new_button.png'),
                             RGBAImage('menu', 'edit_button.png'),
@@ -906,46 +1056,54 @@ class MainPage(tk.Frame):
         for i in range(4):
             self.buttons.append(self.canvas.create_image((110,40+60*i), image=self.button_imgs[i]))
         for i in range(len(self.buttons)):
-            self.canvas.tag_bind(self.buttons[i], '<Enter>', lambda event, i=i: self._on_hover(self.buttons[i], self.button_imgs_hover[i]))
-            self.canvas.tag_bind(self.buttons[i], '<Leave>', lambda event, i=i: self._on_hover(self.buttons[i], self.button_imgs[i]))
+            self.canvas.tag_bind(self.buttons[i], '<Enter>', lambda event, i=i: self._on_hover(self.canvas, self.buttons[i], self.button_imgs_hover[i]))
+            self.canvas.tag_bind(self.buttons[i], '<Leave>', lambda event, i=i: self._on_hover(self.canvas, self.buttons[i], self.button_imgs[i]))
         self.canvas.tag_bind(self.buttons[0], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'NewSetPage'))
         self.canvas.tag_bind(self.buttons[1], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'EditSetPage'))
         self.canvas.tag_bind(self.buttons[2], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'TeamBuilderPage'))
         self.canvas.tag_bind(self.buttons[3], '<Button-1>', lambda event: self.controller.quit)
 
-    def _on_hover(self, button, image, sound=False):
-        self.canvas.itemconfig(button, image=image)
+    # TODO FIXME: When changing pages, the sound plays twice.
+    def _on_hover(self, canvas, button, image, sound=False):
+        canvas.itemconfig(button, image=image)
         if sound:
-            move2_sfx.play()
+            sfx['move2'].play()
 
 
-class DBEditor (tk.Tk):
+class Rentals (tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
+        # make the base window
         self.main_frame = tk.Frame(self)
         self.main_frame.pack(fill='both', expand=True)
         self.pages = {}
 
+        # initialize each page
         for page in [MainPage, NewSetPage, EditSetPage, TeamBuilderPage,]:
             frame = page(parent=self.main_frame, controller=self)
             self.pages[page.__name__] = frame
             frame.pack(fill='both', expand=True)
 
+        # hide each page for now
         for page in ['NewSetPage', 'EditSetPage', 'TeamBuilderPage',]:
             self.pages[page].pack_forget()
 
     def _change_page(self, old_page_name, page_name):
-        change_screen_sfx.play()
+        if page_name == 'MainPage':
+            sfx['load_main_menu'].play()
+        else:
+            sfx['change_screen'].play()
         frame = self.pages[old_page_name]
         frame.pack_forget()
         frame = self.pages[page_name]
         frame.pack(fill='both', expand=True)
 
+
 if __name__ == '__main__':
-    dbapp = DBEditor()
+    dbapp = Rentals()
 
     dbapp.resizable(False, False)
     dbapp.geometry("651x651")
-    dbapp.title('Rentals DB Editor v%s' %VERSION)
+    dbapp.title('Pokemon Rentals v%s' %VERSION)
     dbapp.mainloop()
