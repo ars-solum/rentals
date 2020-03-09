@@ -689,6 +689,7 @@ class NewSetPage(tk.Frame):
             new_height = len(search_list)*65+15
             self._refresh_canvas(new_height if new_height > self.min_height else self.min_height)
         else:
+            # TODO FIXME: if I click the entry field, do not filter and give me full list again.
             self._refresh_canvas(self.pkmn_canvas_height)
 
     def _pick_pokemon(self, pkmn_name):
@@ -717,10 +718,17 @@ class NewSetPage(tk.Frame):
         self.entry.delete(0,tk.END)
         self.entry.insert(0,pkmn_name)
         self.entry2.delete(0,tk.END)
-        self.entry2.insert(0,'' if not pkmn_name.startswith('Silvally-') else pkmn_name.split('-')[1] + ' Memory')
+        if pkmn_name.startswith('Silvally-'):
+            text = pkmn_name.split('-')[1] + ' Memory'
+        elif pkmn_name == 'Zacian-Crowned':
+            text = 'Rusted Sword'
+        elif pkmn_name == 'Zamazenta-Crowned':
+            text = 'Rusted Shield'
+        else:
+            text = ''
+        self.entry2.insert(0,text)
         self.entry3.delete(0,tk.END)
         self.entry3.insert(0,'')
-        self.entry2.focus_set()
 
         # delete existing ability buttons and get this Pokemon's abilities
         for ability, button in self.ability_buttons.items():
@@ -755,9 +763,11 @@ class NewSetPage(tk.Frame):
                 print('Missing Attack:', move)
 
         # move to next part
-        if pkmn_name.startswith('Silvally-'):
+        if pkmn_name.startswith('Silvally-') or pkmn_name.endswith('-Crowned'):
+            self.entry3.focus_set()
             self._get_ability_list()
         else:
+            self.entry2.focus_set()
             self._get_item_list()
 
     def _get_item_list(self, check=False):
@@ -770,6 +780,7 @@ class NewSetPage(tk.Frame):
             new_height = len(search_list)*65+15
             self._refresh_canvas(new_height if new_height > self.min_height else self.min_height)
         else:
+            # TODO FIXME: if I click the entry field, do not filter and give me full list again.
             self._refresh_canvas(self.item_canvas_height)
 
     def _pick_item(self, item_name):
@@ -842,7 +853,6 @@ class NewSetPage(tk.Frame):
                             search_list.append(move.casefold())
         if not search_list:
             return
-        # TODO FIXME: if I click the entry box, do not filter and give me full list again.
 
         # clear canvas of all buttons
         if buttons == 'pokemon':
@@ -914,6 +924,12 @@ class NewSetPage(tk.Frame):
         y = self.canvas2.canvasy(0)
         self.canvas2.coords(self.inner_bg, x, y)
 
+    def _get_checks(self):
+        pass
+
+    def _get_counters(self):
+        pass
+
     def clear_page(self):
         # reset all fields
         self.pkmn.set('')
@@ -960,14 +976,32 @@ class EditSetPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.pack_propagate(0)
-        self.images = {'bg'        : RGBAImage('menu', 'edit_bg.png'),
-                       'buttons'   : {'back'  : [RGBAImage('menu', 'back_button.png'), RGBAImage('menu', 'back_button2.png')]},
+        self.images = {'bg'        : [RGBAImage('menu', 'edit_bg.png'), RGBAImage('menu', 'edit_inner_bg.png')],
+                       'buttons'   : {'back'  : [RGBAImage('menu', 'back_button.png'), RGBAImage('menu', 'back_button2.png')],
+                                      'blank' : RGBAImage('menu', 'blank.png')},
                        'pokemon'   : self._get_sprites(),
                        'other'     : RGBAImage('menu', 'sorry.png')}
+        self.min_height = 555
         self._WIDTH = 651
+        self.TESTHEIGHT = 10000
         self.canvas = tk.Canvas(self, height=self._WIDTH, width=self._WIDTH, highlightthickness=0)
         self.canvas.pack()
-        self.background = self.canvas.create_image((0,0), image=self.images['bg'], anchor='nw')
+        self.background = self.canvas.create_image((0,0), image=self.images['bg'][0], anchor='nw')
+        # make a nested canvas
+        self.in_frame = tk.Frame(self, height=self.min_height, width=self._WIDTH, borderwidth=0, highlightthickness=0)
+        self.in_frame.pack_propagate(0)
+        self.frame = self.canvas.create_window((0,96), window=self.in_frame, anchor='nw')
+        self.canvas2 = tk.Canvas(self.in_frame, height=self.TESTHEIGHT, width=self._WIDTH, highlightthickness=0, scrollregion=(0, 0, self._WIDTH, self.TESTHEIGHT))
+        self.inner_bg = self.canvas2.create_image((0,0), image=self.images['bg'][1], anchor='nw')
+        self.scrollbar = tk.Scrollbar(self.in_frame, orient='vertical', command=self._custom_yview)
+        self.scrollbar.pack(side='right', fill='y')
+        self.canvas2.config(yscrollcommand=self.scrollbar.set)
+        self.canvas2.pack(side='left', expand=True, fill='both')
+        self.canvas2.bind('<Enter>', self._on_mousewheel)
+        self.canvas2.bind('<Leave>', self._off_mousewheel)
+        # the top of the bottom canvas
+        self.origX = self.canvas2.xview()[0]
+        self.origY = self.canvas2.yview()[0]
 
         # back button
         self.back_button = self.canvas.create_image((50,40), image=self.images['buttons']['back'][0])
@@ -975,17 +1009,25 @@ class EditSetPage(tk.Frame):
         self.canvas.tag_bind(self.back_button, '<Leave>', lambda event: self._on_hover(self.canvas, self.back_button, self.images['buttons']['back'][0]))
         self.canvas.tag_bind(self.back_button, '<Button-1>', lambda event: self.controller._change_page('EditSetPage', 'MainPage'))
 
-        # test zone
-        self.test_pkmn = []
-        self.set_num = []
-        self.pkmn_name = []
-        for j in range(3):
-            for i in range(3):
-                self.test_pkmn.append(self.canvas.create_image((130+200*i,200+200*j), image=self.images['pokemon']['eternatus']))
-                self.set_num.append(self.canvas.create_text((130+200*i,140+200*j), text='0 Sets'))
-                self.pkmn_name.append(self.canvas.create_text((130+200*i,235+200*j), text='Darmanitan-Galar-Zen-Mode'))
+        # search bar
+        self.pkmn = tk.StringVar()
+        self.pokemon_text = self.canvas.create_text((230,60), text='Search:')
+        self.entry = tk.Entry(self.canvas, textvariable=self.pkmn, width=25)
+        self.entry.bind('<Button-1>', lambda event: self._get_screen(pokemon=True))
+        self.pokemon_entry = self.canvas.create_window((340,60), window=self.entry)
+        self.pkmn.trace('w', lambda name, index, mode, pkmn=self.pkmn: self._filter(pkmn, self.images['pokemon']))
 
-        self.sorry = self.canvas.create_image((330,300), image=self.images['other'])
+        # bottom canvas
+        self.pokemon_buttons = {}
+        self.set_num_text = {}
+        for i, pkmn in enumerate(self.images['pokemon'].keys()):
+            self.pokemon_buttons[pkmn] = self.canvas2.create_image((120+200*(i%3)),120+200*int((i/3)), image=self.images['pokemon'][pkmn])
+            self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Button-1>', lambda event, pkmn=pkmn: self._pick_pokemon(pkmn))
+            self.set_num_text[pkmn] = self.canvas2.create_text((120+200*(i%3)),70+200*int((i/3)), text='0 Sets') # TODO FIXME: change 0 to calculated amount
+
+        self.set_buttons = {}
+
+        self.sorry = self.canvas.create_image((320,200), image=self.images['other'])
 
     def _get_sprites(self):
         temp_dict = {}
@@ -995,10 +1037,116 @@ class EditSetPage(tk.Frame):
 
         return temp_dict
 
+    def _refresh_canvas(self, height):
+        # re-pack canvas and scrollbar
+        if height <= self.min_height:
+            self.scrollbar.pack_forget()
+        else:
+            self.scrollbar.pack(side='right', fill='y')
+        self.canvas2.pack_forget()
+        self.canvas2.config(height=height, scrollregion=(0, 0, self._WIDTH, height))
+        self.canvas2.pack(side='left', expand=True, fill='both')
+        # move bg to new coordinates for scrolling
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas2.coords(self.inner_bg, x, y)
+
+    def _filter(self, name, images):
+        # get list of matching pokemon
+        search_list = []
+        for x in images.keys():
+            if x.startswith(name.get().casefold()):
+                search_list.append(x)
+        if not search_list:
+            return
+
+        # clear canvas of all buttons and text
+        for _, button in self.pokemon_buttons.items():
+            self.canvas2.delete(button)
+        self.pokemon_buttons = {}
+        for _, text in self.set_num_text.items():
+            self.canvas2.delete(text)
+        self.set_num_text = {}
+
+        # resize canvas
+        # TODO FIXME: get real height values for images
+        self._refresh_canvas(len(search_list)*65+15 if len(search_list)*65+15 > self.min_height else self.min_height)
+
+        # repopulate canvas with new list
+        for i, pkmn in enumerate(search_list):
+            try:
+                self.pokemon_buttons[pkmn] = self.canvas2.create_image((120+200*(i%3)),120+200*int((i/3)), image=images[pkmn])
+                self.set_num_text[pkmn] = self.canvas2.create_text((120+200*(i%3)),70+200*int((i/3)), text='0 Sets') # TODO FIXME: change 0 to calculated amount
+                self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Button-1>', lambda event, pkmn=pkmn: self._pick_pokemon(pkmn.capitalize()))
+            except:
+                print('Missing Pokemon:', i, pkmn)
+
+    def _pick_pokemon(self, pkmn_name):
+        # format pokemon name
+        name = [word.capitalize() for word in pkmn_name.split()]
+        pkmn_name = ' '.join(name)
+        if pkmn_name not in ['Jangmo-o', 'Hakamo-o', 'Kommo-o'] and '-' in pkmn_name:
+            name = [word.capitalize() for word in pkmn_name.split('-')]
+            pkmn_name = '-'.join(name)
+
+        # delete existing set buttons get this Pokemon's sets
+        for _, button in self.set_buttons.items():
+            self.canvas2.delete(button)
+        self.set_buttons = {}
+        set_list = self._get_set_list(pkmn_name)
+
+        # make new set buttons
+        for i, pset in enumerate(set_list):
+            self.set_buttons[pset] = self.canvas2.create_image((315,40+65*i), image=self.images['buttons']['blank'])
+            # TODO FIXME: Add set details in text form
+            self.canvas2.tag_bind(self.set_buttons[pset], '<Button-1>', lambda event, name=pset.name: self._edit_set(name))
+
+        self._get_screen(sets=True)
+
+    def _get_screen(self, pokemon=False, sets=False):
+        # show/hide parts of screen depending on the screen we want to show
+        for _ in self.pokemon_buttons.values():
+            self.canvas2.itemconfig(_, state='normal' if pokemon else 'hidden')
+        for _ in self.set_num_text.values():
+            self.canvas2.itemconfig(_, state='normal' if pokemon else 'hidden')
+        for _ in self.set_buttons.values():
+            self.canvas2.itemconfig(_, state='normal' if sets else 'hidden')
+        # TODO FIXME: is this the right spot for this?
+        self._refresh_canvas(self.TESTHEIGHT)
+
+    def _get_set_list(self, pkmn_name):
+        set_list = []
+        for pset in sets:
+            if pset.name == pkmn_name:
+                set_list.append(pset)
+        return set_list
+
+    def _edit_set(self, pkmn_name):
+        # TODO FIXME: Add the ability to change to NewSetPage and fill out w/ set info.
+        print('hi2')
+
     def _on_hover(self, canvas, button, image, sound=False):
         canvas.itemconfig(button, image=image)
         if sound:
             sfx['move'].play()
+
+    def _custom_yview(self, *args, **kwargs):
+        self.canvas2.yview(*args, **kwargs)
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas2.coords(self.inner_bg, x, y)
+
+    def _on_mousewheel(self, event):
+        self.canvas2.bind_all('<MouseWheel>', self._scroll)
+
+    def _off_mousewheel(self, event):
+        self.canvas2.unbind_all('<MouseWheel>')
+
+    def _scroll(self, event):
+        self.canvas2.yview_scroll(int(-1*(event.delta/120)), 'units')
+        x = self.canvas2.canvasx(0)
+        y = self.canvas2.canvasy(0)
+        self.canvas2.coords(self.inner_bg, x, y)
 
 
 class TeamBuilderPage(tk.Frame):
@@ -1026,6 +1174,7 @@ class TeamBuilderPage(tk.Frame):
         canvas.itemconfig(button, image=image)
         if sound:
             sfx['move'].play()
+
 
 class MainPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -1061,7 +1210,7 @@ class MainPage(tk.Frame):
         self.canvas.tag_bind(self.buttons[0], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'NewSetPage'))
         self.canvas.tag_bind(self.buttons[1], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'EditSetPage'))
         self.canvas.tag_bind(self.buttons[2], '<Button-1>', lambda event: self.controller._change_page('MainPage', 'TeamBuilderPage'))
-        self.canvas.tag_bind(self.buttons[3], '<Button-1>', lambda event: self.controller.quit)
+        self.canvas.tag_bind(self.buttons[3], '<Button-1>', lambda event: self.controller.quit())
 
     # TODO FIXME: When changing pages, the sound plays twice.
     def _on_hover(self, canvas, button, image, sound=False):
