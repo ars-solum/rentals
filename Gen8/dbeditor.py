@@ -152,7 +152,7 @@ class NewSetPage(tk.Frame):
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Enter>', lambda event, pkmn=pkmn, img=img: self._on_hover(self.canvas2, self.pokemon_buttons[pkmn], img[1], sound=True))
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Leave>', lambda event, pkmn=pkmn, img=img: self._on_hover(self.canvas2, self.pokemon_buttons[pkmn], img[0]))
             self.canvas2.tag_bind(self.pokemon_buttons[pkmn], '<Button-1>', lambda event, pkmn=pkmn: self._pick_pokemon(pkmn.capitalize()))
-        self.pkmn.trace('w', lambda name, index, mode, pkmn=self.pkmn: self._filter(pkmn, 'pokemon', self.images['pokemon']))
+        self.pkmn_trace = self.pkmn.trace('w', lambda name, index, mode, pkmn=self.pkmn: self._filter(pkmn, 'pokemon', self.images['pokemon']))
         self.item_buttons = {}
         for i, (item, img) in enumerate(self.images['items'].items()):
             self.item_buttons[item] = self.canvas2.create_image((315,40+65*i), image=img[0])
@@ -160,12 +160,13 @@ class NewSetPage(tk.Frame):
             self.canvas2.tag_bind(self.item_buttons[item], '<Leave>', lambda event, item=item, img=img: self._on_hover(self.canvas2, self.item_buttons[item], img[0]))
             self.canvas2.tag_bind(self.item_buttons[item], '<Button-1>', lambda event, item=item: self._pick_item(item))
             self.canvas2.itemconfig(self.item_buttons[item], state='hidden')
-        self.item.trace('w', lambda name, index, mode, item=self.item: self._filter(item, 'items', self.images['items']))
+        self.item_trace = self.item.trace('w', lambda name, index, mode, item=self.item: self._filter(item, 'items', self.images['items']))
         self.ability_buttons = {}
-        self.ability.trace('w', lambda name, index, mode, ability=self.ability: self._filter(ability, 'abilities', self.images['abilities']))
+        self.ability_trace = self.ability.trace('w', lambda name, index, mode, ability=self.ability: self._filter(ability, 'abilities', self.images['abilities']))
         self.move_buttons = {}
+        self.move_trace = []
         for i in range(4):
-            self.moves[i].trace('w', lambda name, index, mode, moves=self.moves, i=i: self._filter(moves[i], 'attacks', self.images['attacks']))
+            self.move_trace.append(self.moves[i].trace('w', lambda name, index, mode, moves=self.moves, i=i: self._filter(moves[i], 'attacks', self.images['attacks'])))
 
         # stat labels
         self.stat_labels = {
@@ -238,10 +239,11 @@ class NewSetPage(tk.Frame):
         self.ev_stats = [tk.StringVar() for i in range(6)]
         self.entry5 = []
         self.ev_stats_entry = []
+        self.ev_trace = []
         for i, stat in enumerate(['hp_stat', 'atk_stat', 'def_stat', 'spa_stat', 'spd_stat', 'spe_stat']):
             self.entry5.append(tk.Entry(self.canvas2, textvariable=self.ev_stats[i], width=7))
             self.ev_stats_entry.append(self.canvas2.create_window((200, 50+25*i), window=self.entry5[i]))
-            self.ev_stats[i].trace('w', lambda name, index, mode, i=i, stat=stat: self._update_all_stats(i, stat))
+            self.ev_trace.append(self.ev_stats[i].trace('w', lambda name, index, mode, i=i, stat=stat: self._update_all_stats(i, stat)))
             self.canvas2.itemconfig(self.ev_stats_entry[i], state='hidden')
 
         # ev scales
@@ -266,13 +268,14 @@ class NewSetPage(tk.Frame):
         self.iv_stats = [tk.StringVar() for i in range(6)]
         self.entry6 = []
         self.iv_stats_entry = []
+        self.iv_trace = []
         for i in range(6):
             self.entry6.append(tk.Entry(self.canvas2, textvariable=self.iv_stats[i], width=7))
             self.entry6[i].insert(0,'31')
             self.iv_stats_entry.append(self.canvas2.create_window((500, 50+25*i), window=self.entry6[i]))
             self.canvas2.itemconfig(self.iv_stats_entry[i], state='hidden')
         for i, stat in enumerate(['hp_stat', 'atk_stat', 'def_stat', 'spa_stat', 'spd_stat', 'spe_stat']):
-            self.iv_stats[i].trace('w', lambda name, index, mode, i=i, stat=stat: self._update_all_stats(i, stat))
+            self.iv_trace.append(self.iv_stats[i].trace('w', lambda name, index, mode, i=i, stat=stat: self._update_all_stats(i, stat)))
 
         # import/export
         self.i_box = tk.Text(self.canvas2, height=20, width=75)
@@ -821,11 +824,13 @@ class NewSetPage(tk.Frame):
         elif '-' in attack_name:
             attack_name = '-'.join([word.capitalize() for word in attack_name.split('-')])
         else:
-            print('How did I get here?', attack_name)
             pass
         slot = self.entry4.index(self.focus_get())
+        self.moves[slot].trace_vdelete('w', self.move_trace[slot])
+        del self.move_trace[slot]
         self.entry4[slot].delete(0,tk.END)
         self.entry4[slot].insert(0,attack_name)
+        self.move_trace.insert(slot, self.moves[slot].trace('w', lambda name, index, mode, moves=self.moves, i=slot: self._filter(moves[i], 'attacks', self.images['attacks'])))
 
         # move to next field or stats
         if slot < 3:
@@ -870,6 +875,7 @@ class NewSetPage(tk.Frame):
         # TODO FIXME: add moves/attacks
 
         # resize canvas
+
         self._refresh_canvas(len(search_list)*65+15 if len(search_list)*65+15 > self.min_height else self.min_height)
 
         # repopulate canvas with new list
@@ -964,7 +970,7 @@ class NewSetPage(tk.Frame):
             return
 
         # update the database if the set is new
-        set = PokemonSet(self.pkmn.get(), self.item.get(), self.ability.get(), self._format_evs(), self.nature.get(), self._format_ivs(), [move.get() for move in self.moves if move.get()])
+        set = PokemonSet(self.pkmn.get(), '100', self.item.get(), self.ability.get(), self._format_evs(), self.nature.get(), self._format_ivs(), [move.get() for move in self.moves if move.get()])
         if not exists(set):
             update_database(set)
             # TODO FIXME: have a visual indicator that the set was saved and prompt if user wants to continue editing or start over.
@@ -1015,7 +1021,7 @@ class EditSetPage(tk.Frame):
         self.entry = tk.Entry(self.canvas, textvariable=self.pkmn, width=25)
         self.entry.bind('<Button-1>', lambda event: self._get_screen(pokemon=True))
         self.pokemon_entry = self.canvas.create_window((340,60), window=self.entry)
-        self.pkmn.trace('w', lambda name, index, mode, pkmn=self.pkmn: self._filter(pkmn, self.images['pokemon']))
+        self.pkmn_trace = self.pkmn.trace('w', lambda name, index, mode, pkmn=self.pkmn: self._filter(pkmn, self.images['pokemon']))
 
         # bottom canvas
         self.pokemon_buttons = {}
@@ -1027,7 +1033,7 @@ class EditSetPage(tk.Frame):
 
         self.set_buttons = {}
 
-        self.sorry = self.canvas.create_image((320,200), image=self.images['other'])
+        # self.sorry = self.canvas.create_image((320,200), image=self.images['other'])
 
     def _get_sprites(self):
         temp_dict = {}
@@ -1100,8 +1106,10 @@ class EditSetPage(tk.Frame):
             self.set_buttons[pset] = self.canvas2.create_image((315,40+65*i), image=self.images['buttons']['blank'])
             # TODO FIXME: Add set details in text form
             self.canvas2.tag_bind(self.set_buttons[pset], '<Button-1>', lambda event, name=pset.name: self._edit_set(name))
+            print('hi1%d' %i)
 
         self._get_screen(sets=True)
+        self._refresh_canvas(self.min_height)
 
     def _get_screen(self, pokemon=False, sets=False):
         # show/hide parts of screen depending on the screen we want to show
@@ -1111,8 +1119,7 @@ class EditSetPage(tk.Frame):
             self.canvas2.itemconfig(_, state='normal' if pokemon else 'hidden')
         for _ in self.set_buttons.values():
             self.canvas2.itemconfig(_, state='normal' if sets else 'hidden')
-        # TODO FIXME: is this the right spot for this?
-        self._refresh_canvas(self.TESTHEIGHT)
+
 
     def _get_set_list(self, pkmn_name):
         set_list = []
@@ -1123,7 +1130,7 @@ class EditSetPage(tk.Frame):
 
     def _edit_set(self, pkmn_name):
         # TODO FIXME: Add the ability to change to NewSetPage and fill out w/ set info.
-        print('hi2')
+        pass
 
     def _on_hover(self, canvas, button, image, sound=False):
         canvas.itemconfig(button, image=image)
