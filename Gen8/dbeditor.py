@@ -601,13 +601,14 @@ class NewSetPage(tk.Frame):
             self.entry3.unbind('<Button-1>')
             for entry in self.entry4:
                 entry.unbind('<Button-1>')
-            # TODO FIXME: Disable stats button hovering when on import screen, and re-enable otherwise.
+            self.canvas.tag_unbind(self.stats_button, '<Button-1>')
         else:
             self.entry.bind('<Button-1>', lambda event: self._get_pokemon_list(check=True))
             self.entry2.bind('<Button-1>', lambda event: self._get_item_list(check=True))
             self.entry3.bind('<Button-1>', lambda event: self._get_ability_list())
             for entry in self.entry4:
                 entry.bind('<Button-1>', lambda event: self._get_move_list())
+            self.canvas.tag_bind(self.stats_button, '<Button-1>', lambda event: self._get_stats_screen())
 
     def _get_import_screen(self):
         self._get_screen(import_=True)
